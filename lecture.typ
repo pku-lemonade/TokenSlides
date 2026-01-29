@@ -69,9 +69,10 @@
 }
 
 #let fonts = (
-    body: ("Inter", "FZLTHProS"),
+    body: ("Inter", "Source Han Sans SC", "FZLTHProS"),
     math: "New Computer Modern Math",
-    mono: "Inconsolata",
+    mono: ("Inconsolata", "Source Han Sans SC"),
+    name: ("Inter", "FZFW ZhuZi GuDianS SH"),
 )
 
 #let font-sizes = (
@@ -161,7 +162,7 @@
     show-total: true,
     show-institution: true,
     show-title: true,
-    show-heading: auto,
+    show-heading: false,
 )
 
 #let tbox(
@@ -440,7 +441,7 @@
 #let footer(self, my-heading: auto) = {
     let footer-cfg = self.store.at("footer", default: default-footer-config)
 
-    if footer-cfg.style == none or footer-cfg.style == "none" { none }
+    if footer-cfg.style == none { none }
     else if footer-cfg.style == "page" { footer-page(self) }
     else { footer-bar(self, my-heading: my-heading) }
 }
@@ -471,8 +472,8 @@
         ]
         place(bottom + center)[
             #set par(leading: 1em)
-            #show regex("[\p{Han}]+"): set text(size: self.store.font-sizes.body-title + 4pt)
-            #text(size: self.store.font-sizes.body-title, font: ("Inter", "FZFW ZhuZi GuDianS LH"), weight: "medium")[
+            #show regex("[\p{Han}]+"): set text(size: self.store.font-sizes.body-title + 6pt, font: "STHeiti")
+            #text(size: self.store.font-sizes.body-title, font: self.store.fonts.body, weight: "medium")[
                 #self.info.author
             ] \
             #text(size: self.store.font-sizes.body-title, font: self.store.fonts.body, weight: "medium")[
@@ -516,8 +517,8 @@
         ]
         align(bottom + center)[
             #set par(leading: 1em)
-            #show regex("[\p{Han}]+"): set text(size: self.store.font-sizes.body-title + 4pt)
-            #text(size: self.store.font-sizes.body-title, font: (self.store.fonts.mono, "FZFW ZhuZi GuDianS LH"), weight: "medium")[
+            #show regex("[\p{Han}]+"): set text(size: self.store.font-sizes.body-title + 6pt, font: "FZFW ZhuZi GuDianS LH")
+            #text(size: self.store.font-sizes.body-title, font: (self.store.fonts.mono), weight: "medium")[
                 #if display-author != none [#display-author]
             ]\
             #text(size: self.store.font-sizes.body-title, font: self.store.fonts.mono, weight: "medium")[
@@ -562,29 +563,60 @@
         if user-val != none { user-val } else { self.store.outline-config.show-subsections }
     }
     let outline-depth = if use-subsections { 2 } else { 1 }
+    let short-heading = args.named().at("short-heading", default: true)
 
-    let outline-content = components.custom-progressive-outline(
+    let outline-alpha = self.store.outline-config.alpha
+    let outline-indent = if use-subsections { (0em, 1em) } else { (self.store.layout.outline-indent,) }
+    let outline-vspace = if use-subsections { (0em, 0em) } else { (self.store.layout.outline-spacing,) }
+    let outline-size = if use-subsections {
+        (self.store.font-sizes.body-title, self.store.font-sizes.small)
+    } else {
+        (self.store.font-sizes.section,)
+    }
+
+    let outline-content = components.progressive-outline(
+        alpha: outline-alpha,
         level: level,
-        alpha: self.store.outline-config.alpha,
-        indent: if use-subsections {
-            (0em, 1em)
-        } else {
-            (self.store.layout.outline-indent,)
+        transform: (cover: false, alpha: outline-alpha, ..args, it) => {
+            let array-at(arr, idx) = arr.at(idx, default: arr.last())
+
+            let set-text(level, body) = {
+                set text(fill: if cover { utils.update-alpha(text.fill, alpha) } else { text.fill })
+                set text(size: array-at(outline-size, level - 1))
+                set text(weight: array-at(("bold",), level - 1))
+                body
+            }
+
+            align(center)[
+                #set-text(
+                    it.level,
+                    {
+                        if type(outline-vspace) == array and outline-vspace.len() > it.level - 1 {
+                            v(outline-vspace.at(it.level - 1))
+                        }
+                        h(range(1, it.level + 1).map(level => array-at(outline-indent, level - 1)).sum())
+                        if numbered {
+                            let current-numbering = if it.element.numbering != none { it.element.numbering } else { "1." }
+                            numbering(
+                                current-numbering,
+                                ..counter(heading).at(it.element.location()),
+                            )
+                            h(.3em)
+                        }
+                        link(
+                            it.element.location(),
+                            if short-heading {
+                                utils.short-heading(self: self, it.element)
+                            } else {
+                                it.element.body
+                            },
+                        )
+                    },
+                )
+            ]
         },
-        vspace: if use-subsections {
-            (0em, 0em)
-        } else {
-            (self.store.layout.outline-spacing,)
-        },
-        numbered: (numbered,),
-        numbering: ("1.",),
+        title: none,
         depth: outline-depth,
-        text-size: if use-subsections {
-            (self.store.font-sizes.body-title, self.store.font-sizes.small)
-        } else {
-            (self.store.font-sizes.section,)
-        },
-        text-weight: ("bold",),
         ..args.named(),
     )
 
@@ -593,13 +625,11 @@
             #text(size: self.store.font-sizes.title, weight: "bold")[#title]
         ]
         if use-subsections {
-            block(inset: (bottom: 1.5em))[
+            align(center)[
                 #components.adaptive-columns(outline-content)
             ]
         } else {
-            place(horizon + center)[
-                #outline-content
-            ]
+            place(center)[#outline-content]
         }
     }
 
