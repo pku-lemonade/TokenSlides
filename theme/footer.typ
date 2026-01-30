@@ -50,7 +50,7 @@
             size: footer-layout.text-size,
             font: fonts.mono,
             fill: footer-text-fill,
-            weight: "black",
+            weight: "bold",
         )
         #grid(
             columns: (1fr, 3fr, 1fr),
