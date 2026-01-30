@@ -3,8 +3,8 @@
 
 // CONFIG
 #let slide-layouts = (
-    "16-9": (top: 1.25em, bottom: 0em, left: 3em, right: 2em),
-    "4-3": (top: 1.5em, bottom: 0em, left: 2em, right: 1.5em),
+    "16-9": (top: 1.25em, bottom: 0em, left: 2em, right: 1.5em),
+    "4-3": (top: 1.5em, bottom: 0em, left: 1.5em, right: 1.5em),
 )
 
 #let slide-config = (show-numbers: false)
