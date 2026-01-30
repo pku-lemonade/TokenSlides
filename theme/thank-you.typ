@@ -1,9 +1,13 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": fonts, font-sizes
 #import "base.typ": cur-ar, cur-colors
-#import "title.typ": title-layouts
 
 // CONFIG
+#let thank-you-layouts = (
+    "16-9": (top: 0em, bottom: 2em, left: 1em, right: 1em),
+    "4-3": (top: 0em, bottom: 2em, left: 1em, right: 1em),
+)
+
 #let thanks-han = (
     font: "FZFW ZhuZi GuDianS LH",
     size-delta: 6pt,
@@ -14,7 +18,7 @@
     content: none,
     config: (:),
 ) = touying-slide-wrapper(self => context {
-    let margins = title-layouts.at(cur-ar.get())
+    let margins = thank-you-layouts.at(cur-ar.get())
 
     let default-config = config-page(
         margin: margins,
@@ -43,7 +47,7 @@
 
     let body = {
         place(center + horizon)[
-            #text(size: font-sizes.title, weight: "bold")[#title]
+            #text(size: font-sizes.title + 8pt, weight: "bold")[#title]
         ]
         align(bottom + center)[
             #set par(leading: 1em)
@@ -60,7 +64,7 @@
                 ]
             ]
         ]
-        v(2em)
+        v(4em)
         // place-bottom-right(assets.qr-code, caption: "pku-lemonade")
     }
 

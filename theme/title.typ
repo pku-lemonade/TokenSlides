@@ -4,8 +4,8 @@
 
 // CONFIG
 #let title-layouts = (
-    "16-9": (top: 2em, bottom: 2em, left: 1em, right: 1em),
-    "4-3": (top: 2em, bottom: 2em, left: 1em, right: 1em),
+    "16-9": (top: 0em, bottom: 2em, left: 1em, right: 1em),
+    "4-3": (top: 0em, bottom: 2em, left: 1em, right: 1em),
 )
 
 #let title-han = (
@@ -27,6 +27,7 @@
     let self = utils.merge-dicts(self, default-config, config)
 
     let body = {
+        v(2em)
         align(top + center)[
             #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
                 #self.info.subtitle
