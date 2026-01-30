@@ -1,7 +1,15 @@
 # Slides theme (Typst)
 
 - Entry: `lecture.typ` (re-exports `theme/lecture.typ`)
-- Shared config: `theme/base.typ` (font sizes, page spacing, colors/fonts + runtime state)
-- Aspect-specific: `theme/slide.typ` (slide margins), `theme/title.typ` (title/thanks margins), `theme/footer.typ` (footer size), `theme/outline.typ` (outline layout)
-- Feature config blocks: `theme/boxes.typ` (boxes + `tbox`), `theme/images.typ`, `theme/footer.typ`, `theme/outline.typ`, `theme/slide.typ`, `theme/title.typ`, `theme/thank-you.typ`
+- `theme/lecture.typ`: main theme wrapper; wires Touying config + global `set/show` rules
+- `theme/base.typ`: global knobs (font sizes, page spacing, colors/fonts, mode choices) + runtime state (`cur-ar`, `cur-colors`, `cur-box`)
+- `theme/slide.typ`: default slide template + slide margins (`slide-layouts`)
+- `theme/title.typ`: title slide template + title/thanks margins (`title-layouts`)
+- `theme/thank-you.typ`: thank-you slide template (uses `title-layouts`)
+- `theme/footer.typ`: footer layouts + footer renderer (`footer`)
+- `theme/outline.typ`: outline slide + outline layout + numbering/title config
+- `theme/boxes.typ`: box helpers (`hbox/ibox/.../cbox`) + `tbox`
+- `theme/images.typ`: assets + `place-image` helpers + `imgs`
+- `theme/table.typ`: table styling (`apply-table-style`)
 - Validate: `typst compile tao.typ /tmp/tao_refactor.pdf`
+- API lookup: when unsure about Typst/Touying APIs, use Context7 + web search; also inspect local package sources under `~/Library/Caches/typst/packages/preview/` (e.g. `touying/0.6.1/src`)
