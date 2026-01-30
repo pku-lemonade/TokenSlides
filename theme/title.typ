@@ -1,8 +1,13 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": fonts, font-sizes
-#import "state.typ": cur-layout
+#import "base.typ": cur-ar
 
 // CONFIG
+#let title-layouts = (
+    "16-9": (top: 2em, bottom: 2em, left: 1em, right: 1em),
+    "4-3": (top: 2em, bottom: 2em, left: 1em, right: 1em),
+)
+
 #let title-han = (
     font: "STHeiti",
     size-delta: 6pt,
@@ -11,16 +16,12 @@
 #let title-slide(
     config: (:),
 ) = touying-slide-wrapper(self => context {
-    let layout = cur-layout.get()
+    let aspect-ratio = cur-ar.get()
+    let margins = title-layouts.at(aspect-ratio)
 
     let default-config = config-page(
         footer: none,
-        margin: (
-            top: layout.title-top-margin,
-            bottom: layout.title-bottom-margin,
-            left: layout.title-left-margin,
-            right: layout.title-right-margin,
-        ),
+        margin: margins,
     )
 
     let self = utils.merge-dicts(self, default-config, config)

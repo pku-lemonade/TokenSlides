@@ -1,7 +1,7 @@
 // Shared theme configuration.
 //
 // Edit this file when you want to change global look & feel:
-// colors, fonts, font sizes, and layouts.
+// colors, fonts, font sizes, and runtime defaults.
 
 #let light-colors = (
     bg: white,
@@ -67,7 +67,6 @@
     body: ("Inter", "Source Han Sans SC", "FZLTHProS"),
     math: "New Computer Modern Math",
     mono: ("Inconsolata", "Source Han Sans SC"),
-    name: ("Inter", "FZFW ZhuZi GuDianS SH"),
 )
 
 #let font-sizes = (
@@ -80,44 +79,9 @@
     code: 20pt,
 )
 
-#let layout-16-9 = (
-    footer-height: 1em,
-    footer-text-size: 16pt,
-    slide-top-margin: 1.25em,
-    slide-bottom-margin: 0em,
-    slide-left-margin: 3em,
-    slide-right-margin: 2em,
-    title-top-margin: 2em,
-    title-bottom-margin: 2em,
-    title-left-margin: 1em,
-    title-right-margin: 1em,
-    par-spacing: 1em,
-    math-block-spacing-above: 0.8em,
-    math-block-spacing-below: 0.6em,
-    outline-indent: 0em,
-    outline-spacing: 1em,
-    outline-width: 70%,
-)
+#let aspect-ratios = ("16-9", "4-3")
 
-#let layout-4-3 = (
-    footer-height: 1em,
-    footer-text-size: 14pt,
-    slide-top-margin: 1.5em,
-    slide-bottom-margin: 0em,
-    slide-left-margin: 2em,
-    slide-right-margin: 1.5em,
-    title-top-margin: 2em,
-    title-bottom-margin: 2em,
-    title-left-margin: 1em,
-    title-right-margin: 1em,
-    par-spacing: 1.1em,
-    math-block-spacing-above: 1em,
-    math-block-spacing-below: auto,
-    outline-indent: 2em,
-    outline-spacing: 1em,
-    outline-width: 70%,
-)
-
-// Central layout “choices”: pick one in `lecture-theme(aspect-ratio: ...)`.
-#let layouts = ("16-9": layout-16-9, "4-3": layout-4-3)
-
+// Runtime state (set by `lecture-theme`; other modules read it).
+#let cur-ar = state("lec-ar", "16-9")
+#let cur-colors = state("lec-colors", modes.light.colors)
+#let cur-box = state("lec-box", modes.light.box)
