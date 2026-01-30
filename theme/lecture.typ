@@ -9,6 +9,7 @@
 
 #import "footer.typ": footer as footer-fn
 #import "slide.typ": slide, slide-layouts
+#import "table.typ": apply-table-style
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide
 #import "outline.typ": outline-slide, new-section-slide
@@ -63,7 +64,7 @@
     set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: theme.colors.fg)
     set par(spacing: spacing.par)
     set heading(numbering: numbly("{1}.", default: "1.1"))
-    show table: set table(stroke: (paint: theme.colors.table-stroke, thickness: 0.6pt))
+    apply-table-style(theme.colors)
     show math.equation: set text(font: fonts.math)
     show math.equation.where(block: true): set block(
         above: spacing.math-above,
