@@ -35,9 +35,9 @@
 )
 
 #let fonts = (
-    body: ("Inter", "Source Han Sans SC", "FZLTHProS"),
+    body: ("Inter", "FZYouHeiS", "Source Han Sans SC", "FZLTHProS"),
     math: "New Computer Modern Math",
-    mono: ("Inconsolata", "Source Han Sans SC"),
+    mono: ("Inconsolata", "FZYouHeiS", "Source Han Sans SC"),
 )
 
 // CONFIG (colors)

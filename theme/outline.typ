@@ -1,5 +1,5 @@
 #import "@preview/touying:0.6.1": *
-#import "base.typ": font-sizes, cur-ar
+#import "base.typ": font-sizes, cur-ar, cur-colors
 
 // Cancel Touying's built-in `h(.3em)` after numbering for Chinese outlines (the `、` is full-width).
 #let outline-chinese-numbering = (..nums) => numbering("一、", ..nums) + h(-0.3em)
@@ -16,14 +16,14 @@
     "16-9": (
         width: 70%,
         variants: (
-            sections: (indent: (4em,), spacing: (0.5em,)),
+            sections: (indent: (3em,), spacing: (0em,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
     "4-3": (
         width: 70%,
         variants: (
-            sections: (indent: (4em,), spacing: (1em,)),
+            sections: (indent: (3em,), spacing: (1em,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
@@ -57,6 +57,7 @@
     level: none,
     variant: auto,
 ) = touying-slide-wrapper(self => context {
+    let colors = cur-colors.get()
     let variant-name = if variant == auto { outline-config.default-variant } else { variant }
 
     let aspect-ratio = cur-ar.get()
@@ -80,6 +81,10 @@
         vspace: variant-layout.spacing,
         numbered: (numbered,),
         numbering: outline-numbering,
+        uncover-fn: body => {
+            show text: set text(fill: colors.primary)
+            body
+        },
         depth: variant-config.depth,
         text-size: variant-config.text-size,
         text-weight: ("bold",),

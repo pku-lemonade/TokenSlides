@@ -1,7 +1,7 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": font-sizes
 
-#let slide-config = (show-numbers: false)
+#let slide-config = (show-numbered-heading: false)
 
 #let slide(
     config: (:),
@@ -10,7 +10,7 @@
 ) = touying-slide-wrapper(self => {
     let heading-title = utils.display-current-heading(
         level: 2,
-        numbered: slide-config.show-numbers,
+        numbered: slide-config.show-numbered-heading,
     )
     let display-title = if title != auto { title } else { heading-title }
 
