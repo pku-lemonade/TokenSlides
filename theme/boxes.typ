@@ -29,77 +29,56 @@
     border-width: 0.8pt,
 )
 
-#let _auto(value, default) = if value == auto { default } else { value }
-
 #let make-box(
     style-name,
     body,
-    fill: auto,
-    width: 100%,
-    height: auto,
-    inset: auto,
-    radius: auto,
-    above: auto,
-    below: auto,
-    left-border: auto,
-    border-color: auto,
-    border-width: auto,
-    breakable: false,
     compact: false,
+    breakable: false,
 ) = {
     context {
         let style = cur-box.get().at(style-name)
-
-        let use-border = _auto(left-border, box-config.left-border)
         let spacing-config = if compact { box-config.compact } else { box-config.normal }
-
-        let inset-left = if inset == auto { spacing-config.inset-left } else { inset }
-        let inset-right = if inset == auto { spacing-config.inset-right } else { inset }
-        let inset-top = if inset == auto { spacing-config.inset-top } else { inset }
-        let inset-bottom = if inset == auto { spacing-config.inset-bottom } else { inset }
-        let inset-left-final = if use-border { inset-left + 4pt } else { inset-left }
-
-        let fill-final = _auto(fill, style.fill)
-        let radius-final = _auto(radius, box-config.radius)
-        let above-final = _auto(above, spacing-config.box-spacing-above)
-        let below-final = _auto(below, spacing-config.box-spacing-below)
-
+        let border-width = box-config.border-width
+        let use-border = box-config.left-border
+        let inset-left = if use-border { spacing-config.inset-left + border-width } else { spacing-config.inset-left }
         let stroke = if use-border {
-            let border-width-effective = _auto(border-width, box-config.border-width)
-            let border-color-effective = _auto(border-color, style.border)
-            (left: border-width-effective + border-color-effective)
+            (left: border-width + style.border)
         } else { none }
 
         block(
-            fill: fill-final,
             breakable: breakable,
-            inset: (left: inset-left-final, right: inset-right, top: inset-top, bottom: inset-bottom),
-            radius: radius-final,
-            width: width,
-            height: height,
-            above: above-final,
-            below: below-final,
+            fill: style.fill,
+            width: 100%,
+            inset: (
+                left: inset-left,
+                right: spacing-config.inset-right,
+                top: spacing-config.inset-top,
+                bottom: spacing-config.inset-bottom,
+            ),
+            radius: box-config.radius,
+            above: spacing-config.box-spacing-above,
+            below: spacing-config.box-spacing-below,
             stroke: stroke,
         )[#body]
     }
 }
 
-#let hbox(body, ..args) = make-box("highlight", body, ..args)
-#let ibox(body, ..args) = make-box("info", body, ..args)
-#let ebox(body, ..args) = make-box("error", body, ..args)
-#let sbox(body, ..args) = make-box("success", body, ..args)
-#let nbox(body, ..args) = make-box("neutral", body, ..args)
-#let pbox(body, ..args) = make-box("purple", body, ..args)
+#let hbox(body, compact: false, breakable: false) = make-box("highlight", body, compact: compact, breakable: breakable)
+#let ibox(body, compact: false, breakable: false) = make-box("info", body, compact: compact, breakable: breakable)
+#let ebox(body, compact: false, breakable: false) = make-box("error", body, compact: compact, breakable: breakable)
+#let sbox(body, compact: false, breakable: false) = make-box("success", body, compact: compact, breakable: breakable)
+#let nbox(body, compact: false, breakable: false) = make-box("neutral", body, compact: compact, breakable: breakable)
+#let pbox(body, compact: false, breakable: false) = make-box("purple", body, compact: compact, breakable: breakable)
 
-#let cbox(body, ..args) = {
+#let cbox(body, breakable: false) = {
     context {
         let colors = cur-colors.get()
         block(
+            breakable: breakable,
             fill: colors.code-bg,
             radius: code-box-config.radius,
             stroke: (paint: colors.code-border, thickness: code-box-config.border-width),
             inset: code-box-config.inset,
-            ..args,
         )[
             #set text(fill: colors.code-fg)
             #body
