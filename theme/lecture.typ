@@ -2,11 +2,10 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, aspect-ratios, cur-ar, cur-colors, cur-box
+#import "base.typ": modes, fonts, font-sizes, page-spacing, aspect-ratios, cur-ar, cur-colors, cur-box
 
 #import "boxes.typ": *
 #import "images.typ": *
-#import "text.typ": *
 
 #import "footer.typ": footer as footer-fn
 #import "slide.typ": slide, slide-layouts
@@ -18,21 +17,6 @@
 
 // Re-export footer under a stable name (avoid clashing with `lecture-theme(footer: ...)`).
 #let footer = footer-fn
-
-// CONFIG
-// Global text/math spacing per aspect ratio.
-#let page-spacing = (
-    "16-9": (
-        par: 1em,
-        math-above: 0.8em,
-        math-below: 0.6em,
-    ),
-    "4-3": (
-        par: 1.1em,
-        math-above: 1em,
-        math-below: auto,
-    ),
-)
 
 // Main theme entry.
 #let lecture-theme(
