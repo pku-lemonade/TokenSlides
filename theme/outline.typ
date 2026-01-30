@@ -20,7 +20,7 @@
     "4-3": (
         width: 70%,
         variants: (
-            sections: (indent: (2em,), spacing: (1em,)),
+            sections: (indent: (4em,), spacing: (1em,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
@@ -95,7 +95,7 @@
                 ]
             ]
         } else {
-            place(center)[
+            place(center + horizon)[
                 #block(width: outline-width)[#outline-content]
             ]
         }
