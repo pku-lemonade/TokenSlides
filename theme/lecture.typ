@@ -2,13 +2,13 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, aspect-ratios, cur-ar, cur-colors, cur-box
+#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, cur-ar, cur-colors, cur-box
 
 #import "boxes.typ": *
 #import "images.typ": *
 
 #import "footer.typ": footer as footer-fn
-#import "slide.typ": slide, slide-layouts
+#import "slide.typ": slide
 #import "table.typ": apply-table-style
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide

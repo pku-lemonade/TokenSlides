@@ -1,6 +1,5 @@
-#import "base.typ": fonts, font-sizes
+#import "base.typ": fonts, font-sizes, slide-layouts
 #import "base.typ": cur-ar
-#import "slide.typ": slide-layouts
 
 // CONFIG
 #let assets = (
