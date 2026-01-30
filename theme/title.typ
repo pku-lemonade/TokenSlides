@@ -9,7 +9,7 @@
 )
 
 #let title-han = (
-    font: "STHeiti",
+    font: "FZFW ZhuZi GuDianS LH",
     size-delta: 6pt,
 )
 
