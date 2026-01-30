@@ -24,7 +24,7 @@
     aspect-ratio: "16-9",
     mode: "light",
     footer: "bar",
-    ..touying,
+    ..args,
     body
 ) = {
     assert(aspect-ratio in aspect-ratios)
@@ -59,7 +59,7 @@
             neutral-lightest: theme.colors.neutral-lightest,
             neutral-darkest: theme.colors.neutral-darkest,
         ),
-        ..touying,
+        ..args,
     )
 
     set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: theme.colors.fg)
