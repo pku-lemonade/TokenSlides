@@ -6,11 +6,11 @@
 // CONFIG (frequently tweaked)
 #let font-sizes = (
     small: 18pt,
-    body: 22pt,
-    body-title: 26pt,
+    body: 24pt,
+    body-title: 32pt,
     title: 44pt,
     slide-title: 36pt,
-    section: 36pt,
+    section: 32pt,
     code: 20pt,
 )
 
@@ -22,10 +22,16 @@
         math-below: 0.6em,
     ),
     "4-3": (
-        par: 1.1em,
+        par: 1em,
         math-above: 1em,
         math-below: auto,
     ),
+)
+
+// Default slide margins per aspect ratio.
+#let slide-layouts = (
+    "16-9": (top: 1em, bottom: 0em, left: 2em, right: 1.5em),
+    "4-3": (top: 1.25em, bottom: 0em, left: 1.5em, right: 1.5em),
 )
 
 #let fonts = (
