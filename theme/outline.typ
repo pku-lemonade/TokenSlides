@@ -1,19 +1,22 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": font-sizes, cur-ar
 
+// Cancel Touying's built-in `h(.3em)` after numbering for Chinese outlines (the `、` is full-width).
+#let outline-chinese-numbering = (..nums) => numbering("一、", ..nums) + h(-0.3em)
+
 // CONFIG
 #let outline-numbering-styles = (
     // Arabic: 1. 2. 3.
     arabic: ("1.",),
     // Chinese: 一、 二、 三、
-    chinese: ("一、",),
+    chinese: (outline-chinese-numbering,),
 )
 
 #let outline-layouts = (
     "16-9": (
         width: 70%,
         variants: (
-            sections: (indent: (0em,), spacing: (1em,)),
+            sections: (indent: (4em,), spacing: (0.5em,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
