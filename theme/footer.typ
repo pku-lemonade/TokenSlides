@@ -1,8 +1,12 @@
 #import "@preview/touying:0.6.1": *
-#import "base.typ": fonts
-#import "state.typ": cur-colors, cur-layout
+#import "base.typ": fonts, cur-ar, cur-colors
 
 // CONFIG
+#let footer-layouts = (
+    "16-9": (height: 1em, text-size: 16pt),
+    "4-3": (height: 1em, text-size: 14pt),
+)
+
 #let footer-config = (
     fill: auto,
     text-fill: auto,
@@ -14,7 +18,7 @@
     show-heading: false,
 )
 
-#let _footer-bar(self, colors, layout) = {
+#let _footer-bar(self, colors, footer-layout) = {
     let footer-fill = if footer-config.fill == auto { colors.footer-bg } else { footer-config.fill }
     let footer-text-fill = if footer-config.text-fill == auto { colors.footer-fg } else { footer-config.text-fill }
 
@@ -38,12 +42,12 @@
     set align(bottom)
     block(
         width: 100%,
-        height: layout.footer-height,
+        height: footer-layout.height,
         fill: footer-fill,
     )[
         #set align(horizon)
         #set text(
-            size: layout.footer-text-size,
+            size: footer-layout.text-size,
             font: fonts.mono,
             fill: footer-text-fill,
             weight: "black",
@@ -65,19 +69,19 @@
     ]
 }
 
-#let _footer-page(self, colors, layout) = {
+#let _footer-page(self, colors, footer-layout) = {
     let footer-fill = if footer-config.fill == auto { none } else { footer-config.fill }
     let footer-text-fill = if footer-config.text-fill == auto { colors.fg } else { footer-config.text-fill }
 
     set align(bottom)
     block(
         width: 100%,
-        height: layout.footer-height,
+        height: footer-layout.height,
         fill: footer-fill,
     )[
         #set align(footer-config.align)
         #set text(
-            size: layout.footer-text-size,
+            size: footer-layout.text-size,
             font: fonts.mono,
             fill: footer-text-fill,
             weight: "black",
@@ -98,11 +102,11 @@
 #let footer(self, style: "bar") = context {
     assert(style in ("bar", "page", none))
 
+    let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
-    let layout = cur-layout.get()
+    let footer-layout = footer-layouts.at(aspect-ratio)
 
     if style == none { none }
-    else if style == "page" { _footer-page(self, colors, layout) }
-    else { _footer-bar(self, colors, layout) }
+    else if style == "page" { _footer-page(self, colors, footer-layout) }
+    else { _footer-bar(self, colors, footer-layout) }
 }
-

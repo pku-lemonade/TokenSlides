@@ -1,5 +1,6 @@
 #import "base.typ": fonts, font-sizes
-#import "state.typ": cur-layout
+#import "base.typ": cur-ar
+#import "slide.typ": slide-layouts
 
 // CONFIG
 #let assets = (
@@ -98,12 +99,11 @@
     )
 
     context {
-        let layout = cur-layout.get()
-        let dx = (layout.slide-right-margin - layout.slide-left-margin) / 2
+        let margins = slide-layouts.at(cur-ar.get())
+        let dx = (margins.right - margins.left) / 2
         align(center, move(dx: dx, box(width: width, {
             block(spacing: 0pt, below: cap-gap)[#images-grid]
             block(spacing: 0pt, above: 0pt)[#captions-grid]
         })))
     }
 }
-

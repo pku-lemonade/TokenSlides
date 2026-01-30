@@ -2,15 +2,14 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, layouts, fonts, font-sizes
-#import "state.typ": cur-colors, cur-box, cur-layout
+#import "base.typ": modes, fonts, font-sizes, aspect-ratios, cur-ar, cur-colors, cur-box
 
 #import "boxes.typ": *
 #import "images.typ": *
 #import "text.typ": *
 
 #import "footer.typ": footer as footer-fn
-#import "slide.typ": slide
+#import "slide.typ": slide, slide-layouts
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide
 #import "outline.typ": outline-slide, new-section-slide
@@ -20,6 +19,21 @@
 // Re-export footer under a stable name (avoid clashing with `lecture-theme(footer: ...)`).
 #let footer = footer-fn
 
+// CONFIG
+// Global text/math spacing per aspect ratio.
+#let page-spacing = (
+    "16-9": (
+        par: 1em,
+        math-above: 0.8em,
+        math-below: 0.6em,
+    ),
+    "4-3": (
+        par: 1.1em,
+        math-above: 1em,
+        math-below: auto,
+    ),
+)
+
 // Main theme entry.
 #let lecture-theme(
     aspect-ratio: "16-9",
@@ -28,27 +42,23 @@
     ..args,
     body
 ) = {
-    assert(aspect-ratio in layouts.keys())
+    assert(aspect-ratio in aspect-ratios)
     assert(mode in modes.keys())
     assert(footer in ("bar", "page", none))
 
-    let layout = layouts.at(aspect-ratio)
-    let m = modes.at(mode)
+    let theme = modes.at(mode)
+    let spacing = page-spacing.at(aspect-ratio)
+    let slide-margins = slide-layouts.at(aspect-ratio)
 
-    cur-layout.update(layout)
-    cur-colors.update(m.colors)
-    cur-box.update(m.box)
+    cur-ar.update(aspect-ratio)
+    cur-colors.update(theme.colors)
+    cur-box.update(theme.box)
 
     show: touying-slides.with(
         config-page(
             paper: "presentation-" + aspect-ratio,
-            fill: m.colors.bg,
-            margin: (
-                top: layout.slide-top-margin,
-                bottom: layout.slide-bottom-margin,
-                left: layout.slide-left-margin,
-                right: layout.slide-right-margin,
-            ),
+            fill: theme.colors.bg,
+            margin: slide-margins,
             header: none,
             footer: footer-fn.with(style: footer),
         ),
@@ -57,27 +67,26 @@
             new-section-slide-fn: new-section-slide,
         ),
         config-colors(
-            primary: m.colors.primary,
-            secondary: m.colors.secondary,
-            neutral: m.colors.neutral,
-            neutral-lightest: m.colors.neutral-lightest,
-            neutral-darkest: m.colors.neutral-darkest,
+            primary: theme.colors.primary,
+            secondary: theme.colors.secondary,
+            neutral: theme.colors.neutral,
+            neutral-lightest: theme.colors.neutral-lightest,
+            neutral-darkest: theme.colors.neutral-darkest,
         ),
         ..args,
     )
 
-    set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: m.colors.fg)
-    set par(spacing: layout.par-spacing)
+    set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: theme.colors.fg)
+    set par(spacing: spacing.par)
     set heading(numbering: numbly("{1}.", default: "1.1"))
-    show table: set table(stroke: (paint: m.colors.table-stroke, thickness: 0.6pt))
+    show table: set table(stroke: (paint: theme.colors.table-stroke, thickness: 0.6pt))
     show math.equation: set text(font: fonts.math)
     show math.equation.where(block: true): set block(
-        above: layout.math-block-spacing-above,
-        below: layout.math-block-spacing-below,
+        above: spacing.math-above,
+        below: spacing.math-below,
     )
     show raw: set text(font: fonts.mono, size: font-sizes.code)
-    show link: set text(fill: m.colors.link)
+    show link: set text(fill: theme.colors.link)
 
     body
 }
-

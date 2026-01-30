@@ -1,4 +1,4 @@
-#import "state.typ": cur-colors, cur-box
+#import "base.typ": cur-colors, cur-box
 
 // CONFIG
 #let box-config = (
@@ -29,7 +29,7 @@
     border-width: 0.8pt,
 )
 
-#let _auto(v, d) = if v == auto { d } else { v }
+#let _auto(value, default) = if value == auto { default } else { value }
 
 #let make-box(
     style-name,
@@ -65,9 +65,9 @@
         let below-final = _auto(below, spacing-config.box-spacing-below)
 
         let stroke = if use-border {
-            let bw = _auto(border-width, box-config.border-width)
-            let bc = _auto(border-color, style.border)
-            (left: bw + bc)
+            let border-width-effective = _auto(border-width, box-config.border-width)
+            let border-color-effective = _auto(border-color, style.border)
+            (left: border-width-effective + border-color-effective)
         } else { none }
 
         block(
@@ -106,4 +106,3 @@
         ]
     }
 }
-

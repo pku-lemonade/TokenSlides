@@ -2,6 +2,11 @@
 #import "base.typ": font-sizes
 
 // CONFIG
+#let slide-layouts = (
+    "16-9": (top: 1.25em, bottom: 0em, left: 3em, right: 2em),
+    "4-3": (top: 1.5em, bottom: 0em, left: 2em, right: 1.5em),
+)
+
 #let slide-config = (show-numbers: false)
 
 #let slide(
@@ -26,4 +31,3 @@
 
     touying-slide(self: self, config: config, main-body)
 })
-
