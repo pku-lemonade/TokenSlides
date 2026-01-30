@@ -53,7 +53,6 @@
     numbered: true,
     level: none,
     variant: auto,
-    ..args,
 ) = touying-slide-wrapper(self => context {
     let variant-name = if variant == auto { outline-config.default-variant } else { variant }
 
@@ -81,7 +80,6 @@
         depth: variant-config.depth,
         text-size: variant-config.text-size,
         text-weight: ("bold",),
-        ..args.named(),
     )
 
     let main-body = {
@@ -103,19 +101,3 @@
 
     touying-slide(self: self, config: config, main-body)
 })
-
-#let new-section-slide(
-    config: (:),
-    title: outline-config.title,
-    level: 1,
-    numbered: true,
-    variant: auto,
-    ..args,
-) = outline-slide(
-    config: config,
-    title: title,
-    level: level,
-    numbered: numbered,
-    variant: variant,
-    ..args,
-)
