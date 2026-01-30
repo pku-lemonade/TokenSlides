@@ -1,15 +1,25 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": font-sizes, cur-ar, cur-colors
 
-// Cancel Touying's built-in `h(.3em)` after numbering for Chinese outlines (the `、` is full-width).
-#let outline-chinese-numbering = (..nums) => numbering("一、", ..nums) + h(-0.3em)
-
 // CONFIG
+//
+// Override the i18n outline title for specific languages. (Defaults to Touying's i18n.)
+#let outline-titles = (
+    zh: "提纲",
+)
+
+#let outline-title = context {
+    outline-titles.at(text.lang, default: utils.i18n-outline-title)
+}
+
+// Cancel Touying's built-in `h(.3em)` after numbering for Chinese outlines (the `、` is full-width).
+#let outline-zh-numbering = (..nums) => numbering("一、", ..nums) + h(-0.3em)
+
 #let outline-numbering-styles = (
-    // Arabic: 1. 2. 3.
-    arabic: ("1.",),
+    // Arabic digits: 1. 2. 3.
+    en: ("1.",),
     // Chinese: 一、 二、 三、
-    chinese: (outline-chinese-numbering,),
+    zh: (outline-zh-numbering,),
 )
 
 #let outline-layouts = (
@@ -30,7 +40,7 @@
 )
 
 #let outline-config = (
-    title: utils.i18n-outline-title,
+    title: outline-title,
     default-variant: "sections",
     alpha: 20%,
     // When `auto`, picks a style based on `text.lang`.
@@ -68,11 +78,18 @@
     let outline-width = outline-layout.width
     let numbering-style = if outline-config.numbering-style == auto {
         let lang = text.lang
-        if lang == "zh" or lang.starts-with("zh-") { "chinese" } else { "arabic" }
+        if lang == "zh" or lang.starts-with("zh-") { "zh" } else { "en" }
+    } else if outline-config.numbering-style == "chinese" {
+        // Backward compat.
+        "zh"
+    } else if outline-config.numbering-style == "arabic" {
+        // Backward compat.
+        "en"
     } else {
         outline-config.numbering-style
     }
     let outline-numbering = outline-config.numbering-styles.at(numbering-style)
+    let highlight-current = level != none
 
     let outline-content = components.custom-progressive-outline(
         level: level,
@@ -81,9 +98,13 @@
         vspace: variant-layout.spacing,
         numbered: (numbered,),
         numbering: outline-numbering,
-        uncover-fn: body => {
-            show text: set text(fill: colors.primary)
-            body
+        uncover-fn: if highlight-current {
+            body => {
+                show text: set text(fill: colors.primary)
+                body
+            }
+        } else {
+            body => body
         },
         depth: variant-config.depth,
         text-size: variant-config.text-size,

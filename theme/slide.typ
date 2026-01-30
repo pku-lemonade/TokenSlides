@@ -1,7 +1,10 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": font-sizes
 
-#let slide-config = (show-numbered-heading: false)
+#let slide-config = (
+    show-numbered-heading: false,
+    title-align: left,
+)
 
 #let slide(
     config: (:),
@@ -16,8 +19,10 @@
 
     let main-body = {
         block(below: 1em)[
-            #text(size: font-sizes.slide-title, weight: "bold")[
-                #display-title
+            #align(slide-config.title-align)[
+                #text(size: font-sizes.slide-title, weight: "bold")[
+                    #display-title
+                ]
             ]
         ]
         body
