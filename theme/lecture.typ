@@ -72,7 +72,12 @@
         below: spacing.math-below,
     )
     show raw: set text(font: fonts.mono, size: font-sizes.code)
-    show link: set text(fill: theme.colors.link)
+    // Only color external links; keep internal navigation links (e.g. outline) inheriting
+    // surrounding text color so progressive fading works.
+    show link: it => {
+        if type(it.dest) == str { set text(fill: theme.colors.link) }
+        it
+    }
 
     body
 }
