@@ -12,7 +12,7 @@
 #import "table.typ": apply-table-style
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide
-#import "outline.typ": outline-slide, new-section-slide
+#import "outline.typ": outline-slide
 
 #show: show-theorion
 
@@ -24,7 +24,7 @@
     aspect-ratio: "16-9",
     mode: "light",
     footer: "bar",
-    ..args,
+    ..touying,
     body
 ) = {
     assert(aspect-ratio in aspect-ratios)
@@ -34,6 +34,7 @@
     let theme = modes.at(mode)
     let spacing = page-spacing.at(aspect-ratio)
     let slide-margins = slide-layouts.at(aspect-ratio)
+    let section-slide-fn = (body) => outline-slide(level: 1)
 
     cur-ar.update(aspect-ratio)
     cur-colors.update(theme.colors)
@@ -49,7 +50,7 @@
         ),
         config-common(
             slide-fn: slide,
-            new-section-slide-fn: new-section-slide,
+            new-section-slide-fn: section-slide-fn,
         ),
         config-colors(
             primary: theme.colors.primary,
@@ -58,7 +59,7 @@
             neutral-lightest: theme.colors.neutral-lightest,
             neutral-darkest: theme.colors.neutral-darkest,
         ),
-        ..args,
+        ..touying,
     )
 
     set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: theme.colors.fg)
