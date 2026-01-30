@@ -1,8 +1,40 @@
 // Shared theme configuration.
 //
-// Edit this file when you want to change global look & feel:
-// colors, fonts, font sizes, and runtime defaults.
+// Most module-specific configs live in their module files under `theme/`.
+// This file holds the few global knobs users tweak often.
 
+// CONFIG (frequently tweaked)
+#let font-sizes = (
+    small: 18pt,
+    body: 22pt,
+    body-title: 26pt,
+    title: 44pt,
+    slide-title: 36pt,
+    section: 36pt,
+    code: 20pt,
+)
+
+// Global text/math spacing per aspect ratio.
+#let page-spacing = (
+    "16-9": (
+        par: 1em,
+        math-above: 0.8em,
+        math-below: 0.6em,
+    ),
+    "4-3": (
+        par: 1.1em,
+        math-above: 1em,
+        math-below: auto,
+    ),
+)
+
+#let fonts = (
+    body: ("Inter", "Source Han Sans SC", "FZLTHProS"),
+    math: "New Computer Modern Math",
+    mono: ("Inconsolata", "Source Han Sans SC"),
+)
+
+// CONFIG (colors)
 #let light-colors = (
     bg: white,
     fg: black,
@@ -63,25 +95,10 @@
     dark: (colors: dark-colors, box: dark-box-styles),
 )
 
-#let fonts = (
-    body: ("Inter", "Source Han Sans SC", "FZLTHProS"),
-    math: "New Computer Modern Math",
-    mono: ("Inconsolata", "Source Han Sans SC"),
-)
-
-#let font-sizes = (
-    small: 18pt,
-    body: 22pt,
-    body-title: 26pt,
-    title: 44pt,
-    slide-title: 36pt,
-    section: 36pt,
-    code: 20pt,
-)
-
+// Central aspect-ratio “choices”: pick one in `lecture-theme(aspect-ratio: ...)`.
 #let aspect-ratios = ("16-9", "4-3")
 
-// Runtime state (set by `lecture-theme`; other modules read it).
+// Internal runtime state (set by `lecture-theme`; other modules read it).
 #let cur-ar = state("lec-ar", "16-9")
 #let cur-colors = state("lec-colors", modes.light.colors)
 #let cur-box = state("lec-box", modes.light.box)

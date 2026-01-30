@@ -2,6 +2,13 @@
 #import "base.typ": font-sizes, cur-ar
 
 // CONFIG
+#let outline-numbering-styles = (
+    // Arabic: 1. 2. 3.
+    arabic: ("1.",),
+    // Chinese: 一、 二、 三、
+    chinese: ("一、",),
+)
+
 #let outline-layouts = (
     "16-9": (
         width: 70%,
@@ -20,8 +27,12 @@
 )
 
 #let outline-config = (
+    title: utils.i18n-outline-title,
     default-variant: "sections",
     alpha: 20%,
+    // When `auto`, picks a style based on `text.lang`.
+    numbering-style: auto,
+    numbering-styles: outline-numbering-styles,
     variants: (
         sections: (
             depth: 1,
@@ -38,7 +49,7 @@
 
 #let outline-slide(
     config: (:),
-    title: utils.i18n-outline-title,
+    title: outline-config.title,
     numbered: true,
     level: none,
     variant: auto,
@@ -52,6 +63,13 @@
 
     let variant-config = outline-config.variants.at(variant-name)
     let outline-width = outline-layout.width
+    let numbering-style = if outline-config.numbering-style == auto {
+        let lang = text.lang
+        if lang == "zh" or lang.starts-with("zh-") { "chinese" } else { "arabic" }
+    } else {
+        outline-config.numbering-style
+    }
+    let outline-numbering = outline-config.numbering-styles.at(numbering-style)
 
     let outline-content = components.custom-progressive-outline(
         level: level,
@@ -59,7 +77,7 @@
         indent: variant-layout.indent,
         vspace: variant-layout.spacing,
         numbered: (numbered,),
-        numbering: ("1.",),
+        numbering: outline-numbering,
         depth: variant-config.depth,
         text-size: variant-config.text-size,
         text-weight: ("bold",),
@@ -88,7 +106,7 @@
 
 #let new-section-slide(
     config: (:),
-    title: utils.i18n-outline-title,
+    title: outline-config.title,
     level: 1,
     numbered: true,
     variant: auto,
