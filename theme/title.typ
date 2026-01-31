@@ -33,12 +33,12 @@
                 #self.info.subtitle
             ]
         ]
-        place(center + horizon)[
+        place(horizon + center)[
             #text(size: font-sizes.title, weight: "bold")[
                 #self.info.title
             ]
         ]
-        place(bottom + center)[
+        align(bottom + center)[
             #set par(leading: 1em)
             #show regex("[\p{Han}]+"): set text(
                 size: font-sizes.body-title + title-han.size-delta,
