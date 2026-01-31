@@ -3,8 +3,8 @@
 
 // CONFIG
 #let assets = (
-    logo: "assets/logo.png",
-    qr-code: "assets/qr.png",
+    logo: "../assets/logo.png",
+    qr-code: "../assets/qr.png",
 )
 
 #let place-image(

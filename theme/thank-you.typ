@@ -1,6 +1,6 @@
 #import "@preview/touying:0.6.1": *
 #import "base.typ": fonts, font-sizes
-#import "base.typ": cur-ar, cur-colors
+#import "base.typ": cur-ar
 
 // CONFIG
 #let thank-you-layouts = (
@@ -16,8 +16,11 @@
 #let thank-you-slide(
     title: [Thank You],
     content: none,
+    decoration: none,
     config: (:),
+    ..extras,
 ) = touying-slide-wrapper(self => context {
+    let extra = extras.pos().sum(default: none)
     let margins = thank-you-layouts.at(cur-ar.get())
 
     let default-config = config-page(
@@ -25,8 +28,6 @@
     )
 
     let self = utils.merge-dicts(self, default-config, config)
-
-    let colors = cur-colors.get()
 
     let display-author = self.info.at("author", default: none)
     let display-email = self.info.at("email", default: none)
@@ -64,8 +65,8 @@
                 ]
             ]
         ]
-        v(1em)
-        // place-bottom-right(assets.qr-code, caption: "pku-lemonade")
+        if decoration != none { decoration }
+        if extra != none { extra }
     }
 
     touying-slide(self: self, body)
