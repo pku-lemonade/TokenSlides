@@ -20,6 +20,19 @@
     show-heading: false,
 )
 
+#let _footer-inline-title(it) = {
+    if type(it) == str {
+        it.replace("\r\n", "").replace("\n", "").replace("\r", "")
+    } else {
+        {
+            // Remove explicit line/paragraph breaks so the footer title stays on one line.
+            show linebreak: []
+            show parbreak: []
+            it
+        }
+    }
+}
+
 #let _footer-bar(self, colors, footer-layout) = {
     let footer-fill = if footer-config.fill == auto { colors.footer-bg } else { footer-config.fill }
     let footer-text-fill = if footer-config.text-fill == auto { colors.footer-fg } else { footer-config.text-fill }
@@ -28,6 +41,7 @@
 
     let footer-title = self.info.at("short-title", default: auto)
     if footer-title == none or footer-title == auto { footer-title = self.info.title }
+    footer-title = _footer-inline-title(footer-title)
 
     let heading = if footer-config.show-heading {
         utils.display-current-heading(level: 1, numbered: false)
