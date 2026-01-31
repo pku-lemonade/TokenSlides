@@ -1,6 +1,5 @@
 #import "@preview/touying:0.6.1": *
-#import "base.typ": fonts, font-sizes
-#import "base.typ": cur-ar
+#import "base.typ": fonts, font-sizes, cur-ar, cur-colors
 
 // CONFIG
 #let title-layouts = (
@@ -17,6 +16,7 @@
     config: (:),
 ) = touying-slide-wrapper(self => context {
     let aspect-ratio = cur-ar.get()
+    let colors = cur-colors.get()
     let margins = title-layouts.at(aspect-ratio)
 
     let default-config = config-page(
@@ -34,7 +34,7 @@
             ]
         ]
         place(horizon + center)[
-            #text(size: font-sizes.title, weight: "bold")[
+            #text(size: font-sizes.title, weight: "bold", fill: colors.primary)[
                 #self.info.title
             ]
         ]
