@@ -75,8 +75,13 @@
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
     // surrounding text color so progressive fading works.
     show link: it => {
-        if type(it.dest) == str { set text(fill: theme.colors.link) }
-        it
+        if type(it.dest) == str {
+            // `set text(fill: ...)` may not override already-styled text in Touying slides,
+            // so wrap the link in a local text style.
+            text(fill: theme.colors.link)[#it]
+        } else {
+            it
+        }
     }
 
     body
