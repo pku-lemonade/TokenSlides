@@ -35,18 +35,18 @@
 
     let contact-items = ()
     if display-email != none {
-        contact-items.push(link("mailto:" + display-email)[text(fill: colors.link)[display-email]])
+        contact-items.push(link("mailto:" + display-email)[#display-email])
     }
     if display-website != none {
-        contact-items.push(link(display-website)[text(fill: colors.link)[display-website]])
+        contact-items.push(link(display-website)[#display-website])
     }
     if display-github != none {
-        contact-items.push(link("https://github.com/" + display-github)[text(fill: colors.link)[github.com/#display-github]])
+        contact-items.push(link("https://github.com/" + display-github)[github.com/#display-github])
     }
     if content != none { contact-items.push(content) }
 
     let body = {
-        place(center + horizon)[
+        place(horizon + center)[
             #text(size: font-sizes.title + 8pt, weight: "bold")[#title]
         ]
         align(bottom + center)[
@@ -64,7 +64,7 @@
                 ]
             ]
         ]
-        v(4em)
+        v(1em)
         // place-bottom-right(assets.qr-code, caption: "pku-lemonade")
     }
 
