@@ -3,14 +3,16 @@
 
 // CONFIG
 #let footer-layouts = (
-    "16-9": (height: 1em, text-size: 16pt),
-    "4-3": (height: 1em, text-size: 14pt),
+    // `height` uses `em` so it scales with `text-size` (set in the footer renderer).
+    // Example: `text-size: 16pt` + `height: 1.6em` => 25.6pt tall footer.
+    "16-9": (height: 1.5em, text-size: 14pt),
+    "4-3": (height: 1.5em, text-size: 14pt),
 )
 
 #let footer-config = (
     fill: auto,
     text-fill: auto,
-    inset: 0.5em,
+    inset: 0.3em,
     align: right,
     show-total: true,
     show-institution: true,
@@ -40,32 +42,35 @@
     } else { [] }
 
     set align(bottom)
+    set text(
+        size: footer-layout.text-size,
+        font: fonts.mono,
+        fill: footer-text-fill,
+        weight: "bold",
+    )
     block(
         width: 100%,
         height: footer-layout.height,
         fill: footer-fill,
     )[
-        #set align(horizon)
-        #set text(
-            size: footer-layout.text-size,
-            font: fonts.mono,
-            fill: footer-text-fill,
-            weight: "bold",
-        )
-        #grid(
-            columns: (1fr, 3fr, 1fr),
-            align: (left, center, right),
-            inset: footer-config.inset,
-            if footer-config.show-institution and inst != none { [#upper(inst)] } else { [] },
-            title-cell,
-            context text(size: 1.1em)[
-                #if footer-config.show-total {
-                    [#utils.slide-counter.display() / #utils.last-slide-number]
-                } else {
-                    [#utils.slide-counter.display()]
-                }
-            ],
-        )
+        #align(horizon)[
+            #block(width: 100%)[
+                #grid(
+                columns: (1fr, 3fr, 1fr),
+                align: (left + horizon, center + horizon, right + horizon),
+                inset: footer-config.inset,
+                if footer-config.show-institution and inst != none { [#upper(inst)] } else { [] },
+                title-cell,
+                context text(size: 1em)[
+                    #if footer-config.show-total {
+                        [#utils.slide-counter.display() / #utils.last-slide-number]
+                    } else {
+                        [#utils.slide-counter.display()]
+                    }
+                ],
+                )
+            ]
+        ]
     ]
 }
 
@@ -74,25 +79,26 @@
     let footer-text-fill = if footer-config.text-fill == auto { colors.fg } else { footer-config.text-fill }
 
     set align(bottom)
+    set text(
+        size: footer-layout.text-size,
+        font: fonts.mono,
+        fill: footer-text-fill,
+        weight: "black",
+    )
     block(
         width: 100%,
         height: footer-layout.height,
         fill: footer-fill,
     )[
-        #set align(footer-config.align)
-        #set text(
-            size: footer-layout.text-size,
-            font: fonts.mono,
-            fill: footer-text-fill,
-            weight: "black",
-        )
-        #block(inset: footer-config.inset)[
-            #context [
-                #if footer-config.show-total {
-                    [#utils.slide-counter.display() / #utils.last-slide-number]
-                } else {
-                    [#utils.slide-counter.display()]
-                }
+        #align(footer-config.align + horizon)[
+            #block(inset: footer-config.inset)[
+                #context [
+                    #if footer-config.show-total {
+                        [#utils.slide-counter.display() / #utils.last-slide-number]
+                    } else {
+                        [#utils.slide-counter.display()]
+                    }
+                ]
             ]
         ]
     ]
