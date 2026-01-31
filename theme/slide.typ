@@ -1,5 +1,5 @@
-#import "@preview/touying:0.6.1": *
 #import "base.typ": font-sizes, slide-layouts, cur-ar, cur-colors
+#import "base.typ": touying-slide-wrapper, touying-slide, utils
 
 #let slide-config = (
     show-numbered-heading: false,

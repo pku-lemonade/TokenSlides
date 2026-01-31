@@ -1,5 +1,5 @@
-#import "@preview/touying:0.6.1": *
 #import "base.typ": font-sizes, cur-ar, cur-colors
+#import "base.typ": touying-slide-wrapper, touying-slide, utils, components
 
 // CONFIG
 //

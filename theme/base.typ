@@ -3,6 +3,10 @@
 // Most module-specific configs live in their module files under `theme/`.
 // This file holds the few global knobs users tweak often.
 
+// Central Touying import: theme modules can import Touying APIs from `base.typ`
+// so we only pin the package version once.
+#import "@preview/touying:0.6.1": *
+
 // CONFIG (frequently tweaked)
 #let font-sizes = (
     small: 18pt,
