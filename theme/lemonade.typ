@@ -16,11 +16,11 @@
 
 #show: show-theorion
 
-// Re-export footer under a stable name (avoid clashing with `lecture-theme(footer: ...)`).
+// Re-export footer under a stable name (avoid clashing with `lemonade-theme(footer: ...)`).
 #let footer = footer-fn
 
 // Main theme entry.
-#let lecture-theme(
+#let lemonade-theme(
     aspect-ratio: "16-9",
     mode: "light",
     footer: "bar",
@@ -86,3 +86,6 @@
 
     body
 }
+
+// Backwards-compat: keep the old name around.
+#let lecture-theme = lemonade-theme

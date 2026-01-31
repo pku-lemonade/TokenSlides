@@ -100,16 +100,16 @@
     purple: (fill: rgb("#1A102A"), border: rgb("#8b5cf6")),
 )
 
-// Central theme “choices”: pick one of these modes in `lecture-theme(mode: ...)`.
+// Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.
 #let modes = (
     light: (colors: light-colors, box: light-box-styles),
     dark: (colors: dark-colors, box: dark-box-styles),
 )
 
-// Central aspect-ratio “choices”: pick one in `lecture-theme(aspect-ratio: ...)`.
+// Central aspect-ratio “choices”: pick one in `lemonade-theme(aspect-ratio: ...)`.
 #let aspect-ratios = ("16-9", "4-3")
 
-// Internal runtime state (set by `lecture-theme`; other modules read it).
+// Internal runtime state (set by `lemonade-theme`; other modules read it).
 #let cur-ar = state("lec-ar", "16-9")
 #let cur-colors = state("lec-colors", modes.light.colors)
 #let cur-box = state("lec-box", modes.light.box)
