@@ -30,8 +30,8 @@
 
 // Default slide margins per aspect ratio.
 #let slide-layouts = (
-    "16-9": (top: 1em, bottom: 0em, left: 2em, right: 1.5em),
-    "4-3": (top: 1.25em, bottom: 0em, left: 1.5em, right: 1.5em),
+    "16-9": (top: 0.75em, bottom: 0em, left: 2em, right: 1.5em),
+    "4-3": (top: 0.75em, bottom: 0em, left: 1.5em, right: 1.5em),
 )
 
 #let fonts = (
@@ -44,15 +44,16 @@
 #let light-colors = (
     bg: white,
     fg: black,
-    // primary: rgb("#94070a"),
-    primary: rgb("#002676"),
+    primary: rgb("#94070a"),
+    // primary: rgb("#002676"),
     secondary: rgb("#FDB515"),
     neutral: rgb("#737373"),
     neutral-lightest: white,
     neutral-darkest: black,
     table-stroke: rgb("#d4d4d4"),
     link: rgb("#2563eb"),
-    footer-bg: rgb("#002676"),
+    // footer-bg: rgb("#002676"),
+    footer-bg: rgb("#94070a"),
     footer-fg: white,
     code-bg: rgb("#f5f5f5"),
     code-border: rgb("#d4d4d4"),
