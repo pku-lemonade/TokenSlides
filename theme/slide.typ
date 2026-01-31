@@ -1,17 +1,11 @@
-#import "base.typ": font-sizes, slide-layouts, cur-ar, cur-colors
+#import "base.typ": font-sizes, cur-colors, bleed
 #import "base.typ": touying-slide-wrapper, touying-slide, utils
 
 #let slide-config = (
     show-numbered-heading: false,
     title-align: center,
+    title-tracking: 0.05em,
 )
-
-#let bleed(body) = context {
-    let margins = slide-layouts.at(cur-ar.get())
-    move(dx: -margins.left)[
-        #block(width: 100% + margins.left + margins.right)[#body]
-    ]
-}
 
 #let slide(
     config: (:),
@@ -28,7 +22,7 @@
     let title-block = if slide-config.title-align == center {
         // Full-bleed title: center across the whole page width (ignore page margins).
         bleed(align(center)[
-            #text(size: font-sizes.slide-title, weight: "bold", fill: colors.primary)[
+            #text(size: font-sizes.slide-title, weight: "bold", tracking: slide-config.title-tracking, fill: colors.primary)[
                 #display-title
             ]
         ])
@@ -36,7 +30,7 @@
         // Respect margins for non-centered titles.
         block(width: 100%)[
             #align(slide-config.title-align)[
-                #text(size: font-sizes.slide-title, weight: "bold")[
+                #text(size: font-sizes.slide-title, weight: "bold", tracking: slide-config.title-tracking)[
                     #display-title
                 ]
             ]
