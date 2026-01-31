@@ -8,7 +8,7 @@
 #import "images.typ": *
 
 #import "footer.typ": footer as footer-fn
-#import "slide.typ": slide
+#import "slide.typ": slide, bleed
 #import "table.typ": apply-table-style
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide
