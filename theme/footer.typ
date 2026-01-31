@@ -20,18 +20,7 @@
     show-heading: false,
 )
 
-#let _footer-inline-title(it) = {
-    if type(it) == str {
-        it.replace("\r\n", "").replace("\n", "").replace("\r", "")
-    } else {
-        {
-            // Remove explicit line/paragraph breaks so the footer title stays on one line.
-            show linebreak: []
-            show parbreak: []
-            it
-        }
-    }
-}
+#let _footer-inline-title(it) = utils.markup-text(it, mode: "typ").replace(regex("\\s*[\\r\\n]+\\s*"), "")
 
 #let _footer-bar(self, colors, footer-layout) = {
     let footer-fill = if footer-config.fill == auto { colors.footer-bg } else { footer-config.fill }
