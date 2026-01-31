@@ -26,7 +26,7 @@
     "16-9": (
         width: 70%,
         variants: (
-            sections: (indent: (3em,), spacing: (0em,)),
+            sections: (indent: (3em,), spacing: (6pt,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
@@ -43,7 +43,7 @@
     title: outline-title,
     default-variant: "sections",
     alpha: 20%,
-    // When `auto`, picks a style based on `text.lang`.
+    entry-tracking: 0.1em,
     numbering-style: auto,
     numbering-styles: outline-numbering-styles,
     variants: (
@@ -77,39 +77,37 @@
     let variant-config = outline-config.variants.at(variant-name)
     let outline-width = outline-layout.width
     let numbering-style = if outline-config.numbering-style == auto {
-        let lang = text.lang
-        if lang == "zh" or lang.starts-with("zh-") { "zh" } else { "en" }
-    } else if outline-config.numbering-style == "chinese" {
-        // Backward compat.
-        "zh"
-    } else if outline-config.numbering-style == "arabic" {
-        // Backward compat.
-        "en"
-    } else {
-        outline-config.numbering-style
+        if text.lang == "zh" or text.lang.starts-with("zh-") { "zh" } else { "en" }
     }
     let outline-numbering = outline-config.numbering-styles.at(numbering-style)
     let highlight-current = level != none
 
-    let outline-content = components.custom-progressive-outline(
-        level: level,
-        alpha: outline-config.alpha,
-        indent: variant-layout.indent,
-        vspace: variant-layout.spacing,
-        numbered: (numbered,),
-        numbering: outline-numbering,
-        uncover-fn: if highlight-current {
-            body => {
-                show text: set text(fill: colors.primary)
-                body
-            }
-        } else {
-            body => body
-        },
-        depth: variant-config.depth,
-        text-size: variant-config.text-size,
-        text-weight: ("bold",),
-    )
+    let outline-content = {
+        let cont = components.custom-progressive-outline(
+            level: level,
+            alpha: outline-config.alpha,
+            indent: variant-layout.indent,
+            vspace: variant-layout.spacing,
+            numbered: (numbered,),
+            numbering: outline-numbering,
+            uncover-fn: if highlight-current {
+                body => {
+                    show text: set text(fill: colors.primary)
+                    body
+                }
+            } else {
+                body => body
+            },
+            depth: variant-config.depth,
+            text-size: variant-config.text-size,
+            text-weight: ("bold",),
+        )
+
+        if outline-config.entry-tracking != none {
+            set text(tracking: outline-config.entry-tracking)
+            cont
+        }
+    }
 
     let main-body = {
         align(center)[
