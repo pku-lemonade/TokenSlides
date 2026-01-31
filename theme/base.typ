@@ -113,3 +113,11 @@
 #let cur-ar = state("lec-ar", "16-9")
 #let cur-colors = state("lec-colors", modes.light.colors)
 #let cur-box = state("lec-box", modes.light.box)
+
+// Full-bleed helper: ignore slide left/right margins.
+#let bleed(body) = context {
+    let margins = slide-layouts.at(cur-ar.get())
+    move(dx: -margins.left)[
+        #block(width: 100% + margins.left + margins.right)[#body]
+    ]
+}

@@ -1,5 +1,4 @@
-#import "base.typ": fonts, font-sizes, slide-layouts
-#import "base.typ": cur-ar
+#import "base.typ": fonts, font-sizes, bleed
 
 // CONFIG
 #let assets = (
@@ -97,12 +96,10 @@
         }).flatten()
     )
 
-    context {
-        let margins = slide-layouts.at(cur-ar.get())
-        let dx = (margins.right - margins.left) / 2
-        align(center, move(dx: dx, box(width: width, {
-            block(spacing: 0pt, below: cap-gap)[#images-grid]
-            block(spacing: 0pt, above: 0pt)[#captions-grid]
-        })))
-    }
+    bleed(align(center)[
+        #box(width: width)[
+            #block(spacing: 0pt, below: cap-gap)[#images-grid]
+            #block(spacing: 0pt, above: 0pt)[#captions-grid]
+        ]
+    ])
 }
