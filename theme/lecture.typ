@@ -1,8 +1,8 @@
-#import "@preview/touying:0.6.1": *
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, cur-ar, cur-colors, cur-box
+#import "base.typ": touying-slides, config-page, config-common, config-colors, config-info
 
 #import "boxes.typ": *
 #import "images.typ": *

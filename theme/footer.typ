@@ -1,5 +1,5 @@
-#import "@preview/touying:0.6.1": *
 #import "base.typ": fonts, cur-ar, cur-colors
+#import "base.typ": utils
 
 // CONFIG
 #let footer-layouts = (

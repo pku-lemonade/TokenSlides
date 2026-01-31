@@ -1,6 +1,5 @@
-#import "@preview/touying:0.6.1": *
-#import "base.typ": fonts, font-sizes
-#import "base.typ": cur-ar
+#import "base.typ": fonts, font-sizes, cur-ar
+#import "base.typ": touying-slide-wrapper, touying-slide, utils, config-page
 
 // CONFIG
 #let thank-you-layouts = (
