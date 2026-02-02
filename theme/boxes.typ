@@ -3,12 +3,12 @@
 // CONFIG
 #let box-config = (
     normal: (
-        inset-left: 12pt,
+        inset-left: 0.5em,
         inset-right: 0em,
-        inset-top: 1em,
-        inset-bottom: 1em,
-        box-spacing-above: 1em,
-        box-spacing-below: auto,
+        inset-top: 0.75em,
+        inset-bottom: 0.75em,
+        box-spacing-above: 0.5em,
+        box-spacing-below: 0em,
     ),
     compact: (
         inset-left: 10pt,
