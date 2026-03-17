@@ -10,6 +10,8 @@
     path,
     caption: none,
     width: 25%,
+    height: auto,
+    fit: "contain",
     position: top + right,
     dx: 0.5em,
     dy: 1em
@@ -19,7 +21,11 @@
             #text(font: fonts.mono, size: font-sizes.body, weight: "medium")[#caption]
             #v(-0.8em)
         ]
-        #image(path, width: width)
+        #if height == auto {
+            image(path, width: width)
+        } else {
+            image(path, width: width, height: height, fit: fit)
+        }
     ]
 ]
 
@@ -29,10 +35,14 @@
 
 #let imgs(
     ..images,
-    width: 100%,
+    width: 60%,
     widths: auto,
-    gap: 0.5em,
+    gap: 0em,
     valign: horizon,
+    img-width: 100%,
+    img-height: auto,
+    img-fit: "contain",
+    show-captions: false,
     cap-size: 18pt,
     cap-weight: "medium",
     cap-color: auto,
@@ -67,7 +77,13 @@
         align: (center + valign,) * (count * 2 - 1),
         rows: (auto,),
         ..parsed.enumerate().map(((i, item)) => {
-            let img = image(item.path)
+            // Fit images to their grid cell width by default to avoid overflow across pages.
+            // (Slide decks prioritize predictable layout over intrinsic image sizing.)
+            let img = if img-height == auto {
+                image(item.path, width: img-width)
+            } else {
+                image(item.path, width: img-width, height: img-height, fit: img-fit)
+            }
             let cell = if border != none {
                 box(
                     stroke: border,
@@ -99,7 +115,9 @@
     bleed(align(center)[
         #box(width: width)[
             #block(spacing: 0pt, below: cap-gap)[#images-grid]
-            #block(spacing: 0pt, above: 0pt)[#captions-grid]
+            #if show-captions and parsed.any(it => it.caption != none) [
+                #block(spacing: 0pt, above: 0pt)[#captions-grid]
+            ]
         ]
     ])
 }
