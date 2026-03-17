@@ -113,6 +113,7 @@
 #let cur-ar = state("lec-ar", "16-9")
 #let cur-colors = state("lec-colors", modes.light.colors)
 #let cur-box = state("lec-box", modes.light.box)
+#let cur-box-compact = state("lec-box-compact", false)
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {

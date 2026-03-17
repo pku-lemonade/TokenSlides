@@ -1,4 +1,4 @@
-#import "base.typ": font-sizes, cur-colors, cur-box
+#import "base.typ": font-sizes, cur-colors, cur-box, cur-box-compact
 
 // CONFIG
 #let box-config = (
@@ -32,10 +32,12 @@
 #let make-box(
     style-name,
     body,
-    compact: false,
+    compact: auto,
     breakable: false,
 ) = {
     context {
+        // `compact: auto` inherits the file-level default from `lemonade-theme(box-compact: ...)`.
+        let compact = if compact == auto { cur-box-compact.get() } else { compact }
         let style = cur-box.get().at(style-name)
         let spacing-config = if compact { box-config.compact } else { box-config.normal }
         let border-width = box-config.border-width
@@ -63,12 +65,12 @@
     }
 }
 
-#let hbox(body, compact: false, breakable: false) = make-box("highlight", body, compact: compact, breakable: breakable)
-#let ibox(body, compact: false, breakable: false) = make-box("info", body, compact: compact, breakable: breakable)
-#let ebox(body, compact: false, breakable: false) = make-box("error", body, compact: compact, breakable: breakable)
-#let sbox(body, compact: false, breakable: false) = make-box("success", body, compact: compact, breakable: breakable)
-#let nbox(body, compact: false, breakable: false) = make-box("neutral", body, compact: compact, breakable: breakable)
-#let pbox(body, compact: false, breakable: false) = make-box("purple", body, compact: compact, breakable: breakable)
+#let hbox(body, compact: auto, breakable: false) = make-box("highlight", body, compact: compact, breakable: breakable)
+#let ibox(body, compact: auto, breakable: false) = make-box("info", body, compact: compact, breakable: breakable)
+#let ebox(body, compact: auto, breakable: false) = make-box("error", body, compact: compact, breakable: breakable)
+#let sbox(body, compact: auto, breakable: false) = make-box("success", body, compact: compact, breakable: breakable)
+#let nbox(body, compact: auto, breakable: false) = make-box("neutral", body, compact: compact, breakable: breakable)
+#let pbox(body, compact: auto, breakable: false) = make-box("purple", body, compact: compact, breakable: breakable)
 
 #let cbox(body, breakable: false) = {
     context {
