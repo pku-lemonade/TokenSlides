@@ -55,6 +55,8 @@
     mono: ("Inconsolata", "Source Han Sans SC"),
 )
 
+#let is-zh-lang(lang) = type(lang) == str and (lang == "zh" or lang.starts-with("zh-"))
+
 // CONFIG (colors)
 #let light-colors = (
     bg: white,

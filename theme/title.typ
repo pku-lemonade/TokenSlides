@@ -1,4 +1,4 @@
-#import "base.typ": fonts, font-sizes, cur-ar, cur-colors
+#import "base.typ": fonts, font-sizes, is-zh-lang, cur-ar, cur-colors
 #import "base.typ": touying-slide-wrapper, touying-slide, utils, config-page
 
 // CONFIG
@@ -13,7 +13,7 @@
 )
 
 #let _title-date-format(lang) = {
-    if type(lang) == str and (lang == "zh" or lang.starts-with("zh-")) {
+    if is-zh-lang(lang) {
         "[year]年[month padding:none]月[day padding:none]日"
     } else {
         "[month repr:long] [day], [year]"

@@ -103,9 +103,9 @@
         ..parsed.enumerate().map(((i, item)) => {
             let cell = if item.caption != none {
                 if cap-color == auto {
-                    text(size: cap-size, weight: cap-weight)[#item.caption]
+                    text(font: fonts.mono, size: cap-size, weight: cap-weight)[#item.caption]
                 } else {
-                    text(size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
+                    text(font: fonts.mono, size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
                 }
             } else { [] }
             if i < count - 1 { (cell, []) } else { (cell,) }
