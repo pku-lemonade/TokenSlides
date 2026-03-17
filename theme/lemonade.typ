@@ -1,7 +1,7 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, cur-ar, cur-colors, cur-box, bleed
+#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, cur-ar, cur-colors, cur-box, cur-box-compact, bleed
 #import "base.typ": touying-slides, config-page, config-common, config-colors, config-info
 
 #import "boxes.typ": *
@@ -24,6 +24,8 @@
     aspect-ratio: "16-9",
     mode: "light",
     footer: "bar",
+    // File-level default for all `hbox/ibox/...`; per-box `compact:` still overrides it.
+    box-compact: false,
     ..args,
     body
 ) = {
@@ -39,6 +41,7 @@
     cur-ar.update(aspect-ratio)
     cur-colors.update(theme.colors)
     cur-box.update(theme.box)
+    cur-box-compact.update(box-compact)
 
     show: touying-slides.with(
         config-page(
