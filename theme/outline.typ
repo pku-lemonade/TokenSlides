@@ -24,7 +24,7 @@
 
 #let outline-layouts = (
     "16-9": (
-        width: 70%,
+        width: 100%,
         variants: (
             sections: (indent: (3em,), spacing: (6pt,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),

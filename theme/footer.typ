@@ -13,7 +13,6 @@
     fill: auto,
     text-fill: auto,
     inset: 0.3em,
-    align: right,
     show-total: true,
     show-institution: true,
     show-title: true,
@@ -26,6 +25,7 @@
     let footer-fill = if footer-config.fill == auto { colors.footer-bg } else { footer-config.fill }
     let footer-text-fill = if footer-config.text-fill == auto { colors.footer-fg } else { footer-config.text-fill }
 
+    let author = self.info.at("author", default: none)
     let inst = self.info.at("institution", default: none)
 
     let footer-title = self.info.at("short-title", default: auto)
@@ -62,7 +62,13 @@
                 columns: (1fr, 3fr, 1fr),
                 align: (left + horizon, center + horizon, right + horizon),
                 inset: footer-config.inset,
-                if footer-config.show-institution and inst != none { [#upper(inst)] } else { [] },
+                {
+                    let is-zh = text.lang == "zh" or text.lang.starts-with("zh-")
+                    if not footer-config.show-institution { [] }
+                    else if is-zh and author != none and inst != none { [#author @ #inst] }
+                    else if inst != none { [#upper(inst)] }
+                    else { [] }
+                },
                 title-cell,
                 context text(size: 1em)[
                     #if footer-config.show-total {
@@ -93,7 +99,7 @@
         height: footer-layout.height,
         fill: footer-fill,
     )[
-        #align(footer-config.align + horizon)[
+        #align(right + horizon)[
             #block(inset: footer-config.inset)[
                 #context [
                     #if footer-config.show-total {
