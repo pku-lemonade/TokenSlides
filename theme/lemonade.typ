@@ -1,7 +1,7 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, cur-ar, cur-colors, cur-box, cur-box-compact, bleed
+#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, title-alignments, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, bleed
 #import "base.typ": touying-slides, config-page, config-common, config-colors, config-info
 
 #import "boxes.typ": *
@@ -26,12 +26,15 @@
     footer: "bar",
     // File-level default for all `hbox/ibox/...`; per-box `compact:` still overrides it.
     box-compact: false,
+    // Alignment for content slide titles (`== ...`), not the title/thank-you slides.
+    title-align: "center",
     ..args,
     body
 ) = {
     assert(aspect-ratio in aspect-ratios)
     assert(mode in modes.keys())
     assert(footer in ("bar", "page", none))
+    assert(title-align in title-alignments)
 
     let theme = modes.at(mode)
     let spacing = page-spacing.at(aspect-ratio)
@@ -42,6 +45,7 @@
     cur-colors.update(theme.colors)
     cur-box.update(theme.box)
     cur-box-compact.update(box-compact)
+    cur-title-align.update(title-align)
 
     show: touying-slides.with(
         config-page(

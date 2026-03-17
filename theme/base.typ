@@ -6,6 +6,17 @@
 // Central Touying import: theme modules can import Touying APIs from `base.typ`
 // so we only pin the package version once.
 #import "@preview/touying:0.6.1": *
+#import "@preview/touying:0.6.1": config-info as touying-config-info
+
+// Keep Touying's `config-info` API, but default omitted `date:` to today.
+#let config-info(..args) = {
+    assert(args.pos().len() == 0, message: "Unexpected positional arguments.")
+    let named = args.named()
+    if not ("date" in named) {
+        named.insert("date", datetime.today())
+    }
+    touying-config-info(..named)
+}
 
 // CONFIG (frequently tweaked)
 #let font-sizes = (
@@ -108,12 +119,14 @@
 
 // Central aspect-ratio “choices”: pick one in `lemonade-theme(aspect-ratio: ...)`.
 #let aspect-ratios = ("16-9", "4-3")
+#let title-alignments = ("left", "center")
 
 // Internal runtime state (set by `lemonade-theme`; other modules read it).
 #let cur-ar = state("lec-ar", "16-9")
 #let cur-colors = state("lec-colors", modes.light.colors)
 #let cur-box = state("lec-box", modes.light.box)
 #let cur-box-compact = state("lec-box-compact", false)
+#let cur-title-align = state("lec-title-align", "center")
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {

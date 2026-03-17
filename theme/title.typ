@@ -12,12 +12,32 @@
     size-delta: 6pt,
 )
 
+#let _title-date-format(lang) = {
+    if type(lang) == str and (lang == "zh" or lang.starts-with("zh-")) {
+        "[year]年[month padding:none]月[day padding:none]日"
+    } else {
+        "[month repr:long] [day], [year]"
+    }
+}
+
+#let _display-title-date(info) = context {
+    let date = info.at("date", default: datetime.today())
+    if date == none {
+        none
+    } else if type(date) == datetime {
+        date.display(_title-date-format(text.lang))
+    } else {
+        date
+    }
+}
+
 #let title-slide(
     config: (:),
 ) = touying-slide-wrapper(self => context {
     let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
     let margins = title-layouts.at(aspect-ratio)
+    let date = _display-title-date(self.info)
 
     let default-config = config-page(
         footer: none,
@@ -51,7 +71,7 @@
                 #self.info.institution
             ] \
             #text(size: font-sizes.body-title, font: fonts.body, weight: "medium")[
-                #if self.info.date != none { self.info.date } else { hide[placeholder] }
+                #if date != none { date } else { hide[placeholder] }
             ]
         ]
     }
