@@ -1,4 +1,4 @@
-#import "base.typ": fonts, cur-ar, cur-colors
+#import "base.typ": fonts, is-zh-lang, cur-ar, cur-colors
 #import "base.typ": utils
 
 // CONFIG
@@ -21,98 +21,6 @@
 
 #let _footer-inline-title(it) = utils.markup-text(it, mode: "typ").replace(regex("\\s*[\\r\\n]+\\s*"), "")
 
-#let _footer-bar(self, colors, footer-layout) = {
-    let footer-fill = if footer-config.fill == auto { colors.footer-bg } else { footer-config.fill }
-    let footer-text-fill = if footer-config.text-fill == auto { colors.footer-fg } else { footer-config.text-fill }
-
-    let author = self.info.at("author", default: none)
-    let inst = self.info.at("institution", default: none)
-
-    let footer-title = self.info.at("short-title", default: auto)
-    if footer-title == none or footer-title == auto { footer-title = self.info.title }
-    footer-title = _footer-inline-title(footer-title)
-
-    let heading = if footer-config.show-heading {
-        utils.display-current-heading(level: 1, numbered: false)
-    } else { none }
-
-    let title-cell = if footer-config.show-title and heading != none {
-        [#footer-title: #heading]
-    } else if footer-config.show-title {
-        [#footer-title]
-    } else if heading != none {
-        [#heading]
-    } else { [] }
-
-    set align(bottom)
-    set text(
-        size: footer-layout.text-size,
-        font: fonts.mono,
-        fill: footer-text-fill,
-        weight: "bold",
-    )
-    block(
-        width: 100%,
-        height: footer-layout.height,
-        fill: footer-fill,
-    )[
-        #align(horizon)[
-            #block(width: 100%)[
-                #grid(
-                columns: (1fr, 3fr, 1fr),
-                align: (left + horizon, center + horizon, right + horizon),
-                inset: footer-config.inset,
-                {
-                    let is-zh = text.lang == "zh" or text.lang.starts-with("zh-")
-                    if not footer-config.show-institution { [] }
-                    else if is-zh and author != none and inst != none { [#author @ #inst] }
-                    else if inst != none { [#upper(inst)] }
-                    else { [] }
-                },
-                title-cell,
-                context text(size: 1em)[
-                    #if footer-config.show-total {
-                        [#utils.slide-counter.display() / #utils.last-slide-number]
-                    } else {
-                        [#utils.slide-counter.display()]
-                    }
-                ],
-                )
-            ]
-        ]
-    ]
-}
-
-#let _footer-page(self, colors, footer-layout) = {
-    let footer-fill = if footer-config.fill == auto { none } else { footer-config.fill }
-    let footer-text-fill = if footer-config.text-fill == auto { colors.fg } else { footer-config.text-fill }
-
-    set align(bottom)
-    set text(
-        size: footer-layout.text-size,
-        font: fonts.mono,
-        fill: footer-text-fill,
-        weight: "black",
-    )
-    block(
-        width: 100%,
-        height: footer-layout.height,
-        fill: footer-fill,
-    )[
-        #align(right + horizon)[
-            #block(inset: footer-config.inset)[
-                #context [
-                    #if footer-config.show-total {
-                        [#utils.slide-counter.display() / #utils.last-slide-number]
-                    } else {
-                        [#utils.slide-counter.display()]
-                    }
-                ]
-            ]
-        ]
-    ]
-}
-
 // Footer renderer. Set as `config-page(footer: footer.with(style: ...))` in the theme.
 #let footer(self, style: "bar") = context {
     assert(style in ("bar", "page", none))
@@ -120,8 +28,79 @@
     let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
     let footer-layout = footer-layouts.at(aspect-ratio)
+    let footer-fill = if footer-config.fill == auto {
+        if style == "bar" { colors.footer-bg } else { none }
+    } else { footer-config.fill }
+    let footer-text-fill = if footer-config.text-fill == auto {
+        if style == "bar" { colors.footer-fg } else { colors.fg }
+    } else { footer-config.text-fill }
+    let footer-weight = if style == "bar" { "bold" } else { "black" }
+    let counter = text(size: 1em)[
+        #if footer-config.show-total {
+            [#utils.slide-counter.display() / #utils.last-slide-number]
+        } else {
+            [#utils.slide-counter.display()]
+        }
+    ]
 
-    if style == none { none }
-    else if style == "page" { _footer-page(self, colors, footer-layout) }
-    else { _footer-bar(self, colors, footer-layout) }
+    if style == none { none } else {
+        set align(bottom)
+        set text(
+            size: footer-layout.text-size,
+            font: fonts.mono,
+            fill: footer-text-fill,
+            weight: footer-weight,
+        )
+
+        let content = if style == "page" {
+            align(right + horizon)[
+                #block(inset: footer-config.inset)[#counter]
+            ]
+        } else {
+            let author = self.info.at("author", default: none)
+            let inst = self.info.at("institution", default: none)
+
+            let footer-title = self.info.at("short-title", default: auto)
+            if footer-title == none or footer-title == auto { footer-title = self.info.title }
+            footer-title = _footer-inline-title(footer-title)
+
+            let heading = if footer-config.show-heading {
+                utils.display-current-heading(level: 1, numbered: false)
+            } else { none }
+
+            let title-cell = if footer-config.show-title and heading != none {
+                [#footer-title: #heading]
+            } else if footer-config.show-title {
+                [#footer-title]
+            } else if heading != none {
+                [#heading]
+            } else { [] }
+
+            align(horizon)[
+                #block(width: 100%)[
+                    #grid(
+                    columns: (1fr, 3fr, 1fr),
+                    align: (left + horizon, center + horizon, right + horizon),
+                    inset: footer-config.inset,
+                    {
+                        if not footer-config.show-institution { [] }
+                        else if is-zh-lang(text.lang) and author != none and inst != none { [#author @ #inst] }
+                        else if inst != none { [#upper(inst)] }
+                        else { [] }
+                    },
+                    title-cell,
+                    counter,
+                    )
+                ]
+            ]
+        }
+
+        block(
+            width: 100%,
+            height: footer-layout.height,
+            fill: footer-fill,
+        )[
+            #content
+        ]
+    }
 }

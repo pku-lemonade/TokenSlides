@@ -1,4 +1,4 @@
-#import "base.typ": font-sizes, cur-ar, cur-colors
+#import "base.typ": font-sizes, is-zh-lang, cur-ar, cur-colors
 #import "base.typ": touying-slide-wrapper, touying-slide, utils, components
 
 // CONFIG
@@ -26,7 +26,7 @@
     "16-9": (
         width: 100%,
         variants: (
-            sections: (indent: (3em,), spacing: (6pt,)),
+            sections: (indent: (10em,), spacing: (6pt,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
@@ -77,7 +77,7 @@
     let variant-config = outline-config.variants.at(variant-name)
     let outline-width = outline-layout.width
     let numbering-style = if outline-config.numbering-style == auto {
-        if text.lang == "zh" or text.lang.starts-with("zh-") { "zh" } else { "en" }
+        if is-zh-lang(text.lang) { "zh" } else { "en" }
     }
     let outline-numbering = outline-config.numbering-styles.at(numbering-style)
     let highlight-current = level != none
