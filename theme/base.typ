@@ -105,8 +105,8 @@
 )
 
 #let dark-box-styles = (
-    highlight: (fill: rgb("#0B2533"), border: dark-colors.link),
-    info: (fill: rgb("#0B1220"), border: dark-colors.link),
+    highlight: (fill: rgb("#2A1C08"), border: rgb("#F59E0B")),
+    info: (fill: rgb("#0B2533"), border: dark-colors.link),
     error: (fill: rgb("#2A0B0B"), border: rgb("#ef4444")),
     success: (fill: rgb("#0B2414"), border: rgb("#22c55e")),
     neutral: (fill: rgb("#141414"), border: dark-colors.neutral),
