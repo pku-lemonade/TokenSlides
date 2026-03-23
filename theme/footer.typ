@@ -5,8 +5,8 @@
 #let footer-layouts = (
     // `height` uses `em` so it scales with `text-size` (set in the footer renderer).
     // Example: `text-size: 16pt` + `height: 1.6em` => 25.6pt tall footer.
-    "16-9": (height: 1.5em, text-size: 14pt),
-    "4-3": (height: 1.5em, text-size: 14pt),
+    "16-9": (height: 1.25em, text-size: 16pt),
+    "4-3": (height: 1.25em, text-size: 16pt),
 )
 
 #let footer-config = (
@@ -35,7 +35,7 @@
         if style == "bar" { colors.footer-fg } else { colors.fg }
     } else { footer-config.text-fill }
     let footer-weight = if style == "bar" { "bold" } else { "black" }
-    let counter = text(size: 1em)[
+    let counter = text(size: 1em, weight: footer-weight)[
         #if footer-config.show-total {
             [#utils.slide-counter.display() / #utils.last-slide-number]
         } else {
