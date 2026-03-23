@@ -4,6 +4,7 @@
 #let slide-config = (
     show-numbered-heading: false,
     title-tracking: 0.05em,
+    title-body-gap: 0.1em,
 )
 
 #let slide(
@@ -41,6 +42,7 @@
 
     let main-body = {
         title-block
+        v(slide-config.title-body-gap)
         body
     }
 
