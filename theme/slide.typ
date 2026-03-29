@@ -1,5 +1,6 @@
 #import "base.typ": font-sizes, cur-colors, cur-title-align, bleed
 #import "base.typ": touying-slide-wrapper, touying-slide, utils
+#import "page-number.typ": top-page-number
 
 #let slide-config = (
     show-numbered-heading: false,
@@ -44,6 +45,7 @@
         title-block
         v(slide-config.title-body-gap)
         body
+        top-page-number()
     }
 
     touying-slide(self: self, config: config, main-body)
