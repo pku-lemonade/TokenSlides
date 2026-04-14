@@ -79,7 +79,7 @@
             align(horizon)[
                 #block(width: 100%)[
                     #grid(
-                    columns: (1fr, 3fr, 1fr),
+                    columns: (1.5fr, 3fr, 1fr),
                     align: (left + horizon, center + horizon, right + horizon),
                     inset: footer-config.inset,
                     {
