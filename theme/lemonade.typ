@@ -1,7 +1,7 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, title-alignments, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, bleed
+#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, title-alignments, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, cur-imgs-fill-height, cur-imgs-fill-pad, bleed
 #import "base.typ": touying-slides, config-page, config-common, config-colors, config-info
 
 #import "boxes.typ": *
@@ -29,6 +29,8 @@
     box-compact: false,
     // Alignment for content slide titles (`== ...`), not the title/thank-you slides.
     title-align: "center",
+    imgs-fill-height: false,
+    imgs-fill-pad: 0.5em,
     ..args,
     body
 ) = {
@@ -56,6 +58,8 @@
     cur-box.update(theme.box)
     cur-box-compact.update(box-compact)
     cur-title-align.update(title-align)
+    cur-imgs-fill-height.update(imgs-fill-height)
+    cur-imgs-fill-pad.update(imgs-fill-pad)
 
     show: touying-slides.with(
         config-page(
