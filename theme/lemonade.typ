@@ -23,6 +23,7 @@
 #let lemonade-theme(
     aspect-ratio: "16-9",
     mode: "light",
+    colors-override: none,
     footer: "bar",
     // File-level default for all `hbox/ibox/...`; per-box `compact:` still overrides it.
     box-compact: false,
@@ -37,12 +38,21 @@
     assert(title-align in title-alignments)
 
     let theme = modes.at(mode)
+    let colors = (:)
+    for (key, value) in theme.colors.pairs() {
+        colors.insert(key, value)
+    }
+    if colors-override != none {
+        for (key, value) in colors-override.pairs() {
+            colors.insert(key, value)
+        }
+    }
     let spacing = page-spacing.at(aspect-ratio)
     let slide-margins = slide-layouts.at(aspect-ratio)
     let section-slide-fn = (body) => outline-slide(level: 1)
 
     cur-ar.update(aspect-ratio)
-    cur-colors.update(theme.colors)
+    cur-colors.update(colors)
     cur-box.update(theme.box)
     cur-box-compact.update(box-compact)
     cur-title-align.update(title-align)
@@ -60,16 +70,16 @@
             new-section-slide-fn: section-slide-fn,
         ),
         config-colors(
-            primary: theme.colors.primary,
-            secondary: theme.colors.secondary,
-            neutral: theme.colors.neutral,
-            neutral-lightest: theme.colors.neutral-lightest,
-            neutral-darkest: theme.colors.neutral-darkest,
+            primary: colors.primary,
+            secondary: colors.secondary,
+            neutral: colors.neutral,
+            neutral-lightest: colors.neutral-lightest,
+            neutral-darkest: colors.neutral-darkest,
         ),
         ..args,
     )
 
-    set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: theme.colors.fg)
+    set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: colors.fg)
     set par(spacing: spacing.par)
     set heading(numbering: numbly("{1}.", default: "1.1"))
     apply-table-style(theme.colors)
@@ -85,7 +95,7 @@
         if type(it.dest) == str {
             // `set text(fill: ...)` may not override already-styled text in Touying slides,
             // so wrap the link in a local text style.
-            text(fill: theme.colors.link)[#it]
+            text(fill: colors.link)[#it]
         } else {
             it
         }
