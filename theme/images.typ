@@ -1,4 +1,5 @@
-#import "base.typ": fonts, font-sizes, bleed
+#import "base.typ": fonts, font-sizes, bleed, slide-layouts, cur-ar, cur-imgs-fill-height, cur-imgs-fill-pad
+#import "footer.typ": footer-layouts
 
 // CONFIG
 #let assets = (
@@ -42,7 +43,8 @@
     img-width: 100%,
     img-height: auto,
     img-fit: "contain",
-    show-captions: false,
+    fill-height: auto,
+    fill-pad: auto,
     cap-size: 18pt,
     cap-weight: "medium",
     cap-color: auto,
@@ -72,52 +74,133 @@
         if i < count - 1 { cols.push(gap) }
     }
 
-    let images-grid = grid(
-        columns: cols,
-        align: (center + valign,) * (count * 2 - 1),
-        rows: (auto,),
-        ..parsed.enumerate().map(((i, item)) => {
-            // Fit images to their grid cell width by default to avoid overflow across pages.
-            // (Slide decks prioritize predictable layout over intrinsic image sizing.)
-            let img = if img-height == auto {
-                image(item.path, width: img-width)
-            } else {
-                image(item.path, width: img-width, height: img-height, fit: img-fit)
-            }
-            let cell = if border != none {
-                box(
-                    stroke: border,
-                    radius: border-radius,
-                    clip: true,
-                    inset: inset,
-                    img
-                )
-            } else { img }
-            if i < count - 1 { (cell, []) } else { (cell,) }
-        }).flatten()
-    )
-
-    let captions-grid = grid(
-        columns: cols,
-        align: (center,) * (count * 2 - 1),
-        ..parsed.enumerate().map(((i, item)) => {
-            let cell = if item.caption != none {
-                if cap-color == auto {
-                    text(font: fonts.mono, size: cap-size, weight: cap-weight)[#item.caption]
-                } else {
-                    text(font: fonts.mono, size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
-                }
-            } else { [] }
-            if i < count - 1 { (cell, []) } else { (cell,) }
-        }).flatten()
-    )
-
-    bleed(align(center)[
-        #box(width: width)[
-            #block(spacing: 0pt, below: cap-gap)[#images-grid]
-            #if show-captions and parsed.any(it => it.caption != none) [
-                #block(spacing: 0pt, above: 0pt)[#captions-grid]
-            ]
+    let single-image = resolved-height => {
+        let item = parsed.at(0)
+        let img = if resolved-height == auto {
+            image(item.path, width: img-width)
+        } else {
+            image(item.path, width: 100%, height: resolved-height, fit: img-fit)
+        }
+        let cell = if border != none {
+            box(
+                stroke: border,
+                radius: border-radius,
+                clip: true,
+                inset: inset,
+                img
+            )
+        } else { img }
+        block(width: 100%)[
+            #align(center)[#cell]
         ]
-    ])
+    }
+
+    let images-grid = resolved-height => block(width: 100%)[
+        #if count == 1 {
+            single-image(resolved-height)
+        } else {
+            grid(
+                columns: cols,
+                align: (center + valign,) * (count * 2 - 1),
+                rows: (auto,),
+                ..parsed.enumerate().map(((i, item)) => {
+                    // Fit images to their grid cell width by default to avoid overflow across pages.
+                    // (Slide decks prioritize predictable layout over intrinsic image sizing.)
+                    let img = if resolved-height == auto {
+                        image(item.path, width: img-width)
+                    } else {
+                        image(item.path, width: img-width, height: resolved-height, fit: img-fit)
+                    }
+                    let cell = if border != none {
+                        box(
+                            stroke: border,
+                            radius: border-radius,
+                            clip: true,
+                            inset: inset,
+                            img
+                        )
+                    } else { img }
+                    if i < count - 1 { (cell, []) } else { (cell,) }
+                }).flatten()
+            )
+        }
+    ]
+
+    let captions-body = if count == 1 {
+            let item = parsed.at(0)
+            if item.caption != none {
+                align(center)[
+                    #if cap-color == auto {
+                        text(font: fonts.mono, size: cap-size, weight: cap-weight)[#item.caption]
+                    } else {
+                        text(font: fonts.mono, size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
+                    }
+                ]
+            }
+        } else {
+            grid(
+                columns: cols,
+                align: (center,) * (count * 2 - 1),
+                ..parsed.enumerate().map(((i, item)) => {
+                    let cell = if item.caption != none {
+                        if cap-color == auto {
+                            text(font: fonts.mono, size: cap-size, weight: cap-weight)[#item.caption]
+                        } else {
+                            text(font: fonts.mono, size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
+                        }
+                    } else { [] }
+                    if i < count - 1 { (cell, []) } else { (cell,) }
+                }).flatten()
+            )
+        }
+
+    let captions-grid = block(width: 100%)[#captions-body]
+
+    let has-captions = parsed.any(it => it.caption != none)
+    context {
+        let resolved-fill-height = if fill-height == auto { cur-imgs-fill-height.get() } else { fill-height }
+        let resolved-fill-pad = if fill-pad == auto { cur-imgs-fill-pad.get() } else { fill-pad }
+
+        if resolved-fill-height {
+            layout(size => context {
+                let pos = here().position()
+                let top-margin = measure(v(slide-layouts.at(cur-ar.get()).top)).height
+                let footer-layout = footer-layouts.at(cur-ar.get())
+                let footer-height = measure({
+                    set text(size: footer-layout.text-size)
+                    v(footer-layout.height)
+                }).height
+                let caption-height = if has-captions {
+                    measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
+                } else {
+                    0pt
+                }
+                let pad-height = measure(v(resolved-fill-pad)).height
+                let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
+                let resolved-height = calc.max(0pt, remaining-height - caption-height - footer-height - pad-height)
+                [
+                    #place(left)[
+                        #bleed(align(center)[
+                            #box(width: width)[
+                                #block(spacing: 0pt, below: cap-gap)[#images-grid(resolved-height)]
+                                #if has-captions [
+                                    #block(spacing: 0pt, above: 0pt)[#captions-grid]
+                                ]
+                            ]
+                        ])
+                    ]
+                    #v(remaining-height, weak: true)
+                ]
+            })
+        } else {
+            bleed(align(center)[
+                #box(width: width)[
+                    #block(spacing: 0pt, below: cap-gap)[#images-grid(img-height)]
+                    #if has-captions [
+                        #block(spacing: 0pt, above: 0pt)[#captions-grid]
+                    ]
+                ]
+            ])
+        }
+    }
 }

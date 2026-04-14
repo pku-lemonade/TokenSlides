@@ -129,6 +129,8 @@
 #let cur-box = state("lec-box", modes.light.box)
 #let cur-box-compact = state("lec-box-compact", false)
 #let cur-title-align = state("lec-title-align", "center")
+#let cur-imgs-fill-height = state("lec-imgs-fill-height", false)
+#let cur-imgs-fill-pad = state("lec-imgs-fill-pad", 0.5em)
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {
