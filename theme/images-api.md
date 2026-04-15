@@ -43,13 +43,13 @@ Captions are shown automatically if at least one item provides a caption.
 - `img-width`: Width passed to each image in normal mode. Default: `100%`
 - `img-height`: Explicit image height. Default: `auto`
 - `img-fit`: Image fit mode when height is constrained. Default: `"contain"`
-- `fill-height`: Whether to fill the remaining slide height below the current text. Default: `auto`
-- `fill-pad`: Extra bottom padding kept when fill-height mode is active. Default: `auto`
+- `fill-height`: Whether to fill the remaining slide height below the current text. Default: `auto`, which resolves through the theme's `imgs-config`
+- `fill-pad`: Extra bottom padding kept when fill-height mode is active. Default: `auto`, which resolves through the theme's `imgs-config`
 
 ### Caption Styling
 
-- `cap-size`: Caption font size. Default: `18pt`
-- `cap-weight`: Caption font weight. Default: `"medium"`
+- `cap-size`: Caption font size. Default: `auto`, which resolves through the theme's `imgs-config` (currently `18pt`)
+- `cap-weight`: Caption font weight. Default: `auto`, which resolves through the theme's `imgs-config` (currently `"bold"`)
 - `cap-color`: Caption color. Default: `auto`
 - `cap-gap`: Gap between image row and caption row. Default: `0.2em`
 
@@ -77,6 +77,8 @@ You can set deck-wide defaults in `lemonade-theme`:
 ```
 
 After that, `#imgs(...)` will inherit those defaults unless a slide overrides them explicitly.
+
+The older `imgs-fill-height`, `imgs-fill-pad`, `imgs-cap-size`, and `imgs-cap-weight` arguments still work as compatibility shims, but new code should use `imgs-config`.
 
 Use per-slide override when needed:
 
@@ -166,8 +168,35 @@ If your whole deck mostly uses this mode, prefer the theme-level `imgs-config: (
   - `img-height` is manual and fixed.
   - `fill-height` is dynamic and depends on current slide position.
 
+## Floating Placement Helpers
+
+These helpers are for small anchored images such as logos and QR codes, not main evidence figures.
+
+### 7. Place The Theme Logo
+
+```typst
+#place-logo(width: 10%)
+```
+
+Use this for the default theme logo in the top-right corner.
+
+### 8. Place A Bottom-Right QR Code
+
+```typst
+#place-image(
+  assets.qr-code,
+  caption: "pku-lemonade",
+  width: 20%,
+  position: bottom + right,
+  dx: 0em,
+  dy: 1em,
+)
+```
+
+Use this on thank-you or contact slides when you want a QR code plus a short mono caption.
+
 ## Minimal Example
 
 See:
 
-- [examples/images-api.typ](../examples/images-api.typ)
+- [examples/tokencake/tokencake.typ](../examples/tokencake/tokencake.typ)
