@@ -29,20 +29,21 @@ Before drafting Typst slide code, build two scratch artifacts.
 
 ## Output Layout
 
-For a source PDF at `<pdf-dir>/<paper>.pdf`, keep generated notes and extracted assets in paper-specific directories rather than a shared flat folder.
+Keep each paper's generated artifacts inside one paper workspace directory rather than scattering them across shared top-level folders.
 
 Preferred layout:
 
-- `notes/<pdf-dir>/<paper>/brief.md`
-- `notes/<pdf-dir>/<paper>/slide-map.md`
-- `assets/<pdf-dir>/<paper>/...`
+- `examples/<paper>.typ`
+- `papers/<paper>/notes/brief.md`
+- `papers/<paper>/notes/slide-map.md`
+- `papers/<paper>/assets/...`
 
 Rules:
 
-- Mirror the PDF path relative to the repo root when possible.
-- If the PDF lives at the repo root, omit the empty directory layer: `notes/<paper>/...` and `assets/<paper>/...`.
-- If several PDFs live in the same source folder, each paper still gets its own `<paper>/` subdirectory.
-- Do not mix briefs, slide maps, crops, and extracted figures from different papers in one shared folder.
+- Default to one workspace directory per paper under `papers/`.
+- If two source PDFs would map to the same `<paper>` name, disambiguate the workspace directory with a short parent-folder prefix such as `papers/<parent>-<paper>/`.
+- Keep briefs, slide maps, crops, and extracted figures inside that paper workspace.
+- Do not create shared top-level `notes/...` or `assets/...` folders for generated paper artifacts.
 
 ## Workflow
 
@@ -54,7 +55,7 @@ Rules:
      - `references/chinese-academic-style.md`
      - `references/english-academic-style.md`
 2. Build the paper brief.
-   - Create the paper-specific `notes/...` and `assets/...` directories first so downstream extraction and drafting steps write into the right namespace.
+   - Create `papers/<paper>/notes/` and `papers/<paper>/assets/` first so downstream extraction and drafting steps write into the right namespace.
    - Prefer the paper's own figures and tables over generated visuals.
    - Keep exact numbers intact.
    - Reorganize around claims, not the paper's section order.
