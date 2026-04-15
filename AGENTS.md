@@ -1,7 +1,6 @@
 # Slides theme (Typst)
 
 - Entry: `lemonade.typ` (re-exports `theme/lemonade.typ`)
-- Compat: `lecture.typ` (re-exports `lemonade.typ`)
 - `theme/lemonade.typ`: main theme wrapper; wires Touying config + global `set/show` rules
 - `theme/base.typ`: global knobs (font sizes, spacing, colors/fonts, mode choices) + runtime state (`cur-ar`, `cur-colors`, `cur-box`)
 - `theme/slide.typ`: default slide template + slide margins (`slide-layouts`)
