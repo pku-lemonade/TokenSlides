@@ -1,6 +1,6 @@
 ---
 name: academic-paper-to-slides
-description: Convert academic papers, preprints, and local PDF manuscripts into slide decks in the local lemonade Typst theme. Use when Codex is given a research paper or paper PDF and asked to draft, revise, or reorganize slides for paper readings, seminars, research overviews, proposal/midterm/final defenses, or other academic presentations.
+description: Convert academic papers, preprints, and local PDF manuscripts into Typst slide decks in the local lemonade theme. Use when the user asks to draft, revise, or reorganize slides for paper readings, seminars, research overviews, proposal/midterm/final defenses, or similar academic talks.
 ---
 
 # Academic Paper to Slides
@@ -13,73 +13,55 @@ Turn a paper into a presentation argument. Do not mirror the PDF page by page.
 - extract claims, figures, tables, and exact numbers from a PDF
 - adapt the same source into different academic contexts such as seminar, reading report, overview, or defense
 
+## Required Working Artifacts
+
+Before drafting Typst slide code, build two scratch artifacts.
+
+1. Paper brief.
+   - Capture the title, problem, motivation, assumptions, main idea, method components, evaluation setting, and quantitative results.
+   - Keep exact baselines, datasets, model names, metrics, and improvements.
+   - Inventory the figures and tables you may reuse, plus what each asset proves.
+   - Identify 3 to 6 deck-level claims. For systems or architecture papers, expand the method into multiple mechanism claims instead of collapsing the technique into 1 or 2 slides.
+2. Slide map.
+   - Write one line per planned slide: section, title, takeaway, evidence, archetype.
+   - Each slide should defend one claim.
+   - Assign real evidence before writing the page: figure, table, or exact number.
+
 ## Workflow
 
-1. Determine the presentation type.
+1. Determine the talk scenario, language, and register.
    - If the user names the occasion, follow it.
    - Otherwise default to a paper reading or seminar deck.
-   - Match the requested language and speaking register.
-
-2. Build a paper brief before writing slides.
-   - Extract the title, problem, motivation, assumptions, main idea, method components, evaluation setting, and quantitative results.
-   - Keep exact baselines, datasets, model names, metrics, and improvements.
-   - Identify 3 to 6 paper-level claims that deserve their own slides.
+   - Read `references/deck-structures.md` when you need a deck arc.
+   - Read the language reference that matches the requested output:
+     - `references/chinese-academic-style.md`
+     - `references/english-academic-style.md`
+2. Build the paper brief.
    - Prefer the paper's own figures and tables over generated visuals.
-
-3. Reorganize around claims, not section order.
-   - A strong default arc is background, problem, method, evidence, conclusion.
-   - Split method and results across more pages instead of compressing text.
-   - Use tables when the source material is highly structured.
-   - Each slide should make one main point.
-
-4. Write at slide granularity.
-   - Prefer a small set of stable slide archetypes over ad hoc mixes of boxes, paragraphs, tables, and figures.
-   - The slide title names the topic in a short noun phrase, not a full sentence.
-   - The body text states the takeaway, constraint, or contribution.
-   - Compact wording before adding more layout complexity; remove filler and compress obvious subjects or helper verbs first.
-   - On figure-led slides, stop a little short of the theoretical text maximum; one sentence less is usually better than one sentence too many.
-   - On figure-led slides, do not mix one takeaway box with a loose explanatory paragraph; prefer one or two short takeaway boxes and let the figure carry the detail.
-   - For method-overview slides with one architecture figure, prefer stacked short boxes beside the figure. Avoid table-plus-figure hybrids unless both remain clearly readable.
-   - Figure captions identify the figure; they do not replace slide text.
-   - Do not leave a title-plus-image-only slide.
-
-5. Match the local presentation system.
-   - Read workspace instructions first if the repo contains `AGENTS.md` or theme notes.
-   - This skill is tailored to the local `lemonade.typ` theme, so reuse its macros, layouts, and deck conventions instead of inventing a parallel system.
-   - For repo decks compiled with `typst compile --root .`, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`; avoid fragile `../..` climbing imports.
-   - Keep the top-of-file scaffold stable: theme import first, then language or local helpers, then `#show: lemonade-theme.with(...)`.
-   - If a layout or helper problem appears across multiple slides, inspect the owning theme file first and prefer a theme-level fix over repeated per-slide workarounds.
+   - Keep exact numbers intact.
+   - Reorganize around claims, not the paper's section order.
+   - If reused paper figures need cleanup, read `references/figure-prep.md` and run `scripts/prepare_figure.py` before layout work.
+3. Build the slide map.
+   - Spread method and results across more pages instead of compressing text.
+   - Choose a stable slide archetype for each page from `references/archetypes.md`.
+   - Vary neighboring figure-heavy slides instead of repeating the same side-by-side layout by default.
+4. Draft with the local presentation system.
+   - Read workspace instructions first if the repo contains `AGENTS.md`.
    - Read `references/lemonade-theme.md` before drafting or revising slides in this repo.
+   - Reuse the local `lemonade.typ` macros, layouts, and deck conventions instead of inventing a parallel system.
+   - For repo decks compiled with `typst compile --root .`, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`.
+   - If the same layout or helper problem appears across multiple slides, inspect the owning theme file first instead of adding repeated per-slide workarounds.
+5. Validate as a deck.
+   - Prepare cropped figures with `scripts/prepare_figure.py <image> --preview` when the raw asset carries paper chrome or inconsistent margins.
+   - Run `scripts/validate_deck.sh <deck.typ>` to compile and export preview images when available.
+   - Use `references/visual-qa.md` as a pass/fail rubric.
+   - Fix visual failures in this order: crop or split evidence, change archetype, split slide, then consider local overrides.
+   - Do not accept accidental continuation pages, broken outlines, footer overflow, or unreadable evidence figures.
 
-6. Validate as a deck.
-   - Compile the slides.
-   - Screenshot figure-heavy pages and inspect scale, whitespace, and footer stability.
-   - Do not exempt method-overview slides from figure review. If one slide contains both a table and an overview figure, verify that the figure is still readable at screenshot scale.
-   - On figure-led slides, especially fat or wide layouts, treat figure readability as the hard constraint and keep text below the point where the figure becomes postcard-sized.
-   - On horizontal figure slides, keep the default text size unless there is a strong reason not to; first shorten the wording and fix the layout so the text column wraps naturally.
-   - If a side-by-side slide does not wrap text cleanly, check whether the image helper is bleeding outside its column; prefer in-cell image placement over shrinking text.
-   - If a figure is too small, crop, split, or change layout instead of shrinking text.
-   - If a figure has shrunk to icon size because a table consumed the page, convert the table to short boxes or split the material across slides.
-   - Fix accidental blank continuation pages, broken outlines, and overflowed footer content.
+## Non-Negotiables
 
-## Writing Guidance
-
-- For reusable deck arcs, read `references/deck-structures.md`.
-- For concise academic Chinese sentence style, read `references/chinese-academic-style.md`.
-- Treat concise short boxed takeaways as the benchmark for figure-led pages: ideally one short line per box, and rarely more than two.
-
-Target tone:
-
-- concise
-- academic
-- declarative
-- evidence-led
-- restrained
-
-Avoid:
-
-- section-by-section retelling of the paper
-- student-style narration
-- empty praise without data
-- body text that repeats the caption
-- dense paragraphs when a table or extra slide is clearer
+- Do not retell the paper section by section.
+- Do not leave title-plus-image-only slides.
+- Do not rely on captions to carry the main takeaway.
+- Do not accept table-plus-figure slides if the figure becomes tiny.
+- Do not shrink text before trying a better composition or another slide.

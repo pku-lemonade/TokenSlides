@@ -1,6 +1,6 @@
 # Chinese Academic Slide Writing
 
-Target tone: concise, academic, restrained, like a senior professor summarizing a result rather than a student narrating process.
+Use this reference for Chinese-language decks. Target tone: concise, academic, restrained, like a senior professor summarizing a result rather than a student narrating process.
 
 For deck arc, section order, and scenario-specific structure, use `deck-structures.md`. This file is only about wording and sentence style.
 
