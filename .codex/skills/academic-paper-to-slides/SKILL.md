@@ -33,15 +33,15 @@ Keep each paper's generated artifacts inside one paper workspace directory rathe
 
 Preferred layout:
 
-- `examples/<paper>.typ`
-- `papers/<paper>/notes/brief.md`
-- `papers/<paper>/notes/slide-map.md`
-- `papers/<paper>/assets/...`
+- `examples/<paper>/<paper>.typ`
+- `examples/<paper>/notes/brief.md`
+- `examples/<paper>/notes/slide-map.md`
+- `examples/<paper>/assets/...`
 
 Rules:
 
-- Default to one workspace directory per paper under `papers/`.
-- If two source PDFs would map to the same `<paper>` name, disambiguate the workspace directory with a short parent-folder prefix such as `papers/<parent>-<paper>/`.
+- Default to one workspace directory per paper under `examples/`.
+- If two source PDFs would map to the same `<paper>` name, disambiguate the workspace directory with a short parent-folder prefix such as `examples/<parent>-<paper>/`.
 - Keep briefs, slide maps, crops, and extracted figures inside that paper workspace.
 - Do not create shared top-level `notes/...` or `assets/...` folders for generated paper artifacts.
 
@@ -55,7 +55,7 @@ Rules:
      - `references/chinese-academic-style.md`
      - `references/english-academic-style.md`
 2. Build the paper brief.
-   - Create `papers/<paper>/notes/` and `papers/<paper>/assets/` first so downstream extraction and drafting steps write into the right namespace.
+   - Create `examples/<paper>/notes/` and `examples/<paper>/assets/` first so downstream extraction and drafting steps write into the right namespace.
    - Prefer the paper's own figures and tables over generated visuals.
    - Keep exact numbers intact.
    - Reorganize around claims, not the paper's section order.
