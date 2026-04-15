@@ -18,19 +18,21 @@
     dy: 1em
 ) = place(position, dx: dx, dy: dy)[
     #align(center)[
-        #if caption != none {
-            let imgs-config = cur-imgs-config.get()
-            let resolved-cap-size = imgs-config.at("cap-size")
-            let resolved-cap-weight = imgs-config.at("cap-weight")
-            [
-                #block(width: 100%)[
-                    #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
-                    #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
-                    #caption
+        #if caption != none [
+            #context {
+                let imgs-config = cur-imgs-config.get()
+                let resolved-cap-size = imgs-config.at("cap-size")
+                let resolved-cap-weight = imgs-config.at("cap-weight")
+                [
+                    #block(width: width)[
+                        #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
+                        #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
+                        #caption
+                    ]
+                    #v(-0.8em)
                 ]
-                #v(-0.8em)
-            ]
-        }
+            }
+        ]
         #if height == auto {
             image(path, width: width)
         } else {
