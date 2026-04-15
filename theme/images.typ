@@ -160,11 +160,27 @@
     context {
         let resolved-fill-height = if fill-height == auto { cur-imgs-fill-height.get() } else { fill-height }
         let resolved-fill-pad = if fill-pad == auto { cur-imgs-fill-pad.get() } else { fill-pad }
+        let slide-margins = slide-layouts.at(cur-ar.get())
+        let resolved-left-margin = measure(h(slide-margins.left)).width
+        let resolved-right-margin = measure(h(slide-margins.right)).width
+
+        let wrap-image-body = (body, available-width) => {
+            let full-slide-width = page.width - resolved-left-margin - resolved-right-margin
+            let use-bleed = available-width >= full-slide-width - 1pt
+
+            if use-bleed {
+                bleed(align(center)[#body])
+            } else {
+                block(width: 100%)[
+                    #align(center)[#body]
+                ]
+            }
+        }
 
         if resolved-fill-height {
             layout(size => context {
                 let pos = here().position()
-                let top-margin = measure(v(slide-layouts.at(cur-ar.get()).top)).height
+                let top-margin = measure(v(slide-margins.top)).height
                 let footer-layout = footer-layouts.at(cur-ar.get())
                 let footer-height = measure({
                     set text(size: footer-layout.text-size)
@@ -180,27 +196,29 @@
                 let resolved-height = calc.max(0pt, remaining-height - caption-height - footer-height - pad-height)
                 [
                     #place(left)[
-                        #bleed(align(center)[
-                            #box(width: width)[
+                        #wrap-image-body(
+                            box(width: width)[
                                 #block(spacing: 0pt, below: cap-gap)[#images-grid(resolved-height)]
                                 #if has-captions [
                                     #block(spacing: 0pt, above: 0pt)[#captions-grid]
                                 ]
-                            ]
-                        ])
+                            ],
+                            size.width,
+                        )
                     ]
                     #v(remaining-height, weak: true)
                 ]
             })
         } else {
-            bleed(align(center)[
-                #box(width: width)[
+            layout(size => wrap-image-body(
+                box(width: width)[
                     #block(spacing: 0pt, below: cap-gap)[#images-grid(img-height)]
                     #if has-captions [
                         #block(spacing: 0pt, above: 0pt)[#captions-grid]
                     ]
-                ]
-            ])
+                ],
+                size.width,
+            ))
         }
     }
 }

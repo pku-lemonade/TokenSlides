@@ -76,19 +76,30 @@
                 [#heading]
             } else { [] }
 
+            let left-cell = if not footer-config.show-institution or inst == none {
+                []
+            } else if is-zh-lang(text.lang) {
+                [#inst]
+            } else {
+                [#upper(inst)]
+            }
+
+            let center-cell = if author != none and title-cell != [] {
+                [#author  #title-cell]
+            } else if author != none {
+                [#author]
+            } else {
+                title-cell
+            }
+
             align(horizon)[
                 #block(width: 100%)[
                     #grid(
-                    columns: (1.5fr, 3fr, 1fr),
+                    columns: (1fr, auto, 1fr),
                     align: (left + horizon, center + horizon, right + horizon),
                     inset: footer-config.inset,
-                    {
-                        if not footer-config.show-institution { [] }
-                        else if is-zh-lang(text.lang) and author != none and inst != none { [#author @ #inst] }
-                        else if inst != none { [#upper(inst)] }
-                        else { [] }
-                    },
-                    title-cell,
+                    left-cell,
+                    center-cell,
                     counter,
                     )
                 ]
