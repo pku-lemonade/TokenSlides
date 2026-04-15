@@ -66,6 +66,7 @@ Rules:
    - Choose a stable slide archetype for each page from `references/archetypes.md`.
    - Vary neighboring figure-heavy slides instead of repeating the same side-by-side layout by default.
    - For systems papers, give the thesis, overview, major mechanisms, and main evidence room to breathe. Do not collapse multiple independent mechanisms into one overloaded "method" slide.
+   - Plan boxed takeaways and captions as short lines, not mini-paragraphs. Prefer one-line boxes and one-line captions unless the evidence truly needs more text.
 4. Draft with the local presentation system.
    - Read workspace instructions first if the repo contains `AGENTS.md`.
    - Read `references/lemonade-theme.md` before drafting or revising slides in this repo.
@@ -79,6 +80,8 @@ Rules:
    - Use `references/visual-qa.md` as a pass/fail rubric.
    - Fix visual failures in this order: crop or split evidence, change archetype, split slide, then consider local overrides.
    - On figure-led slides, default to one or two short takeaway boxes. Each box should preferably fit on one line and should rarely exceed two.
+   - Prefer one-line captions. If a caption wraps, first shorten it; if needed, slightly widen the figure block when that does not materially hurt figure readability.
+   - Remove low-value wording before changing layout: obvious labels, weak transitions, and phrases such as `Figure X shows ...` or `the figure above shows ...`.
    - Do not accept accidental continuation pages, broken outlines, footer overflow, or unreadable evidence figures.
 
 ## Non-Negotiables
@@ -86,6 +89,7 @@ Rules:
 - Do not retell the paper section by section.
 - Do not leave title-plus-image-only slides.
 - Do not rely on captions to carry the main takeaway.
+- Do not waste box or caption budget on low-information phrasing such as `Figure 3 shows`, `the figure above`, or obvious restatements of the visual.
 - Do not accept table-plus-figure slides if the figure becomes tiny.
 - Do not shrink text before trying a better composition or another slide.
 - Do not invent deck-local figure helpers for ordinary image layout before checking whether `theme/images.typ` already supports the needed composition.
