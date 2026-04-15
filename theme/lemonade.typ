@@ -1,7 +1,7 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, aspect-ratios, title-alignments, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, cur-imgs-fill-height, cur-imgs-fill-pad, bleed
+#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, slide-page-sizes, aspect-ratios, title-alignments, imgs-config as default-imgs-config, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, cur-imgs-config, bleed
 #import "base.typ": touying-slides, config-page, config-common, config-colors, config-info
 
 #import "boxes.typ": *
@@ -29,8 +29,12 @@
     box-compact: false,
     // Alignment for content slide titles (`== ...`), not the title/thank-you slides.
     title-align: "center",
-    imgs-fill-height: false,
-    imgs-fill-pad: 0.5em,
+    imgs-config: (:),
+    // Backwards-compat shims; prefer `imgs-config: (...)`.
+    imgs-fill-height: auto,
+    imgs-fill-pad: auto,
+    imgs-cap-size: auto,
+    imgs-cap-weight: auto,
     ..args,
     body
 ) = {
@@ -51,6 +55,21 @@
     }
     let spacing = page-spacing.at(aspect-ratio)
     let slide-margins = slide-layouts.at(aspect-ratio)
+    let slide-page-size = slide-page-sizes.at(aspect-ratio)
+    let resolved-imgs-config = (
+        fill-height: if imgs-fill-height == auto {
+            imgs-config.at("fill-height", default: default-imgs-config.fill-height)
+        } else { imgs-fill-height },
+        fill-pad: if imgs-fill-pad == auto {
+            imgs-config.at("fill-pad", default: default-imgs-config.fill-pad)
+        } else { imgs-fill-pad },
+        cap-size: if imgs-cap-size == auto {
+            imgs-config.at("cap-size", default: default-imgs-config.cap-size)
+        } else { imgs-cap-size },
+        cap-weight: if imgs-cap-weight == auto {
+            imgs-config.at("cap-weight", default: default-imgs-config.cap-weight)
+        } else { imgs-cap-weight },
+    )
     let section-slide-fn = (body) => outline-slide(level: 1)
 
     cur-ar.update(aspect-ratio)
@@ -58,12 +77,13 @@
     cur-box.update(theme.box)
     cur-box-compact.update(box-compact)
     cur-title-align.update(title-align)
-    cur-imgs-fill-height.update(imgs-fill-height)
-    cur-imgs-fill-pad.update(imgs-fill-pad)
+    cur-imgs-config.update(resolved-imgs-config)
 
     show: touying-slides.with(
         config-page(
             paper: "presentation-" + aspect-ratio,
+            width: slide-page-size.width,
+            height: slide-page-size.height,
             fill: theme.colors.bg,
             margin: slide-margins,
             header: none,
