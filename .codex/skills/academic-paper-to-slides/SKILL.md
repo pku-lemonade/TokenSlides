@@ -41,6 +41,7 @@ Before drafting Typst slide code, build two scratch artifacts.
    - Keep exact numbers intact.
    - Reorganize around claims, not the paper's section order.
    - If reused paper figures need cleanup, read `references/figure-prep.md` and run `scripts/prepare_figure.py` before layout work.
+   - If the source is a PDF and you first need to recover the best figure asset, use `$figure-extraction`.
 3. Build the slide map.
    - Spread method and results across more pages instead of compressing text.
    - Choose a stable slide archetype for each page from `references/archetypes.md`.
