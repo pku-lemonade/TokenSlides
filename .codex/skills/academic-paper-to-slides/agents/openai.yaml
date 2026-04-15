@@ -1,0 +1,4 @@
+interface:
+  display_name: "Academic Paper to Slides"
+  short_description: "Turn academic papers into slides with lemonade."
+  default_prompt: "Use $academic-paper-to-slides to convert this paper or PDF into a slide deck using the local lemonade Typst theme."
