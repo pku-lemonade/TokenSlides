@@ -45,14 +45,19 @@
     )
 
     let self = utils.merge-dicts(self, default-config, config)
+    // Use `config-info(venue: ...)` for the visible venue line above the title.
+    // Examples: [arXiv:2510.18586v2], [MICRO 2025], [OSDI 2025], [PKU LEMONADE Seminar].
+    let display-venue = self.info.at("venue", default: none)
 
     let body = {
         v(2em)
-        align(top + center)[
-            #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
-                #self.info.subtitle
+        if display-venue != none {
+            align(top + center)[
+                #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
+                    #display-venue
+                ]
             ]
-        ]
+        }
         place(horizon + center)[
             #text(size: font-sizes.title, weight: "bold", fill: colors.primary)[
                 #self.info.title

@@ -107,9 +107,9 @@ The validation helper writes the PDF and page previews under `/tmp/academic-pape
   ),
   config-info(
     title: [Paper Title],
-    subtitle: [Subtitle],
+    venue: [MICRO 2025],
     author: [Author et al.],
-    institution: [Venue / Year],
+    institution: [Institution Name],
   ),
 )
 
