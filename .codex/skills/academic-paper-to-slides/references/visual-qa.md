@@ -25,10 +25,14 @@ Use this rubric after the deck compiles. A slide that technically compiles can s
 ## Layout Pass
 
 - Figure-led slides do not mix one takeaway box with a loose paragraph.
+- On figure-led slides, each takeaway box should preferably fit on one wrapped line and should rarely exceed two.
 - One-figure slides do not stack so much text above the figure that the evidence collapses.
+- Count title, boxes, and caption together. If they leave the evidence as a thumbnail or narrow strip, the slide fails even if each box is individually short.
+- Composite contact-sheet figures get split or re-cropped when the full sheet becomes unreadable at deck scale.
 - Table-plus-figure slides only pass if both remain clearly readable.
 - Side-by-side slides wrap text cleanly and keep the figure inside its column.
 - Adjacent figure-heavy slides do not all reuse the exact same archetype unless the content truly demands it.
+- Ordinary figure layout should use the theme helper. A deck-local replacement helper is a smell unless `theme/images.typ` truly lacks the needed behavior.
 
 ## Language Pass
 

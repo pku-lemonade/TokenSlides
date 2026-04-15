@@ -32,7 +32,7 @@ Before drafting Typst slide code, build two scratch artifacts.
 1. Determine the talk scenario, language, and register.
    - If the user names the occasion, follow it.
    - Otherwise default to a paper reading or seminar deck.
-   - Read `references/deck-structures.md` when you need a deck arc.
+   - Read `references/deck-structures.md` for the deck arc. For systems, architecture, storage, database, or serving papers, check whether the `Systems Paper Reading / OSDI-SOSP Style` arc fits before defaulting to a generic seminar arc.
    - Read the language reference that matches the requested output:
      - `references/chinese-academic-style.md`
      - `references/english-academic-style.md`
@@ -46,17 +46,20 @@ Before drafting Typst slide code, build two scratch artifacts.
    - Spread method and results across more pages instead of compressing text.
    - Choose a stable slide archetype for each page from `references/archetypes.md`.
    - Vary neighboring figure-heavy slides instead of repeating the same side-by-side layout by default.
+   - For systems papers, give the thesis, overview, major mechanisms, and main evidence room to breathe. Do not collapse multiple independent mechanisms into one overloaded "method" slide.
 4. Draft with the local presentation system.
    - Read workspace instructions first if the repo contains `AGENTS.md`.
    - Read `references/lemonade-theme.md` before drafting or revising slides in this repo.
    - Reuse the local `lemonade.typ` macros, layouts, and deck conventions instead of inventing a parallel system.
    - For repo decks compiled with `typst compile --root .`, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`.
+   - Default to `#imgs(...)` from `theme/images.typ` for single figures, comparison rows, and captioned figure blocks. Do not add deck-local wrappers such as `figcell` unless you have inspected `theme/images.typ` and confirmed a real missing capability.
    - If the same layout or helper problem appears across multiple slides, inspect the owning theme file first instead of adding repeated per-slide workarounds.
 5. Validate as a deck.
    - Prepare cropped figures with `scripts/prepare_figure.py <image> --preview` when the raw asset carries paper chrome or inconsistent margins.
    - Run `scripts/validate_deck.sh <deck.typ>` to compile and export preview images when available.
    - Use `references/visual-qa.md` as a pass/fail rubric.
    - Fix visual failures in this order: crop or split evidence, change archetype, split slide, then consider local overrides.
+   - On figure-led slides, default to one or two short takeaway boxes. Each box should preferably fit on one line and should rarely exceed two.
    - Do not accept accidental continuation pages, broken outlines, footer overflow, or unreadable evidence figures.
 
 ## Non-Negotiables
@@ -66,3 +69,5 @@ Before drafting Typst slide code, build two scratch artifacts.
 - Do not rely on captions to carry the main takeaway.
 - Do not accept table-plus-figure slides if the figure becomes tiny.
 - Do not shrink text before trying a better composition or another slide.
+- Do not invent deck-local figure helpers for ordinary image layout before checking whether `theme/images.typ` already supports the needed composition.
+- Do not accept figure-led slides where title, boxes, and caption leave the evidence as a thumbnail or narrow strip.
