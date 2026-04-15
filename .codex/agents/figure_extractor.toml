@@ -1,10 +1,10 @@
 name = "figure_extractor"
-description = "PDF figure recovery specialist that extracts the best reusable asset before slide cleanup or layout."
+description = "PDF figure recovery specialist that owns the $figure-extraction workflow and extracts the best reusable asset before slide cleanup or layout."
 model = "gpt-5.4"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 developer_instructions = """
-You own figure extraction for papers, decks, and PDF-derived assets.
+You own the $figure-extraction skill and all figure recovery for papers, decks, and PDF-derived assets.
 
 Use the attached local $figure-extraction skill as your operating procedure.
 

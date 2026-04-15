@@ -1,19 +1,19 @@
 ---
 name: figure-extraction
-description: Extract figures from PDFs and slide decks while preserving original embedded assets when possible. Use when the user asks to pull figures out of a PDF, recover reusable paper figures from LaTeX-generated PDFs, inspect embedded images, or render vector/page content for later cropping.
+description: Recover reusable figure assets from PDFs and slide decks while preserving original embedded assets when possible. This workflow is owned by the `figure_extractor` agent when figure recovery is delegated from a larger task, and it can also be used directly when figure recovery itself is the task.
 ---
 
 # Figure Extraction
 
-Use this skill when figure extraction itself is the task. Keep extraction separate from slide writing so the main slide skill does not carry all PDF/image handling guidance.
+This skill is the operating procedure for `figure_extractor`.
 
-When this work is part of a larger task, explicitly ask Codex to spawn the `figure_extractor` subagent. That custom agent is the narrow execution path for this skill.
+When a parent workflow delegates figure recovery, stay scoped to PDF inspection and asset recovery. Leave slide writing, narrative structure, and final layout choices to the parent agent. When figure recovery itself is the whole task, use the same workflow directly.
 
 ## Workflow
 
 1. Prefer the original source asset when it is available.
    - If the paper repo or deck assets already contain the figure file, use that directly instead of re-extracting from a PDF.
-   - When this work is part of a slide workflow, write extracted assets into the example workspace asset directory chosen by the parent skill, not a shared catch-all folder.
+   - If a parent workflow already chose the output workspace, write extracted assets into that workspace asset directory, not a shared catch-all folder.
 2. Inspect the PDF before extracting.
    - Run `scripts/extract_pdf_figures.py list <file.pdf>`.
    - If the target page contains embedded images of plausible size, prefer direct extraction.
@@ -26,11 +26,11 @@ When this work is part of a larger task, explicitly ask Codex to spawn the `figu
 5. Crop after extraction, not before.
    - Once you have the best source asset, use `$academic-paper-to-slides` figure prep or `../academic-paper-to-slides/scripts/prepare_figure.py`.
 
-## Subagent Routing
+## Ownership Boundary
 
-- If this skill is being used inside another workflow, tell Codex to spawn `figure_extractor`.
-- Keep the parent agent focused on slide structure, claims, and layout while `figure_extractor` handles PDF inspection and asset recovery.
-- After the subagent returns, continue with figure trimming or slide composition in the parent flow.
+- `figure_extractor` owns this workflow during delegated figure recovery.
+- Parent agents should delegate PDF or deck figure recovery here instead of carrying these instructions inline.
+- Stop after recovering the best reusable source asset and reporting exact output paths unless the parent task explicitly asks for further cleanup.
 
 ## Routing Rules
 
