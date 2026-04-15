@@ -1,3 +1,4 @@
 *.pdf
-
+.tmp/
+__pycache__/
 examples/*
