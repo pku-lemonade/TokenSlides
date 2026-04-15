@@ -8,8 +8,9 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 
 - Prefer short declarative sentences.
 - Let each sentence carry one judgment, constraint, or result.
-- Prefer nouns and verbs over rhetorical connectors.
 - Put the evidence and the conclusion close together.
+- Prefer nouns and verbs over rhetorical connectors and narrative filler.
+- If a sentence needs several commas, multiple clauses, or two rhetorical turns, split it into two sentences or two slides.
 
 ## Title Principles
 
@@ -20,26 +21,27 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 
 ## Preferred Tone
 
+- concise
 - direct
-- compact
 - technical
 - evidence-led
 - non-conversational
+- restrained
 
 ## Good Habits
 
 - Put exact numbers and the corresponding conclusion in the same sentence when possible.
-- If one sentence needs two turns, split it into two sentences or two slides.
-- On figure slides, body text explains why the figure matters; caption identifies what the figure is.
+- On figure slides, body text explains why the figure matters; the caption identifies what the figure is.
 - On figure-heavy slides, default to one or two short takeaway boxes; each box should preferably fit on one line and rarely exceed two.
+- If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
 - In short takeaway boxes, prefer compact Chinese phrasing over long mixed-language labels or code-like tokens when meaning can be preserved.
 
 ## Avoid
 
-- `接下来我们来看`
-- `本文首先...然后...最后...`
-- `非常重要` or `十分显著` without evidence
+- process-narration openers such as `接下来我们来看`
+- rigid chronological scaffolding such as `本文首先...然后...最后...`
+- unsupported praise such as `非常重要` or `十分显著` without evidence
 - body text that repeats the caption
 - figure-heavy pages that mix one takeaway box with a loose paragraph
 - long paragraphs that read like an abstract pasted onto a slide
