@@ -27,6 +27,23 @@ Before drafting Typst slide code, build two scratch artifacts.
    - Each slide should defend one claim.
    - Assign real evidence before writing the page: figure, table, or exact number.
 
+## Output Layout
+
+For a source PDF at `<pdf-dir>/<paper>.pdf`, keep generated notes and extracted assets in paper-specific directories rather than a shared flat folder.
+
+Preferred layout:
+
+- `notes/<pdf-dir>/<paper>/brief.md`
+- `notes/<pdf-dir>/<paper>/slide-map.md`
+- `assets/<pdf-dir>/<paper>/...`
+
+Rules:
+
+- Mirror the PDF path relative to the repo root when possible.
+- If the PDF lives at the repo root, omit the empty directory layer: `notes/<paper>/...` and `assets/<paper>/...`.
+- If several PDFs live in the same source folder, each paper still gets its own `<paper>/` subdirectory.
+- Do not mix briefs, slide maps, crops, and extracted figures from different papers in one shared folder.
+
 ## Workflow
 
 1. Determine the talk scenario, language, and register.
@@ -37,6 +54,7 @@ Before drafting Typst slide code, build two scratch artifacts.
      - `references/chinese-academic-style.md`
      - `references/english-academic-style.md`
 2. Build the paper brief.
+   - Create the paper-specific `notes/...` and `assets/...` directories first so downstream extraction and drafting steps write into the right namespace.
    - Prefer the paper's own figures and tables over generated visuals.
    - Keep exact numbers intact.
    - Reorganize around claims, not the paper's section order.
