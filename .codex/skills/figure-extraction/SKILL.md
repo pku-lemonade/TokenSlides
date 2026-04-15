@@ -7,6 +7,8 @@ description: Extract figures from PDFs and slide decks while preserving original
 
 Use this skill when figure extraction itself is the task. Keep extraction separate from slide writing so the main slide skill does not carry all PDF/image handling guidance.
 
+When this work is part of a larger task, explicitly ask Codex to spawn the `figure_extractor` subagent. That custom agent is the narrow execution path for this skill.
+
 ## Workflow
 
 1. Prefer the original source asset when it is available.
@@ -22,6 +24,12 @@ Use this skill when figure extraction itself is the task. Keep extraction separa
    - Use `--format png --dpi 300` or higher for raster output when SVG is not appropriate.
 5. Crop after extraction, not before.
    - Once you have the best source asset, use `$academic-paper-to-slides` figure prep or `../academic-paper-to-slides/scripts/prepare_figure.py`.
+
+## Subagent Routing
+
+- If this skill is being used inside another workflow, tell Codex to spawn `figure_extractor`.
+- Keep the parent agent focused on slide structure, claims, and layout while `figure_extractor` handles PDF inspection and asset recovery.
+- After the subagent returns, continue with figure trimming or slide composition in the parent flow.
 
 ## Routing Rules
 

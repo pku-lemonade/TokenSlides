@@ -1,4 +1,4 @@
 interface:
   display_name: "Figure Extraction"
   short_description: "Extract embedded PDF figures without slide-context bloat."
-  default_prompt: "Use $figure-extraction to inspect this PDF and extract the best reusable figure asset before any slide cropping."
+  default_prompt: "Spawn `figure_extractor` and use $figure-extraction to inspect this PDF and recover the best reusable figure asset before any slide cropping."
