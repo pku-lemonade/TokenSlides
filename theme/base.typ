@@ -63,7 +63,7 @@
 )
 
 #let fonts = (
-    body: ("Inter", "Source Han Sans SC", ),
+    body: ("Inter", "Arial", "Source Han Sans SC", ),
     math: "New Computer Modern Math",
     mono: ("Inconsolata", "Source Han Sans SC"),
 )
