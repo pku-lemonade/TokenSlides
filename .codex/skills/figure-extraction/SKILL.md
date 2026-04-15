@@ -13,7 +13,7 @@ When this work is part of a larger task, explicitly ask Codex to spawn the `figu
 
 1. Prefer the original source asset when it is available.
    - If the paper repo or deck assets already contain the figure file, use that directly instead of re-extracting from a PDF.
-   - When this work is part of a slide workflow, write extracted assets into the paper-specific asset directory chosen by the parent skill, not a shared catch-all folder.
+   - When this work is part of a slide workflow, write extracted assets into the paper workspace asset directory chosen by the parent skill, not a shared catch-all folder.
 2. Inspect the PDF before extracting.
    - Run `scripts/extract_pdf_figures.py list <file.pdf>`.
    - If the target page contains embedded images of plausible size, prefer direct extraction.
