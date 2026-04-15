@@ -10,7 +10,7 @@ Turn a paper into a presentation argument. Do not mirror the PDF page by page.
 ## Use This Skill To
 
 - distill one paper or a small paper set into slides
-- extract claims, figures, tables, and exact numbers from a PDF
+- extract claims, tables, and exact numbers from a PDF while delegating figure asset recovery to `figure_extractor`
 - adapt the same source into different academic contexts such as seminar, reading report, overview, or defense
 
 ## Required Working Artifacts
@@ -58,9 +58,9 @@ Rules:
    - Create `examples/<paper>/notes/` and `examples/<paper>/assets/` first so downstream extraction and drafting steps write into the right namespace.
    - Prefer the paper's own figures and tables over generated visuals.
    - Keep exact numbers intact.
+   - If you need any figure recovery from a PDF or slide deck, spawn subagent `figure_extractor`. Do not run figure extraction inline from the parent slide-writing context.
    - Reorganize around claims, not the paper's section order.
    - If reused paper figures need cleanup, read `references/figure-prep.md` and run `scripts/prepare_figure.py` before layout work.
-   - If the source is a PDF and you first need to recover the best figure asset, explicitly ask Codex to spawn `figure_extractor`, which should use `$figure-extraction` before layout work continues.
 3. Build the slide map.
    - Spread method and results across more pages instead of compressing text.
    - Choose a stable slide archetype for each page from `references/archetypes.md`.
@@ -92,5 +92,6 @@ Rules:
 - Do not waste box or caption budget on low-information phrasing such as `Figure 3 shows`, `the figure above`, or obvious restatements of the visual.
 - Do not accept table-plus-figure slides if the figure becomes tiny.
 - Do not shrink text before trying a better composition or another slide.
+- Do not run `$figure-extraction` inline from the slide-writing agent; delegate figure asset recovery to `figure_extractor`.
 - Do not invent deck-local figure helpers for ordinary image layout before checking whether `theme/images.typ` already supports the needed composition.
 - Do not accept figure-led slides where title, boxes, and caption leave the evidence as a thumbnail or narrow strip.

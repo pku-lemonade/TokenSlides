@@ -2,17 +2,18 @@
 
 // CONFIG
 #let table-config = (
-    stroke-width: 0.6pt,
-    spacing-above: 0.2em,
-    spacing-below: 0em,
+    text-size: 20pt,
+    stroke-width: 1pt,
+    spacing-above: 0em,
+    spacing-below: 0.3em,
 )
 
 #let apply-table-style(colors) = {
-    show table: it => block(
-        above: table-config.spacing-above,
-        below: table-config.spacing-below,
-    )[
+    show table: it => [
+        #v(table-config.spacing-above)
+        #set text(size: table-config.text-size)
         #set table(stroke: (paint: colors.table-stroke, thickness: table-config.stroke-width))
         #it
+        #v(table-config.spacing-below)
     ]
 }
