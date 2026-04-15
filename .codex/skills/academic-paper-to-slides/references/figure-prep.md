@@ -10,6 +10,7 @@ Use this reference when a paper figure has too much surrounding chrome, is cropp
 - Avoid blind crop-to-fill. If the aspect ratio mismatch is large, keep the trimmed figure at its native aspect ratio instead of cutting away important context.
 - Add a small margin back after trimming. A crop that touches labels too tightly usually looks worse on slides than one with a little breathing room.
 - Do not upscale raster figures by default. Enlarging a low-resolution crop rarely improves legibility.
+- If the paper figure is really a contact sheet of several panels, split or recrop it before layout when the full sheet would otherwise shrink to a thumbnail on the slide.
 - Judge the result at slide scale, not only as a standalone image.
 
 These rules align with the external guidance this skill now follows:
