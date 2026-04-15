@@ -7,6 +7,10 @@
     "4-3": (top: 0em, bottom: 2em, left: 1em, right: 1em),
 )
 
+#let thank-you-config = (
+    min-contact-lines: 2,
+)
+
 #let thanks-han = (
     font: "FZFW ZhuZi GuDianS LH",
     size-delta: 6pt,
@@ -45,6 +49,15 @@
     }
     if content != none { contact-items.push(content) }
 
+    let display-contact-items = ()
+    for item in contact-items {
+        display-contact-items.push(item)
+    }
+    let reserved-contact-lines = calc.max(contact-items.len(), thank-you-config.min-contact-lines)
+    for _ in range(reserved-contact-lines - contact-items.len()) {
+        display-contact-items.push(hide[placeholder])
+    }
+
     let body = {
         place(horizon + center)[
             #text(size: font-sizes.title + 8pt, weight: "bold")[#title]
@@ -58,10 +71,8 @@
             #text(size: font-sizes.body-title, font: fonts.mono, weight: "medium")[
                 #if display-author != none [#display-author]
             ]\
-            #if contact-items.len() > 0 [
-                #text(size: font-sizes.body-title, font: fonts.mono, weight: "medium")[
-                    #contact-items.join(linebreak())
-                ]
+            #text(size: font-sizes.body-title, font: fonts.mono, weight: "medium")[
+                #display-contact-items.join(linebreak())
             ]
         ]
         if decoration != none { decoration }
