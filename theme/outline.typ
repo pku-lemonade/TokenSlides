@@ -1,4 +1,4 @@
-#import "base.typ": font-sizes, is-zh-lang, cur-ar, cur-colors
+#import "base.typ": font-sizes, fonts, is-zh-lang, cur-ar, cur-colors
 #import "base.typ": touying-slide-wrapper, touying-slide, utils, components
 
 // CONFIG
@@ -26,7 +26,7 @@
     "16-9": (
         width: 100%,
         variants: (
-            sections: (indent: (10em,), spacing: (6pt,)),
+            sections: (indent: (12em,), spacing: (6pt,)),
             subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
         ),
     ),
@@ -100,18 +100,21 @@
             },
             depth: variant-config.depth,
             text-size: variant-config.text-size,
-            text-weight: ("bold",),
+            text-weight: ("black",),
         )
 
         if outline-config.entry-tracking != none {
-            set text(tracking: outline-config.entry-tracking)
+            set text(font: fonts.mono, tracking: outline-config.entry-tracking)
+            cont
+        } else {
+            set text(font: fonts.mono)
             cont
         }
     }
 
     let main-body = {
         align(center)[
-            #text(size: font-sizes.title, weight: "bold")[#title]
+            #text(size: font-sizes.title, font: fonts.mono, weight: "black")[#title]
         ]
         if variant-config.use-columns {
             align(center)[

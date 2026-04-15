@@ -4,7 +4,7 @@
 #let box-config = (
     normal: (
         inset-left: 0.5em,
-        inset-right: 0em,
+        inset-right: 0.5em,
         inset-top: 0.75em,
         inset-bottom: 0.75em,
         box-spacing-above: 0.5em,
@@ -12,11 +12,11 @@
     ),
     compact: (
         inset-left: 10pt,
-        inset-right: 0em,
+        inset-right: 10pt,
         inset-top: 0.5em,
         inset-bottom: 0.5em,
         box-spacing-above: 0.4em,
-        box-spacing-below: auto,
+        box-spacing-below: 0em,
     ),
     radius: 0pt,
     left-border: true,

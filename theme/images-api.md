@@ -67,12 +67,16 @@ You can set deck-wide defaults in `lemonade-theme`:
 
 ```typst
 #show: lemonade-theme.with(
-  imgs-fill-height: true,
-  imgs-fill-pad: 0.5em,
+  imgs-config: (
+    fill-height: true,
+    fill-pad: 0.5em,
+    cap-size: 18pt,
+    cap-weight: "bold",
+  ),
 )
 ```
 
-After that, `#imgs(...)` will inherit `fill-height: true` unless a slide overrides it explicitly.
+After that, `#imgs(...)` will inherit those defaults unless a slide overrides them explicitly.
 
 Use per-slide override when needed:
 
@@ -152,7 +156,7 @@ Use this when you want stable, manual figure sizing.
 ```
 
 Use this on slides where text comes first and the figure should expand to use the rest of the page.
-If your whole deck mostly uses this mode, prefer the theme-level `imgs-fill-height: true`.
+If your whole deck mostly uses this mode, prefer the theme-level `imgs-config: (fill-height: true, ...)`.
 
 ## Behavior Notes
 

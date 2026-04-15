@@ -25,8 +25,15 @@
     body-title: 32pt,
     title: 44pt,
     slide-title: 36pt,
-    section: 32pt,
+    section: 40pt,
     code: 20pt,
+)
+
+#let imgs-config = (
+    fill-height: false,
+    fill-pad: 0.5em,
+    cap-size: 18pt,
+    cap-weight: "bold",
 )
 
 // Global text/math spacing per aspect ratio.
@@ -47,6 +54,12 @@
 #let slide-layouts = (
     "16-9": (top: 0.75em, bottom: 0em, left: 2em, right: 1.5em),
     "4-3": (top: 0.75em, bottom: 0em, left: 1.5em, right: 1.5em),
+)
+
+// Match PowerPoint's standard slide canvases instead of Typst/Touying's smaller presentation papers.
+#let slide-page-sizes = (
+    "16-9": (width: 13.333in, height: 7.5in),
+    "4-3": (width: 10in, height: 7.5in),
 )
 
 #let fonts = (
@@ -96,21 +109,21 @@
 )
 
 #let light-box-styles = (
-    highlight: (fill: rgb("#fff8e1"), border: rgb("#f59e0b")),
-    info: (fill: rgb("#eff6ff"), border: rgb("#3b82f6")),
-    error: (fill: rgb("#fef2f2"), border: rgb("#ef4444")),
-    success: (fill: rgb("#f0fdf4"), border: rgb("#22c55e")),
-    neutral: (fill: rgb("#fafafa"), border: rgb("#737373")),
-    purple: (fill: rgb("#f6f3ff"), border: rgb("#8b5cf6")),
+    highlight: (fill: none, border: rgb("#f59e0b")),
+    info: (fill: none, border: rgb("#3b82f6")),
+    error: (fill: none, border: rgb("#ef4444")),
+    success: (fill: none, border: rgb("#22c55e")),
+    neutral: (fill: none, border: rgb("#737373")),
+    purple: (fill: none, border: rgb("#8b5cf6")),
 )
 
 #let dark-box-styles = (
-    highlight: (fill: rgb("#2A1C08"), border: rgb("#F59E0B")),
-    info: (fill: rgb("#0B2533"), border: dark-colors.link),
-    error: (fill: rgb("#2A0B0B"), border: rgb("#ef4444")),
-    success: (fill: rgb("#0B2414"), border: rgb("#22c55e")),
-    neutral: (fill: rgb("#141414"), border: dark-colors.neutral),
-    purple: (fill: rgb("#1A102A"), border: rgb("#8b5cf6")),
+    highlight: (fill: none, border: rgb("#F59E0B")),
+    info: (fill: none, border: dark-colors.link),
+    error: (fill: none, border: rgb("#ef4444")),
+    success: (fill: none, border: rgb("#22c55e")),
+    neutral: (fill: none, border: dark-colors.neutral),
+    purple: (fill: none, border: rgb("#8b5cf6")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.
@@ -129,8 +142,7 @@
 #let cur-box = state("lec-box", modes.light.box)
 #let cur-box-compact = state("lec-box-compact", false)
 #let cur-title-align = state("lec-title-align", "center")
-#let cur-imgs-fill-height = state("lec-imgs-fill-height", false)
-#let cur-imgs-fill-pad = state("lec-imgs-fill-pad", 0.5em)
+#let cur-imgs-config = state("lec-imgs-config", imgs-config)
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {

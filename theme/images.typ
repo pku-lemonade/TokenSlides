@@ -1,4 +1,4 @@
-#import "base.typ": fonts, font-sizes, bleed, slide-layouts, cur-ar, cur-imgs-fill-height, cur-imgs-fill-pad
+#import "base.typ": fonts, font-sizes, bleed, slide-layouts, cur-ar, cur-imgs-config
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -18,10 +18,19 @@
     dy: 1em
 ) = place(position, dx: dx, dy: dy)[
     #align(center)[
-        #if caption != none [
-            #text(font: fonts.mono, size: font-sizes.body, weight: "medium")[#caption]
-            #v(-0.8em)
-        ]
+        #if caption != none {
+            let imgs-config = cur-imgs-config.get()
+            let resolved-cap-size = imgs-config.at("cap-size")
+            let resolved-cap-weight = imgs-config.at("cap-weight")
+            [
+                #block(width: 100%)[
+                    #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
+                    #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
+                    #caption
+                ]
+                #v(-0.8em)
+            ]
+        }
         #if height == auto {
             image(path, width: width)
         } else {
@@ -45,8 +54,8 @@
     img-fit: "contain",
     fill-height: auto,
     fill-pad: auto,
-    cap-size: 18pt,
-    cap-weight: "medium",
+    cap-size: auto,
+    cap-weight: auto,
     cap-color: auto,
     cap-gap: 0.2em,
     border: none,
@@ -72,6 +81,27 @@
     for (i, w) in col-widths.enumerate() {
         cols.push(w)
         if i < count - 1 { cols.push(gap) }
+    }
+
+    let render-caption = caption => context {
+        let imgs-config = cur-imgs-config.get()
+        let resolved-cap-size = if cap-size == auto { imgs-config.at("cap-size") } else { cap-size }
+        let resolved-cap-weight = if cap-weight == auto { imgs-config.at("cap-weight") } else { cap-weight }
+        if cap-color == auto {
+            block(width: 100%)[
+                #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
+                // Keep inline code and wrapped lines on the same caption sizing path.
+                #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
+                #caption
+            ]
+        } else {
+            block(width: 100%)[
+                #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight, fill: cap-color)
+                // Keep inline code and wrapped lines on the same caption sizing path.
+                #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight, fill: cap-color)
+                #caption
+            ]
+        }
     }
 
     let single-image = resolved-height => {
@@ -130,11 +160,7 @@
             let item = parsed.at(0)
             if item.caption != none {
                 align(center)[
-                    #if cap-color == auto {
-                        text(font: fonts.mono, size: cap-size, weight: cap-weight)[#item.caption]
-                    } else {
-                        text(font: fonts.mono, size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
-                    }
+                    #render-caption(item.caption)
                 ]
             }
         } else {
@@ -143,11 +169,7 @@
                 align: (center,) * (count * 2 - 1),
                 ..parsed.enumerate().map(((i, item)) => {
                     let cell = if item.caption != none {
-                        if cap-color == auto {
-                            text(font: fonts.mono, size: cap-size, weight: cap-weight)[#item.caption]
-                        } else {
-                            text(font: fonts.mono, size: cap-size, weight: cap-weight, fill: cap-color)[#item.caption]
-                        }
+                        render-caption(item.caption)
                     } else { [] }
                     if i < count - 1 { (cell, []) } else { (cell,) }
                 }).flatten()
@@ -158,8 +180,9 @@
 
     let has-captions = parsed.any(it => it.caption != none)
     context {
-        let resolved-fill-height = if fill-height == auto { cur-imgs-fill-height.get() } else { fill-height }
-        let resolved-fill-pad = if fill-pad == auto { cur-imgs-fill-pad.get() } else { fill-pad }
+        let imgs-config = cur-imgs-config.get()
+        let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
+        let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
         let slide-margins = slide-layouts.at(cur-ar.get())
         let resolved-left-margin = measure(h(slide-margins.left)).width
         let resolved-right-margin = measure(h(slide-margins.right)).width
