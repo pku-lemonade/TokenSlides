@@ -15,12 +15,13 @@
         inset-right: 10pt,
         inset-top: 0.5em,
         inset-bottom: 0.5em,
-        box-spacing-above: 0.4em,
+        box-spacing-above: 0.3em,
         box-spacing-below: 0em,
     ),
     radius: 0pt,
     left-border: true,
-    border-width: 4pt,
+    border-width: 3pt,
+    frame-width: 0.6pt,
 )
 
 #let code-box-config = (
@@ -39,12 +40,19 @@
         // `compact: auto` inherits the file-level default from `lemonade-theme(box-compact: ...)`.
         let compact = if compact == auto { cur-box-compact.get() } else { compact }
         let style = cur-box.get().at(style-name)
+        let colors = cur-colors.get()
         let spacing-config = if compact { box-config.compact } else { box-config.normal }
         let border-width = box-config.border-width
+        let frame-width = box-config.frame-width
         let use-border = box-config.left-border
         let inset-left = if use-border { spacing-config.inset-left + border-width } else { spacing-config.inset-left }
         let stroke = if use-border {
-            (left: border-width + style.border)
+            (
+                left: border-width + style.border,
+                top: frame-width + colors.table-stroke,
+                right: frame-width + colors.table-stroke,
+                bottom: frame-width + colors.table-stroke,
+            )
         } else { none }
 
         block(
