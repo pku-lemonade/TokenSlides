@@ -32,15 +32,19 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 - Put the exact number and its implication in the same line when possible.
 - On figure slides, body text explains why the figure matters; the caption identifies what the figure is.
 - On figure-heavy slides, default to one or two short takeaway boxes; each box should preferably fit on one line and rarely exceed two.
+- Prefer one-line boxes when possible. If a box wraps, rewrite it before accepting the layout.
+- Prefer one-line captions. If a caption wraps, shorten it first; only then widen the figure block if figure readability is not harmed.
 - If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
 - In short takeaway boxes, prefer compact technical phrasing over long labels or code-like tokens when meaning can be preserved.
+- Treat low-information phrasing as layout debt. Cut obvious lead-ins such as `Figure 4 shows`, `the figure above`, `we can see that`, or `it can be observed that`.
 
 ## Avoid
 
 - process-narration openers such as `In this slide, we show ...`
 - rigid chronological scaffolding such as `First ... Then ... Finally ...`
 - unsupported praise such as `very significant` or `highly effective` without data
+- openers such as `Figure 3 shows ...` when the sentence can state the takeaway directly
 - body text that repeats the caption
 - figure-heavy pages that mix one takeaway box with a loose paragraph
 - long abstract-like paragraphs pasted onto a slide
@@ -62,6 +66,14 @@ Verbose:
 Better:
 
 - `The system decouples communication reuse from state management, which improves both latency and cache efficiency.`
+
+Verbose:
+
+- `Figure 9 shows the latency comparison under different workloads.`
+
+Better:
+
+- `Tokencake's latency advantage grows with load, which matches the memory-pressure thesis.`
 
 Verbose title:
 

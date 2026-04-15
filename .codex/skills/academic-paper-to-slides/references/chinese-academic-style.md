@@ -33,15 +33,19 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 - Put exact numbers and the corresponding conclusion in the same sentence when possible.
 - On figure slides, body text explains why the figure matters; the caption identifies what the figure is.
 - On figure-heavy slides, default to one or two short takeaway boxes; each box should preferably fit on one line and rarely exceed two.
+- 优先让 box 保持单行；如果换行，先重写句子，再考虑改版式。
+- 优先让 caption 保持单行；如果 caption 换行，先缩短文字，必要时再略微放宽图块宽度，但不要牺牲证据可读性。
 - If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
 - In short takeaway boxes, prefer compact Chinese phrasing over long mixed-language labels or code-like tokens when meaning can be preserved.
+- 把低信息量表述当作版面负担处理，优先删除诸如 `图 3 展示了`、`从图中可以看出`、`我们可以发现` 这类起手句。
 
 ## Avoid
 
 - process-narration openers such as `接下来我们来看`
 - rigid chronological scaffolding such as `本文首先...然后...最后...`
 - unsupported praise such as `非常重要` or `十分显著` without evidence
+- `图 X 展示了 ...` 这类可以直接改写为结论句的句式
 - body text that repeats the caption
 - figure-heavy pages that mix one takeaway box with a loose paragraph
 - long paragraphs that read like an abstract pasted onto a slide
@@ -63,6 +67,14 @@ Verbose:
 Better:
 
 - `系统将通信复用与差分存储解耦，实现了时延与显存的同时优化。`
+
+Verbose:
+
+- `图 9 展示了不同负载下的时延对比结果。`
+
+Better:
+
+- `负载越高，Tokencake 的时延优势越明显，说明收益来自显存压力场景。`
 
 Verbose title:
 

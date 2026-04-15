@@ -38,9 +38,10 @@ Avoid when:
 
 Notes:
 
-- Keep the stacked text tight. Each takeaway box should preferably fit on one wrapped line and should rarely exceed two.
+- Keep the stacked text tight. Each takeaway box should preferably fit on one line and should rarely exceed two.
 - Count total page budget, not only box count. The combined boxed text above the figure should usually stay within about 2 to 4 wrapped lines total.
 - Count the title and caption as part of the same visual budget. A long title plus two 2-line boxes is already close to the limit, so split the slide or recrop the evidence early.
+- Captions should preferably fit on one line. Shorten them before accepting a wrapped caption; only widen the figure block if the figure still reads well.
 - If the evidence turns into a thumbnail or narrow strip, change archetype, crop or split the figure, or split the slide.
 - The caption identifies the figure. The box carries the judgment.
 
@@ -80,7 +81,7 @@ Avoid when:
 Notes:
 
 - This is the default method slide for architecture papers in this repo.
-- Keep mechanism boxes terse. If 3 or 4 boxes cannot stay short, split the content into an overview slide and one or more mechanism slides.
+- Keep mechanism boxes terse and preferably single-line. If 3 or 4 boxes cannot stay short, split the content into an overview slide and one or more mechanism slides.
 - If the figure shrinks below readable size, switch to a wide figure page or split the method across two slides.
 
 ## 3. Two-Up Comparison
@@ -115,6 +116,7 @@ Avoid when:
 Notes:
 
 - Use symmetric captions and similar cropping.
+- Prefer one-line captions for both panels so the comparison reads as one unit.
 - Do not force several weakly related panels into one contact sheet just to keep them on one slide.
 - If one panel needs a different scale, do not force this archetype.
 
