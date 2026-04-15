@@ -42,7 +42,6 @@ class FigureSummary:
     trimmed_size: tuple[int, int]
     trim_bbox: tuple[int, int, int, int]
     required_crop_fraction: float
-    max_crop_fraction: float
     anchor: str
     background: str
     allow_upscale: bool
@@ -52,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Prepare a slide-ready figure by trimming outer margins, adding breathing "
-            "room, and then padding or cropping to a target canvas."
+            "room, and optionally fitting or padding to a target canvas."
         )
     )
     parser.add_argument("input", help="Source image path")
@@ -81,11 +80,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--mode",
-        choices=("smart", "pad", "fit", "none"),
-        default="smart",
+        choices=("trim", "fit", "pad"),
+        default="trim",
         help=(
-            "smart trims first, then uses fit only when the required crop is small; "
-            "otherwise it pads. Default: smart."
+            "trim removes outer whitespace/chrome without changing aspect ratio. "
+            "fit crops to the target aspect ratio. pad preserves all content on a fixed canvas."
         ),
     )
     parser.add_argument(
@@ -118,19 +117,10 @@ def parse_args() -> argparse.Namespace:
         help="Extra fixed pixels added back after trim. Default: 12.",
     )
     parser.add_argument(
-        "--max-crop",
-        type=float,
-        default=0.12,
-        help=(
-            "In smart mode, use crop-to-fit only when the required crop fraction is at "
-            "most this value. Default: 0.12."
-        ),
-    )
-    parser.add_argument(
         "--bleed",
         type=float,
         default=0.0,
-        help="Optional Pillow fit bleed value. Default: 0.",
+        help="Optional Pillow fit bleed value used only with --mode fit. Default: 0.",
     )
     parser.add_argument(
         "--allow-upscale",
@@ -301,38 +291,19 @@ def fit_to_canvas(
     centering: tuple[float, float],
     bleed: float,
     allow_upscale: bool,
-    background_rgba: tuple[int, int, int, int] | None,
-) -> tuple[Image.Image, str]:
+) -> Image.Image:
     scale = max(target_size[0] / image.width, target_size[1] / image.height)
     if scale > 1.0 and not allow_upscale:
-        return (pad_to_canvas(image, target_size, centering, background_rgba, allow_upscale), "pad-no-upscale")
-    fitted = ImageOps.fit(
+        raise SystemExit(
+            "fit would require raster upscaling; rerun with --allow-upscale or use --mode trim"
+        )
+    return ImageOps.fit(
         image,
         target_size,
         method=RESAMPLING,
         bleed=bleed,
         centering=centering,
     )
-    return (fitted, "fit")
-
-
-def choose_mode(
-    requested_mode: str,
-    trimmed_size: tuple[int, int],
-    target_size: tuple[int, int],
-    max_crop_fraction: float,
-    allow_upscale: bool,
-) -> tuple[str, float]:
-    crop_fraction = required_crop_fraction(trimmed_size, target_size)
-    if requested_mode != "smart":
-        return (requested_mode, crop_fraction)
-
-    scale = max(target_size[0] / trimmed_size[0], target_size[1] / trimmed_size[1])
-    if scale > 1.0 and not allow_upscale:
-        return ("pad", crop_fraction)
-    if crop_fraction <= max_crop_fraction:
-        return ("fit", crop_fraction)
-    return ("pad", crop_fraction)
 
 
 def label_tile(image: Image.Image, label: str, tile_size: tuple[int, int]) -> Image.Image:
@@ -405,29 +376,23 @@ def main() -> None:
     )
     trimmed = source.crop(trim_bbox)
     centering = ANCHORS[args.anchor]
-    mode, crop_fraction = choose_mode(
-        requested_mode=args.mode,
-        trimmed_size=trimmed.size,
-        target_size=target_size,
-        max_crop_fraction=args.max_crop,
-        allow_upscale=args.allow_upscale,
-    )
+    crop_fraction = required_crop_fraction(trimmed.size, target_size)
 
-    if mode == "none":
-        output = contain_without_upscale(trimmed, target_size, args.allow_upscale)
-        mode_applied = "none"
-    elif mode == "pad":
+    if args.mode == "trim":
+        output = trimmed
+        mode_applied = "trim"
+    elif args.mode == "pad":
         output = pad_to_canvas(trimmed, target_size, centering, background_rgba, args.allow_upscale)
         mode_applied = "pad"
     else:
-        output, mode_applied = fit_to_canvas(
+        output = fit_to_canvas(
             trimmed,
             target_size,
             centering,
             args.bleed,
             args.allow_upscale,
-            background_rgba,
         )
+        mode_applied = "fit"
 
     save_image(output, output_path)
     preview_path = save_preview(source, trimmed, output, output_path, mode_applied) if args.preview else None
@@ -443,7 +408,6 @@ def main() -> None:
         trimmed_size=trimmed.size,
         trim_bbox=trim_bbox,
         required_crop_fraction=round(crop_fraction, 4),
-        max_crop_fraction=args.max_crop,
         anchor=args.anchor,
         background=background_name,
         allow_upscale=args.allow_upscale,
