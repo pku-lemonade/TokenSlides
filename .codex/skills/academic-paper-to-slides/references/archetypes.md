@@ -1,0 +1,205 @@
+# Slide Archetypes
+
+Use a small set of reusable compositions. The goal is predictable, readable pages rather than one-off layouts.
+
+## Selection Rules
+
+- Default to simpler archetypes before inventing a custom composition.
+- On figure-led slides, keep the figure as the main evidence; the text explains why it matters.
+- Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.
+- If a slide still needs too many words after choosing an archetype, split the material across slides.
+
+## 1. Figure-Led Vertical
+
+Use when:
+
+- one result figure or one pair of comparable figures should dominate the page
+- the page only needs 1 or 2 short takeaways
+
+Avoid when:
+
+- the figure is horizontally wide and loses legibility when stacked
+- the slide needs 3 substantial text points
+
+```typst
+#ibox[
+  *Takeaway:* ...
+]
+
+#hbox[
+  *Key number:* ...
+]
+
+#imgs(
+  (asset("result.jpg"), [What the figure is]),
+  width: 90%,
+)
+```
+
+Notes:
+
+- Keep the stacked text tight. If the boxes above the figure grow past about four short lines, change archetype or split the slide.
+- The caption identifies the figure. The box carries the judgment.
+
+## 2. Method Overview Side-by-Side
+
+Use when:
+
+- one architecture or pipeline figure needs 3 or 4 short mechanism boxes
+- the figure is tall enough to live in a side column
+
+Avoid when:
+
+- the figure is horizontally wide
+- the boxes have turned into paragraphs
+
+```typst
+#grid(
+  columns: (1.05fr, 0.95fr),
+  gutter: 0.8em,
+  [
+    #ibox[*Core idea:* ...]
+    #hbox[*Step 1:* ...]
+    #nbox[*Step 2:* ...]
+    #sbox[*Step 3:* ...]
+  ],
+  [
+    #imgs(
+      (asset("overview.jpg"), [System overview]),
+      width: 100%,
+      fill-height: false,
+      cap-size: 16pt,
+    )
+  ],
+)
+```
+
+Notes:
+
+- This is the default method slide for architecture papers in this repo.
+- If the figure shrinks below readable size, switch to a wide figure page or split the method across two slides.
+
+## 3. Two-Up Comparison
+
+Use when:
+
+- two panels have similar visual importance
+- the comparison itself is the story: two workloads, two baselines, before/after
+
+Avoid when:
+
+- one panel is much denser than the other
+- one panel is only supporting evidence and does not deserve equal area
+
+```typst
+#ibox[
+  *Comparison:* ...
+]
+
+#hbox[
+  *Implication:* ...
+]
+
+#imgs(
+  (asset("left.jpg"), [Condition A]),
+  (asset("right.jpg"), [Condition B]),
+  width: 100%,
+  gap: 0.8em,
+)
+```
+
+Notes:
+
+- Use symmetric captions and similar cropping.
+- If one panel needs a different scale, do not force this archetype.
+
+## 4. Table-Led Structured Slide
+
+Use when:
+
+- the source material is regular and tabular: setup, baselines, schedules, progress, ablations
+- the user needs precise structured comparison
+
+Avoid when:
+
+- the main evidence is a figure
+- the table is becoming prose pasted into cells
+
+```typst
+#ibox[
+  *Setup:* ...
+]
+
+#table(
+  columns: (1fr, 2fr),
+  inset: 8pt,
+  align: (left, left),
+  [*Item*], [*Detail*],
+  [...], [...],
+  [...], [...],
+)
+```
+
+Notes:
+
+- If a figure must share the slide and becomes tiny, the slide failed. Replace the table with short boxes or split the material.
+- Prefer short noun phrases inside cells instead of paragraph-length explanations.
+
+## 5. Wide or Fat Evidence
+
+Use when:
+
+- the source figure is horizontally wide
+- the figure contains multiple horizontal stages or broad comparisons
+
+Avoid when:
+
+- the slide also needs a large table
+- the page needs dense explanatory text
+
+```typst
+#ibox[
+  *Main point:* ...
+]
+
+#imgs(
+  (asset("wide-figure.jpg"), [What the wide figure shows]),
+  width: 100%,
+)
+```
+
+Notes:
+
+- Lower the text budget before lowering the figure size.
+- If the figure still reads like a small footer illustration, crop tighter, change the evidence split, or dedicate another slide.
+
+## 6. Progress or Status Matrix
+
+Use when:
+
+- the deck is a proposal, midterm, progress report, or defense
+- the page needs to communicate status clearly and defensibly
+
+Avoid when:
+
+- the page should really be a method or results slide with evidence
+
+```typst
+#sbox[
+  *Stage summary:* ...
+]
+
+#table(
+  columns: (1.35fr, 0.8fr, 2fr),
+  inset: 8pt,
+  align: (left, left, left),
+  [*Work item*], [*Status*], [*Meaning*],
+  [...], [...], [...],
+  [...], [...], [...],
+)
+```
+
+Notes:
+
+- Match the reporting line the user wants to present.
+- Keep the table factual. Put interpretation in the summary box, not in the status cell.

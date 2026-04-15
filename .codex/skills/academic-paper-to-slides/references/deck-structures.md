@@ -1,5 +1,7 @@
 # Common Deck Structures
 
+Treat these as deck arcs, not literal one-slide-per-section templates. Convert the chosen arc into a slide map before writing Typst.
+
 ## 1. General Paper Talk
 
 Use when the user asks for a paper presentation, reading report, or seminar without a defense-specific context.
