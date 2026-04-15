@@ -191,7 +191,7 @@
 
         let wrap-image-body = (body, available-width) => {
             let full-slide-width = page.width - resolved-left-margin - resolved-right-margin
-            let use-bleed = available-width >= full-slide-width - 1pt
+            let use-bleed = available-width >= full-slide-width
 
             if use-bleed {
                 bleed(align(center)[#body])
