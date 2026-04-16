@@ -1,5 +1,7 @@
 # Slides theme (Typst)
 
+IMPORTANT: When unsure about Typst/Touying APIs, always use Context7 + web search.
+
 - Entry: `lemonade.typ` (re-exports `theme/lemonade.typ`)
 - `theme/lemonade.typ`: main theme wrapper; wires Touying config + global `set/show` rules
 - `theme/base.typ`: global knobs (font sizes, spacing, colors/fonts, mode choices) + runtime state (`cur-ar`, `cur-colors`, `cur-box`)
@@ -12,4 +14,4 @@
 - `theme/images.typ`: assets + `place-image` helpers + `imgs`
 - `theme/table.typ`: table styling (`apply-table-style`)
 - Validate: `typst compile --root . examples/<file>.typ /tmp/out.pdf`
-- API lookup: when unsure about Typst/Touying APIs, use Context7 + web search; also inspect local package sources under `~/Library/Caches/typst/packages/preview/` (e.g. `touying/0.6.1/src`)
+
