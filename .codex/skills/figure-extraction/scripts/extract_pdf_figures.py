@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -48,8 +49,22 @@ def clip_rect(rect, container):
     return clipped
 
 
+def clip_rect_to_vertical_band(rect, top: float, bottom: float, container):
+    fitz = fitz_module()
+    bounded = fitz.Rect(rect.x0, max(rect.y0, top), rect.x1, min(rect.y1, bottom))
+    return clip_rect(bounded, container)
+
+
 def rect_area(rect) -> float:
     return max(0.0, rect.x1 - rect.x0) * max(0.0, rect.y1 - rect.y0)
+
+
+def rect_width(rect) -> float:
+    return max(0.0, rect.x1 - rect.x0)
+
+
+def rect_height(rect) -> float:
+    return max(0.0, rect.y1 - rect.y0)
 
 
 def rect_to_list(rect) -> list[float]:
@@ -106,6 +121,37 @@ def compact_text(text: str, max_len: int = 96) -> str:
     return compact[: max_len - 1] + "..."
 
 
+def is_margin_line_number_block(rect, text: str, page_rect) -> bool:
+    stripped = text.strip()
+    if not stripped.isdigit() or len(stripped) > 5:
+        return False
+    page_width = max(1.0, rect_width(page_rect))
+    page_height = max(1.0, rect_height(page_rect))
+    near_left = rect.x1 <= page_rect.x0 + page_width * 0.08
+    near_right = rect.x0 >= page_rect.x1 - page_width * 0.08
+    return (near_left or near_right) and rect_width(rect) <= page_width * 0.04 and rect_height(rect) <= page_height * 0.03
+
+
+def is_running_header_or_footer_block(rect, text: str, page_rect) -> bool:
+    if not text:
+        return False
+    page_width = max(1.0, rect_width(page_rect))
+    page_height = max(1.0, rect_height(page_rect))
+    width_ratio = rect_width(rect) / page_width
+    top_band = rect.y1 <= page_rect.y0 + page_height * 0.10
+    bottom_band = rect.y0 >= page_rect.y1 - page_height * 0.06
+    if not (top_band or bottom_band):
+        return False
+    if width_ratio >= 0.55:
+        return True
+    return touches_page_edge(rect, page_rect, tolerance=4.0) >= 2 and width_ratio >= 0.3
+
+
+def looks_like_paper_caption(text: str) -> bool:
+    stripped = text.strip()
+    return bool(re.match(r"^(figure|fig\.|table)\s+\d+", stripped, flags=re.IGNORECASE))
+
+
 def page_text_blocks(page) -> list[dict[str, Any]]:
     page_rect = to_rect(page.rect)
     page_area = rect_area(page_rect)
@@ -121,18 +167,52 @@ def page_text_blocks(page) -> list[dict[str, Any]]:
             continue
         if rect_area(rect) / page_area > 0.25:
             continue
+        if is_margin_line_number_block(rect, text, page_rect):
+            continue
+        if is_running_header_or_footer_block(rect, text, page_rect):
+            continue
         blocks.append({"rect": rect, "text": text})
     return blocks
 
 
-def plausible_nearby_text_blocks(base_rect, text_blocks: list[dict[str, Any]], page_rect, margin: float) -> list[dict[str, Any]]:
+def page_caption_blocks(page) -> list[dict[str, Any]]:
+    page_rect = to_rect(page.rect)
+    blocks = []
+    for raw in page.get_text("blocks"):
+        if len(raw) < 5:
+            continue
+        text = compact_text(raw[4])
+        if not text or not looks_like_paper_caption(text):
+            continue
+        rect = clip_rect(to_rect(raw[:4]), page_rect)
+        if rect_area(rect) <= 0:
+            continue
+        blocks.append({"rect": rect, "text": text})
+    return blocks
+
+
+def plausible_nearby_text_blocks(
+    base_rect,
+    text_blocks: list[dict[str, Any]],
+    page_rect,
+    margin: float,
+    *,
+    band_top: float | None = None,
+    band_bottom: float | None = None,
+) -> list[dict[str, Any]]:
     page_width = max(1.0, page_rect.x1 - page_rect.x0)
     page_height = max(1.0, page_rect.y1 - page_rect.y0)
     base_width = max(1.0, base_rect.x1 - base_rect.x0)
     selected = []
     for block in text_blocks:
         rect = block["rect"]
+        if band_top is not None and rect.y1 <= band_top:
+            continue
+        if band_bottom is not None and rect.y0 >= band_bottom:
+            continue
         if not rects_touch_or_close(base_rect, rect, margin):
+            continue
+        if looks_like_paper_caption(block["text"]):
             continue
         width = rect.x1 - rect.x0
         height = rect.y1 - rect.y0
@@ -144,6 +224,16 @@ def plausible_nearby_text_blocks(base_rect, text_blocks: list[dict[str, Any]], p
             continue
         selected.append(block)
     return selected
+
+
+def horizontal_overlap_ratio(a, b) -> float:
+    overlap = min(a.x1, b.x1) - max(a.x0, b.x0)
+    if overlap <= 0:
+        return 0.0
+    denom = min(rect_width(a), rect_width(b))
+    if denom <= 0:
+        return 0.0
+    return overlap / denom
 
 
 def touches_page_edge(rect, page_rect, tolerance: float = 2.0) -> int:
@@ -202,7 +292,7 @@ def page_drawing_rects(page) -> list[Any]:
 def cluster_rects(rects: list[Any], tolerance: float = 6.0) -> list[dict[str, Any]]:
     clusters: list[dict[str, Any]] = []
     for rect in rects:
-        pending = {"rect": rect, "count": 1}
+        pending = {"rect": rect, "count": 1, "rects": [rect]}
         merged = True
         while merged:
             merged = False
@@ -211,12 +301,108 @@ def cluster_rects(rects: list[Any], tolerance: float = 6.0) -> list[dict[str, An
                 if rects_touch_or_close(pending["rect"], cluster["rect"], tolerance):
                     pending["rect"] = union_rect(pending["rect"], cluster["rect"])
                     pending["count"] += cluster["count"]
+                    pending["rects"].extend(cluster["rects"])
                     merged = True
                 else:
                     next_clusters.append(cluster)
             clusters = next_clusters
         clusters.append(pending)
     return clusters
+
+
+def core_cluster_rect(rects: list[Any], cluster_rect):
+    if not rects:
+        return cluster_rect
+    cluster_width = max(1.0, rect_width(cluster_rect))
+    cluster_height = max(1.0, rect_height(cluster_rect))
+    max_area = max(rect_area(rect) for rect in rects)
+    significant = [
+        rect
+        for rect in rects
+        if rect_area(rect) >= max_area * 0.08
+        or rect_width(rect) >= cluster_width * 0.25
+        or rect_height(rect) >= cluster_height * 0.25
+    ]
+    if not significant:
+        return cluster_rect
+    core = significant[0]
+    for rect in significant[1:]:
+        core = union_rect(core, rect)
+    if rect_area(core) < rect_area(cluster_rect) * 0.35:
+        return cluster_rect
+    return core
+
+
+def slice_cluster_by_captions(rects: list[Any], cluster_rect, caption_blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    cluster_area = rect_area(cluster_rect)
+    caption_gap = 2.0
+    relevant_captions = [
+        block
+        for block in caption_blocks
+        if horizontal_overlap_ratio(cluster_rect, block["rect"]) >= 0.35
+        and block["rect"].y0 <= cluster_rect.y1 + 24.0
+        and block["rect"].y1 >= cluster_rect.y0 - 24.0
+    ]
+    if not relevant_captions:
+        return [
+            {
+                "rect": cluster_rect,
+                "rects": rects,
+                "content_top": cluster_rect.y0,
+                "content_bottom": cluster_rect.y1,
+            }
+        ]
+
+    relevant_captions.sort(key=lambda block: block["rect"].y0)
+    slices = []
+    lower_bound = cluster_rect.y0
+    content_top = cluster_rect.y0
+    remaining_rects = rects[:]
+    for block in relevant_captions:
+        upper_bound = block["rect"].y0 + 2.0
+        band_rects = [rect for rect in remaining_rects if (rect.y0 + rect.y1) / 2.0 < upper_bound and rect.y1 >= lower_bound - 2.0]
+        if band_rects:
+            band_rect = band_rects[0]
+            for rect in band_rects[1:]:
+                band_rect = union_rect(band_rect, rect)
+            if rect_area(band_rect) >= cluster_area * 0.08:
+                slices.append(
+                    {
+                        "rect": band_rect,
+                        "rects": band_rects,
+                        "content_top": content_top,
+                        "content_bottom": max(content_top, block["rect"].y0 - caption_gap),
+                    }
+                )
+        lower_bound = max(lower_bound, block["rect"].y1 + caption_gap)
+        content_top = lower_bound
+        remaining_rects = [rect for rect in remaining_rects if rect not in band_rects]
+
+    trailing_rects = [rect for rect in remaining_rects if rect.y1 >= lower_bound - 2.0]
+    if trailing_rects:
+        trailing_rect = trailing_rects[0]
+        for rect in trailing_rects[1:]:
+            trailing_rect = union_rect(trailing_rect, rect)
+        if rect_area(trailing_rect) >= cluster_area * 0.08:
+            slices.append(
+                {
+                    "rect": trailing_rect,
+                    "rects": trailing_rects,
+                    "content_top": content_top,
+                    "content_bottom": cluster_rect.y1,
+                }
+            )
+
+    if len(slices) <= 1:
+        return [
+            {
+                "rect": cluster_rect,
+                "rects": rects,
+                "content_top": cluster_rect.y0,
+                "content_bottom": cluster_rect.y1,
+            }
+        ]
+    return slices
 
 
 def resolve_image_placement(page, xref: int, fallback_rect):
@@ -303,7 +489,12 @@ def build_image_candidates(page, drawing_rects: list[Any], text_blocks: list[dic
     return candidates
 
 
-def build_vector_candidates(page, drawing_rects: list[Any], text_blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def build_vector_candidates(
+    page,
+    drawing_rects: list[Any],
+    text_blocks: list[dict[str, Any]],
+    caption_blocks: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     page_rect = to_rect(page.rect)
     page_area = rect_area(page_rect)
     clusters = cluster_rects(drawing_rects, tolerance=6.0)
@@ -314,42 +505,57 @@ def build_vector_candidates(page, drawing_rects: list[Any], text_blocks: list[di
         cluster_area = rect_area(cluster_rect)
         if cluster_area <= 0 or (page_area and cluster_area / page_area > 0.95):
             continue
-        nearby_text = plausible_nearby_text_blocks(cluster_rect, text_blocks, page_rect, margin=14.0)
-        expanded_bbox = cluster_rect
-        for block in nearby_text:
-            expanded_bbox = union_rect(expanded_bbox, block["rect"])
-        expanded_bbox = clip_rect(expanded_bbox, page_rect)
-        area_ratio = rect_area(expanded_bbox) / page_area if page_area else 0.0
-        if area_ratio < 0.01:
-            continue
-        confidence = 0.25 + min(0.4, area_ratio * 0.8)
-        if touches_page_edge(expanded_bbox, page_rect) >= 3 and area_ratio > 0.75:
-            confidence -= 0.2
-        if cluster["count"] >= 3:
-            confidence += 0.05
-        confidence = max(0.05, min(0.9, confidence))
-        candidates.append(
-            {
-                "id": f"vector-{index}",
-                "kind": "vector",
-                "source": "drawings",
-                "page": page.number + 1,
-                "_bbox": expanded_bbox,
-                "_source_bbox": cluster_rect,
-                "xref": None,
-                "page_coverage": round(rect_area(expanded_bbox) / page_area, 4) if page_area else 0.0,
-                "confidence": round(confidence, 3),
-                "suggested_mode": "vector",
-                "drawing_rects": cluster["count"],
-                "nearby_text_blocks": len(nearby_text),
-                "nearby_text_preview": [block["text"] for block in nearby_text[:3]],
-                "reason": (
-                    f"vector cluster from {cluster['count']} drawing rect(s)"
-                    + (f" with {len(nearby_text)} nearby text block(s)" if nearby_text else "")
-                ),
-            }
-        )
-        index += 1
+        for slice_info in slice_cluster_by_captions(cluster["rects"], cluster_rect, caption_blocks):
+            slice_rect = clip_rect(slice_info["rect"], page_rect)
+            source_rect = clip_rect(core_cluster_rect(slice_info["rects"], slice_rect), page_rect)
+            content_top = max(slice_rect.y0, float(slice_info.get("content_top", slice_rect.y0)))
+            content_bottom = min(slice_rect.y1, float(slice_info.get("content_bottom", slice_rect.y1)))
+            source_rect = clip_rect_to_vertical_band(source_rect, content_top, content_bottom, page_rect)
+            if rect_area(source_rect) <= 0:
+                continue
+            nearby_text = plausible_nearby_text_blocks(
+                source_rect,
+                text_blocks,
+                page_rect,
+                margin=14.0,
+                band_top=content_top,
+                band_bottom=content_bottom,
+            )
+            expanded_bbox = source_rect
+            for block in nearby_text:
+                expanded_bbox = union_rect(expanded_bbox, block["rect"])
+            expanded_bbox = clip_rect_to_vertical_band(expanded_bbox, content_top, content_bottom, page_rect)
+            area_ratio = rect_area(expanded_bbox) / page_area if page_area else 0.0
+            if area_ratio < 0.01:
+                continue
+            confidence = 0.25 + min(0.4, area_ratio * 0.8)
+            if touches_page_edge(expanded_bbox, page_rect) >= 3 and area_ratio > 0.75:
+                confidence -= 0.2
+            if len(slice_info["rects"]) >= 3:
+                confidence += 0.05
+            confidence = max(0.05, min(0.9, confidence))
+            candidates.append(
+                {
+                    "id": f"vector-{index}",
+                    "kind": "vector",
+                    "source": "drawings",
+                    "page": page.number + 1,
+                    "_bbox": expanded_bbox,
+                    "_source_bbox": source_rect,
+                    "xref": None,
+                    "page_coverage": round(rect_area(expanded_bbox) / page_area, 4) if page_area else 0.0,
+                    "confidence": round(confidence, 3),
+                    "suggested_mode": "vector",
+                    "drawing_rects": len(slice_info["rects"]),
+                    "nearby_text_blocks": len(nearby_text),
+                    "nearby_text_preview": [block["text"] for block in nearby_text[:3]],
+                    "reason": (
+                        f"vector cluster from {len(slice_info['rects'])} drawing rect(s)"
+                        + (f" with {len(nearby_text)} nearby text block(s)" if nearby_text else "")
+                    ),
+                }
+            )
+            index += 1
     return candidates
 
 
@@ -366,15 +572,17 @@ def analyze_page(doc, page_number: int) -> dict[str, Any]:
     page = doc[page_number - 1]
     page_rect = to_rect(page.rect)
     text_blocks = page_text_blocks(page)
+    caption_blocks = page_caption_blocks(page)
     drawing_rects = page_drawing_rects(page)
     candidates = build_image_candidates(page, drawing_rects, text_blocks)
-    candidates.extend(build_vector_candidates(page, drawing_rects, text_blocks))
+    candidates.extend(build_vector_candidates(page, drawing_rects, text_blocks, caption_blocks))
     candidates.sort(key=lambda item: (item["confidence"], item["page_coverage"]), reverse=True)
     return {
         "page": page,
         "page_number": page_number,
         "page_rect": page_rect,
         "text_blocks": text_blocks,
+        "caption_blocks": caption_blocks,
         "drawing_rects": drawing_rects,
         "candidates": candidates,
     }
