@@ -1,6 +1,6 @@
 ---
 name: figure-extraction
-description: Recover reusable figure assets from PDFs and slide decks while preserving original embedded assets when possible. This workflow is owned by the `figure_extractor` agent when figure recovery is delegated from a larger task, and it can also be used directly when figure recovery itself is the task.
+description: Recovers reusable figure assets from paper PDFs and slide decks by inspecting pages and capturing raster, vector, or composite figure regions with the bundled helper script. Use when the user asks to extract, crop, or reuse figures from PDF or deck files, especially LaTeX-generated PDFs.
 ---
 
 # Figure Extraction
@@ -9,6 +9,15 @@ This skill is the operating procedure for `figure_extractor`.
 
 When a parent workflow delegates figure recovery, stay scoped to PDF inspection and asset recovery. Leave slide writing, narrative structure, and final layout choices to the parent agent. When figure recovery itself is the whole task, use the same workflow directly.
 
+## Quick Start
+
+- Use the bundled script as the default interface. Do not re-implement one-off PyMuPDF extraction logic inline unless you are debugging or extending the script itself.
+- Inspect first:
+  - `scripts/extract_pdf_figures.py inspect-page <file.pdf> --page N`
+- Capture second:
+  - `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`
+- If the script is missing a needed behavior, patch the script and then re-run it instead of bypassing it for a one-off extraction.
+
 ## Workflow
 
 1. Prefer the original source asset when it is available.
@@ -16,7 +25,8 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
    - If a parent workflow already chose the output workspace, write extracted assets into that workspace asset directory, not a shared catch-all folder.
 2. Inspect the PDF before extracting.
    - Run `scripts/extract_pdf_figures.py inspect-page <file.pdf> --page N`.
-   - Inspect the returned candidates and choose a bbox deliberately. Do not guess from page screenshots if the helper can localize the region.
+   - Treat the script output as the source of truth for candidate bboxes and capture mode.
+   - Choose a bbox deliberately. Do not guess from page screenshots if the helper can localize the region.
 3. Capture from a bbox, not from a whole-page render.
    - Run `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`.
    - `auto` preserves native raster bytes only when the bbox matches one displayed embedded image cleanly.
