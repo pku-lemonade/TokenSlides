@@ -47,7 +47,7 @@
 
 #let imgs(
     ..images,
-    width: 60%,
+    width: 100%,
     widths: auto,
     gap: 0em,
     valign: horizon,

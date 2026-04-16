@@ -8,6 +8,7 @@
 #import "images.typ": *
 
 #import "footer.typ": footer as footer-fn
+#import "grid.typ": apply-grid-style
 #import "slide.typ": slide
 #import "table.typ": apply-table-style
 #import "title.typ": title-slide
@@ -79,6 +80,7 @@
     cur-title-align.update(title-align)
     cur-imgs-config.update(resolved-imgs-config)
 
+    show: apply-grid-style
     show: apply-table-style.with(theme.colors)
     show: touying-slides.with(
         config-page(
