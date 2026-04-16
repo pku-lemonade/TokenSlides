@@ -19,16 +19,16 @@ Keep each paper's generated artifacts inside one paper workspace directory rathe
 
 Preferred layout:
 
-- `examples/<paper>/<paper>.typ`
-- `examples/<paper>/notes/asset-manifest.md`
-- `examples/<paper>/notes/brief.md`
-- `examples/<paper>/notes/slide-map.md`
-- `examples/<paper>/assets/...`
+- `out/<paper>/<paper>.typ`
+- `out/<paper>/notes/asset-manifest.md`
+- `out/<paper>/notes/brief.md`
+- `out/<paper>/notes/slide-map.md`
+- `out/<paper>/assets/...`
 
 Rules:
 
-- Default to one workspace directory per paper under `examples/`.
-- If two source PDFs would map to the same `<paper>` name, disambiguate the workspace directory with a short parent-folder prefix such as `examples/<parent>-<paper>/`.
+- Default to one workspace directory per paper under `out/`.
+- If two source PDFs would map to the same `<paper>` name, disambiguate the workspace directory with a short parent-folder prefix such as `out/<parent>-<paper>/`.
 - Keep briefs, slide maps, crops, and extracted figures inside that paper workspace instead of shared top-level folders.
 
 ## Workflow
@@ -41,7 +41,7 @@ Rules:
      - `references/chinese-academic-style.md`
      - `references/english-academic-style.md`
 2. Create the paper workspace.
-   - Create `examples/<paper>/notes/` and `examples/<paper>/assets/` before any extraction, briefing, or drafting work.
+   - Create `out/<paper>/notes/` and `out/<paper>/assets/` before any extraction, briefing, or drafting work.
    - Keep all generated notes and assets in that workspace namespace.
 3. Complete the planning artifacts checklist before writing Typst.
    - Copy this checklist and finish it in order:
@@ -62,7 +62,7 @@ Rules:
      - Delegate PDF or deck figure recovery to `figure_extractor`.
      - When you already know the figure number, page, or rough target region, pass that hint to `figure_extractor` and expect `bbox`, `primary_output`, and `preview_output` back.
      - Treat `figure_extractor` as script-first infrastructure. If figure recovery behavior is wrong, fix the extraction skill or script instead of adding parent-side PDF extraction workarounds.
-     - Record each recovered asset in `examples/<paper>/notes/asset-manifest.md`.
+     - Record each recovered asset in `out/<paper>/notes/asset-manifest.md`.
      - Keep all likely candidates in the manifest even if some will not be used later.
      - For each entry capture: figure or table identifier if known, source file, page number, `bbox`, capture kind, `primary_output`, `preview_output` if present, what claim or evidence the asset might support, and whether follow-up cleanup or additional sub-asset recovery is likely.
    - Paper brief:
