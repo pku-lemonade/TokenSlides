@@ -79,6 +79,7 @@
     cur-title-align.update(title-align)
     cur-imgs-config.update(resolved-imgs-config)
 
+    show: apply-table-style.with(theme.colors)
     show: touying-slides.with(
         config-page(
             paper: "presentation-" + aspect-ratio,
@@ -106,7 +107,6 @@
     set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: colors.fg)
     set par(spacing: spacing.par)
     set heading(numbering: numbly("{1}.", default: "1.1"))
-    apply-table-style(theme.colors)
     show math.equation: set text(font: fonts.math)
     show math.equation.where(block: true): set block(
         above: spacing.math-above,
