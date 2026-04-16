@@ -6,6 +6,7 @@ Use a small set of reusable compositions. The goal is predictable, readable page
 
 - Default to simpler archetypes before inventing a custom composition.
 - On figure-led slides, keep the figure as the main evidence; the text explains why it matters.
+- Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.
 - Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.
 - If a slide still needs too many words after choosing an archetype, split the material across slides.
 
@@ -50,11 +51,12 @@ Notes:
 Use when:
 
 - one architecture or pipeline figure needs 3 or 4 short mechanism boxes
-- the figure is tall enough to live in a side column
+- the figure is tall enough to live in a side column or can be cropped into a tall evidence slice
 
 Avoid when:
 
 - the figure is horizontally wide
+- the figure is so short that the side column turns into dead whitespace
 - the boxes have turned into paragraphs
 
 ```typst
@@ -82,7 +84,55 @@ Notes:
 
 - This is the default method slide for architecture papers in this repo.
 - Keep mechanism boxes terse and preferably single-line. If 3 or 4 boxes cannot stay short, split the content into an overview slide and one or more mechanism slides.
-- If the figure shrinks below readable size, switch to a wide figure page or split the method across two slides.
+- The evidence column should feel vertically intentional. One tall figure is good; one short centered figure floating in whitespace is not.
+- If the figure shrinks below readable size, first check whether the manifest already has another compatible asset or sub-asset from the same source. Then switch to a wide figure page, use the stacked-evidence variant below, or split the method across two slides.
+
+## 2b. Method Overview With Stacked Evidence
+
+Use when:
+
+- the method still benefits from text on the left and evidence on the right
+- the available evidence is short, wide, or naturally split into overview plus zoom
+- two related visuals together tell the mechanism better than one undersized side figure
+
+Avoid when:
+
+- the two right-column visuals are unrelated scraps collected only to fill space
+- either panel becomes a thumbnail
+
+```typst
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 0.8em,
+  [
+    #ibox[*Core idea:* ...]
+    #hbox[*Mechanism A:* ...]
+    #nbox[*Mechanism B:* ...]
+  ],
+  [
+    #imgs(
+      (asset("overview.jpg"), [Overall pipeline]),
+      width: 100%,
+      fill-height: false,
+    )
+    #v(0.6em)
+    #imgs(
+      (asset("zoom.jpg"), [Critical submodule or zoomed path]),
+      width: 100%,
+      fill-height: false,
+    )
+  ],
+)
+```
+
+Notes:
+
+- This is the preferred fallback when the default side-by-side method slide leaves a short figure stranded in whitespace.
+- Good right-column pairings include overview plus zoom, architecture plus operator table, or pipeline plus one critical stage.
+- Prefer already recovered assets or extraction-stage sub-assets over ad hoc late crops.
+- If only one source figure exists and no companion asset is available, try a tighter tall crop or extract a smaller reusable sub-asset from the source figure before falling back to post-processing cleanup.
+- Otherwise switch to `Wide or Fat Evidence` instead of faking a stack.
+- The stack should read as one argument, not two separate slides squeezed together.
 
 ## 3. Two-Up Comparison
 

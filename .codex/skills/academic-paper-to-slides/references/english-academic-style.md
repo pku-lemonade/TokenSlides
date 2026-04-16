@@ -16,6 +16,7 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 
 - Prefer short noun-phrase titles over sentence titles.
 - Keep titles tighter than body text; if a title wraps into a long line, shorten it instead of keeping the full claim.
+- On dense method or figure slides, prefer a one-line title. A two-line title is usually a sign that the page budget is already under pressure.
 - Avoid turning the title into the full takeaway sentence; put the judgment in the body box instead.
 
 ## Preferred Tone
@@ -35,6 +36,7 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 - Prefer one-line boxes when possible. If a box wraps, rewrite it before accepting the layout.
 - Prefer one-line captions. If a caption wraps, shorten it first; only then widen the figure block if figure readability is not harmed.
 - If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
+- If a long title causes the body to spill onto a continuation page, the title is already too long for that slide.
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
 - In short takeaway boxes, prefer compact technical phrasing over long labels or code-like tokens when meaning can be preserved.
 - Treat low-information phrasing as layout debt. Cut obvious lead-ins such as `Figure 4 shows`, `the figure above`, `we can see that`, or `it can be observed that`.

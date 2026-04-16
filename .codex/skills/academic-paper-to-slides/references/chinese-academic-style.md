@@ -16,6 +16,7 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 
 - Prefer short noun-phrase titles over sentence titles.
 - Keep titles tighter than body text; if a title wraps into a long line, shorten it instead of keeping the full claim.
+- 在证据密集的图页或方法页上，优先把标题控制在单行；一旦标题换成两行，通常说明整页预算已经过紧。
 - Remove filler or weak particles such as `了`, `可以`, `会`, `已经`, `正在` unless they change the meaning materially.
 - Avoid turning the title into the full takeaway sentence; put the judgment in the body box instead.
 
@@ -36,6 +37,7 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 - 优先让 box 保持单行；如果换行，先重写句子，再考虑改版式。
 - 优先让 caption 保持单行；如果 caption 换行，先缩短文字，必要时再略微放宽图块宽度，但不要牺牲证据可读性。
 - If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
+- 如果标题过长，已经把正文挤到续页，说明这页的标题本身就该先缩短。
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
 - In short takeaway boxes, prefer compact Chinese phrasing over long mixed-language labels or code-like tokens when meaning can be preserved.
 - 把低信息量表述当作版面负担处理，优先删除诸如 `图 3 展示了`、`从图中可以看出`、`我们可以发现` 这类起手句。
