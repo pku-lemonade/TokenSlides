@@ -15,16 +15,17 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
    - If the paper repo or deck assets already contain the figure file, use that directly instead of re-extracting from a PDF.
    - If a parent workflow already chose the output workspace, write extracted assets into that workspace asset directory, not a shared catch-all folder.
 2. Inspect the PDF before extracting.
-   - Run `scripts/extract_pdf_figures.py list <file.pdf>`.
-   - If the target page contains embedded images of plausible size, prefer direct extraction.
-3. Extract embedded images without re-rendering when possible.
-   - Run `scripts/extract_pdf_figures.py extract <file.pdf> --page N --outdir <dir>`.
-   - This uses `pdfimages`, which preserves embedded image data more faithfully than rendering the page.
-4. Render the page only when direct extraction is not the right tool.
-   - Use `scripts/extract_pdf_figures.py render-page <file.pdf> --page N --format svg --out <file>` for vector/page content.
-   - Use `--format png --dpi 300` or higher for raster output when SVG is not appropriate.
-5. Crop after extraction, not before.
-   - Once you have the best source asset, use `$academic-paper-to-slides` figure prep or `../academic-paper-to-slides/scripts/prepare_figure.py`.
+   - Run `scripts/extract_pdf_figures.py inspect-page <file.pdf> --page N`.
+   - Inspect the returned candidates and choose a bbox deliberately. Do not guess from page screenshots if the helper can localize the region.
+3. Capture from a bbox, not from a whole-page render.
+   - Run `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`.
+   - `auto` preserves native raster bytes only when the bbox matches one displayed embedded image cleanly.
+   - If the figure is vector or page-composed, the helper emits a cropped PDF as the primary asset and a PNG preview beside it.
+4. Prefer preserving the visible figure over forcing native extraction.
+   - If text, legends, axes, or overlays are separate page objects near the image, treat the figure as composite and keep the cropped PDF path.
+   - Do not downgrade composite or vector figures to a whole-page screenshot just because they are not standalone embedded images.
+5. Crop cleanup is still a separate follow-up step when needed.
+   - Once you have the best source asset, use `$academic-paper-to-slides` figure prep or `../academic-paper-to-slides/scripts/prepare_figure.py` only if the captured bbox still contains paper chrome or inconsistent margins.
 
 ## Ownership Boundary
 
@@ -34,15 +35,18 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 
 ## Routing Rules
 
-- If `pdfimages list` shows a matching embedded raster image, extract it directly.
-- If the figure is vector art, an included PDF page, or a composite page layout, render the page instead.
-- Do not use automatic extraction fallbacks by default. Choose extraction mode deliberately based on `list` output.
+- If `inspect-page` reports a high-confidence `raster` candidate and the requested bbox matches it closely, keep native raster bytes.
+- If `inspect-page` reports `vector` or `composite`, capture the bbox as cropped PDF and keep the PNG only as preview or compatibility output.
+- If the bbox intentionally cuts into a larger raster candidate, use `capture-figure --mode raster` and accept raster fallback instead of silently returning the full uncropped image.
+- Do not use whole-page rendering as the default fallback. The helper should return the best figure-sized region it can localize.
 
 ## Notes
 
-- `pdfimages` extracts embedded images, not arbitrary vector drawings.
-- `pdftocairo -svg` is the preferred path for single-page vector/page content when you need editable output.
+- This workflow is PyMuPDF-only. The helper depends on `pymupdf` and does not route through Poppler tools.
+- Cropped PDF is the preferred vector-preserving artifact for LaTeX, TikZ, and mixed raster+vector figures.
+- PNG preview output is for quick inspection and slide compatibility. It is not the preferred source of truth when a cropped PDF is available.
 - After extraction, keep scale bars, legends, subplot labels, and in-figure titles if they are part of how the figure is interpreted.
+- Parent agents should pass figure number, page hints, or a rough target description when they know them, and they should expect `bbox`, `primary_output`, and `preview_output` back from `figure_extractor`.
 
 ## References
 

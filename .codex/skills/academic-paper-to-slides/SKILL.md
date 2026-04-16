@@ -59,6 +59,7 @@ Rules:
    - Prefer the paper's own figures and tables over generated visuals.
    - Keep exact numbers intact.
    - If you need any figure recovery from a PDF or slide deck, spawn subagent `figure_extractor`. Do not run figure extraction inline from the parent slide-writing context.
+   - When you already know the figure number, page, or rough target region, pass that hint to `figure_extractor` and expect `bbox`, `primary_output`, and `preview_output` back.
    - Reorganize around claims, not the paper's section order.
    - If reused paper figures need cleanup, read `references/figure-prep.md` and run `scripts/prepare_figure.py` before layout work.
 3. Build the slide map.
