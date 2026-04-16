@@ -1,6 +1,6 @@
 ---
 name: academic-paper-to-slides
-description: Convert academic papers, preprints, and local PDF manuscripts into Typst slide decks in the local lemonade theme. Use when the user asks to draft, revise, or reorganize slides for paper readings, seminars, research overviews, proposal/midterm/final defenses, or similar academic talks.
+description: Builds Typst slide decks in the local lemonade theme from academic papers, preprints, and manuscript PDFs. Use when the user asks to draft, revise, or reorganize paper-reading, seminar, overview, or defense slides from paper content.
 ---
 
 # Academic Paper to Slides
@@ -60,6 +60,7 @@ Rules:
    - Keep exact numbers intact.
    - If you need any figure recovery from a PDF or slide deck, spawn subagent `figure_extractor`. Do not run figure extraction inline from the parent slide-writing context.
    - When you already know the figure number, page, or rough target region, pass that hint to `figure_extractor` and expect `bbox`, `primary_output`, and `preview_output` back.
+   - Treat `figure_extractor` as script-first infrastructure. If figure recovery behavior is wrong, fix the extraction skill or script instead of adding parent-side PDF extraction workarounds.
    - Reorganize around claims, not the paper's section order.
    - If reused paper figures need cleanup, read `references/figure-prep.md` and run `scripts/prepare_figure.py` before layout work.
 3. Build the slide map.
