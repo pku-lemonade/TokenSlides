@@ -24,6 +24,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
    - If the paper repo or deck assets already contain the figure file, use that directly instead of re-extracting from a PDF.
    - If a parent workflow already chose the output workspace, write extracted assets into that workspace asset directory, not a shared catch-all folder.
    - When the parent is doing an initial asset pass, recover each likely reusable visual into stable workspace paths so the parent can record them in a manifest.
+   - If one source figure obviously contains separable sub-assets that could support different slide layouts, recover those pieces during this pass instead of assuming the parent will crop them later by hand.
 2. Inspect the PDF before extracting.
    - Run `scripts/extract_pdf_figures.py inspect-page <file.pdf> --page N`.
    - Treat the script output as the source of truth for candidate bboxes and capture mode.
@@ -32,11 +33,12 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
    - Run `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`.
    - `auto` preserves native raster bytes only when the bbox matches one displayed embedded image cleanly.
    - If the figure is vector or page-composed, the helper emits a cropped PDF as the primary asset and a PNG preview beside it.
+   - When a figure has reusable top/bottom panels, left/right subpanels, or one overview plus one useful zoom, prefer capturing those as separate stable assets during extraction if they are likely to become independent evidence on slides.
 4. Prefer preserving the visible figure over forcing native extraction.
    - If text, legends, axes, or overlays are separate page objects near the image, treat the figure as composite and keep the cropped PDF path.
    - Do not downgrade composite or vector figures to a whole-page screenshot just because they are not standalone embedded images.
 5. Crop cleanup is still a separate follow-up step when needed.
-   - Once you have the best source asset, use `$academic-paper-to-slides` figure prep or `../academic-paper-to-slides/scripts/prepare_figure.py` only if the captured bbox still contains paper chrome or inconsistent margins.
+   - Once you have the best source asset, use `$academic-paper-to-slides` figure prep or `../academic-paper-to-slides/scripts/prepare_figure.py` only if the captured bbox still contains paper chrome or inconsistent margins and layout changes or already recovered sub-assets are not enough.
 
 ## Ownership Boundary
 
@@ -59,6 +61,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 - After extraction, keep scale bars, legends, subplot labels, and in-figure titles if they are part of how the figure is interpreted.
 - Parent agents should pass figure number, page hints, or a rough target description when they know them, and they should expect `bbox`, `primary_output`, and `preview_output` back from `figure_extractor`.
 - When supporting a parent asset manifest, also report enough context to transcribe the entry cleanly: source file, page number, capture kind, and whether follow-up crop cleanup is likely.
+- If you recover both a whole figure and smaller reusable sub-assets from the same source, report all of them explicitly so the parent can choose layouts based on what is already available.
 
 ## References
 
