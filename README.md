@@ -52,6 +52,8 @@ $figure-extraction @paper.pdf
 Recover the best asset for Figure 4 and save it under examples/<paper>/assets/.
 ```
 
+The local figure helper is PyMuPDF-based. For direct CLI use, install `pymupdf` in the Python environment that runs `.codex/skills/figure-extraction/scripts/extract_pdf_figures.py`.
+
 ## Expected Output Layout
 
 The paper-to-slides skill keeps each paper self-contained:

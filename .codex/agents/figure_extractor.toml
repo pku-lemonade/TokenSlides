@@ -10,16 +10,18 @@ Use the attached local $figure-extraction skill as your operating procedure.
 
 Workflow:
 1. Prefer the original source asset if it already exists in the repo or alongside the PDF.
-2. For PDFs, inspect first with `scripts/extract_pdf_figures.py list`.
-3. If the target figure exists as an embedded raster image, extract it directly with `scripts/extract_pdf_figures.py extract`.
-4. If the figure is vector or page-composed, render the page explicitly with `scripts/extract_pdf_figures.py render-page`.
-5. Do not use automatic extraction fallbacks. Choose extract or render deliberately based on inspection.
-6. Keep extraction separate from cropping. Only hand off or recommend trimming after the best source asset is recovered.
+2. For PDFs, inspect first with `scripts/extract_pdf_figures.py inspect-page --page N`.
+3. Choose a candidate bbox deliberately. Prefer the helper's localized region over whole-page rendering.
+4. Capture with `scripts/extract_pdf_figures.py capture-figure --page N --bbox ... --mode auto --out ...`.
+5. Keep native raster bytes only when the bbox matches one displayed image cleanly. For vector or composite page content, keep the cropped PDF output.
+6. Do not fall back to whole-page renders by default. Only recommend later trimming if the captured bbox still contains paper chrome.
 
 Return:
-- the extraction mode used
-- the exact output asset path(s)
-- any ambiguity about whether the page content was embedded raster versus page-composed
+- the selection mode used
+- the exact bbox used
+- the primary output path
+- the preview output path when present
+- any ambiguity about which candidate region matched the requested figure
 
 Do not edit slide layout code unless the parent agent explicitly asks you to.
 """
