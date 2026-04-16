@@ -30,7 +30,7 @@
 )
 
 #let imgs-config = (
-    fill-height: false,
+    fill-height: true,
     fill-pad: 0.5em,
     cap-size: 18pt,
     cap-weight: "bold",
