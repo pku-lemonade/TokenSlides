@@ -7,7 +7,7 @@ description: Recovers reusable figure assets from paper PDFs and slide decks by 
 
 This skill is the operating procedure for `figure_extractor`.
 
-When a parent workflow delegates figure recovery, stay scoped to PDF inspection and asset recovery. Leave slide writing, narrative structure, and final layout choices to the parent agent. When figure recovery itself is the whole task, use the same workflow directly.
+When a parent workflow delegates figure recovery, stay scoped to PDF inspection and asset recovery. Leave slide writing, narrative structure, and final layout choices to the parent agent. Parent workflows may use this skill either for one-off figure requests or for an early batch pass that prepares a paper workspace before briefing and drafting. When figure recovery itself is the whole task, use the same workflow directly.
 
 ## Quick Start
 
@@ -23,6 +23,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 1. Prefer the original source asset when it is available.
    - If the paper repo or deck assets already contain the figure file, use that directly instead of re-extracting from a PDF.
    - If a parent workflow already chose the output workspace, write extracted assets into that workspace asset directory, not a shared catch-all folder.
+   - When the parent is doing an initial asset pass, recover each likely reusable visual into stable workspace paths so the parent can record them in a manifest.
 2. Inspect the PDF before extracting.
    - Run `scripts/extract_pdf_figures.py inspect-page <file.pdf> --page N`.
    - Treat the script output as the source of truth for candidate bboxes and capture mode.
@@ -41,7 +42,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 
 - `figure_extractor` owns this workflow during delegated figure recovery.
 - Parent agents should delegate PDF or deck figure recovery here instead of carrying these instructions inline.
-- Stop after recovering the best reusable source asset and reporting exact output paths unless the parent task explicitly asks for further cleanup.
+- Stop after recovering the best reusable source asset and reporting manifest-ready metadata unless the parent task explicitly asks for further cleanup.
 
 ## Routing Rules
 
@@ -57,6 +58,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 - PNG preview output is for quick inspection and slide compatibility. It is not the preferred source of truth when a cropped PDF is available.
 - After extraction, keep scale bars, legends, subplot labels, and in-figure titles if they are part of how the figure is interpreted.
 - Parent agents should pass figure number, page hints, or a rough target description when they know them, and they should expect `bbox`, `primary_output`, and `preview_output` back from `figure_extractor`.
+- When supporting a parent asset manifest, also report enough context to transcribe the entry cleanly: source file, page number, capture kind, and whether follow-up crop cleanup is likely.
 
 ## References
 
