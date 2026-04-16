@@ -4,7 +4,7 @@
 
 // CONFIG
 #let table-config = (
-    text-size: 18pt,
+    text-size: 20pt,
     stroke-width: 1pt,
     spacing-above: 0em,
     spacing-below: 0.3em,
