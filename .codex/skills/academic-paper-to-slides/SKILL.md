@@ -20,6 +20,7 @@ Keep each paper's generated artifacts inside one paper workspace directory rathe
 Preferred layout:
 
 - `out/<paper>/<paper>.typ`
+- `out/<paper>/notes/source.txt`
 - `out/<paper>/notes/asset-manifest.md`
 - `out/<paper>/notes/brief.md`
 - `out/<paper>/notes/slide-map.md`
@@ -47,12 +48,17 @@ Rules:
    - Copy this checklist and finish it in order:
      ```
      Artifact Progress:
+     - [ ] Extract paper text to `notes/source.txt`
      - [ ] Recover likely visuals and write `notes/asset-manifest.md`
      - [ ] Write `notes/brief.md` from the paper text and manifest
      - [ ] Write `notes/slide-map.md` with evidence and archetypes
      ```
-   - Produce these files in order: `notes/asset-manifest.md`, `notes/brief.md`, then `notes/slide-map.md`.
+   - Produce these files in order: `notes/source.txt`, `notes/asset-manifest.md`, `notes/brief.md`, then `notes/slide-map.md`.
    - Keep this as one planning phase. Finish all three artifacts before drafting slides.
+   - Source text:
+     - Save a reproducible plain-text extraction of the paper to `out/<paper>/notes/source.txt`.
+     - Prefer a layout-preserving extraction such as `pdftotext -layout` when available.
+     - Treat `notes/source.txt` as the audit trail for exact wording and numbers used in the brief and slides.
    - Asset manifest:
      - Start with an initial asset recovery pass.
      - Prefer the paper's own figures and tables over generated visuals.
@@ -62,6 +68,8 @@ Rules:
      - Delegate PDF or deck figure recovery to `figure_extractor`.
      - When you already know the figure number, page, or rough target region, pass that hint to `figure_extractor` and expect `bbox`, `primary_output`, and `preview_output` back.
      - Treat `figure_extractor` as script-first infrastructure. If figure recovery behavior is wrong, fix the extraction skill or script instead of adding parent-side PDF extraction workarounds.
+     - When `inspect-page` reveals several image candidates on one page, recover the likely reusable sub-assets as stable files during this pass instead of only capturing the whole figure group.
+     - Prefer candidate-level recovery for obvious left/right or top/bottom panels so later slide planning can reuse them without manual bbox work.
      - Record each recovered asset in `out/<paper>/notes/asset-manifest.md`.
      - Keep all likely candidates in the manifest even if some will not be used later.
      - For each entry capture: figure or table identifier if known, source file, page number, `bbox`, capture kind, `primary_output`, `preview_output` if present, what claim or evidence the asset might support, and whether follow-up cleanup or additional sub-asset recovery is likely.

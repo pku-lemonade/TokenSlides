@@ -7,6 +7,7 @@ Use this rubric after the deck compiles. A slide that technically compiles can s
 - `typst compile --root . <deck>.typ <out.pdf>` succeeds.
 - The deck has no accidental continuation pages, especially title-only pages or orphaned body fragments created by overflow.
 - The outline and footer still render correctly.
+- Footer metadata does not wrap, clip, or collide with the counter; long author or institution strings must still produce a stable one-line footer or trigger a theme-level fix.
 
 ## Story Pass
 
