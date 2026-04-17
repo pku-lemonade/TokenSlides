@@ -6,7 +6,7 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageColor, ImageDraw, ImageFont, ImageOps, ImageStat
+from PIL import Image, ImageChops, ImageColor, ImageOps, ImageStat
 
 
 RESAMPLING = Image.Resampling.LANCZOS
@@ -34,7 +34,6 @@ ANCHORS = {
 class FigureSummary:
     input: str
     output: str
-    preview: str | None
     mode_requested: str
     mode_applied: str
     target_size: tuple[int, int]
@@ -58,11 +57,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         help="Output image path. Defaults to <input>-prepared.png next to the input.",
-    )
-    parser.add_argument(
-        "--preview",
-        action="store_true",
-        help="Write a three-panel preview sheet beside the output image.",
     )
     parser.add_argument(
         "--summary-json",
@@ -306,44 +300,6 @@ def fit_to_canvas(
     )
 
 
-def label_tile(image: Image.Image, label: str, tile_size: tuple[int, int]) -> Image.Image:
-    tile = Image.new("RGBA", tile_size, (248, 248, 248, 255))
-    framed = ImageOps.pad(image.convert("RGBA"), (tile_size[0] - 24, tile_size[1] - 56), color=(255, 255, 255, 255))
-    tile.alpha_composite(framed, (12, 12))
-    draw = ImageDraw.Draw(tile)
-    draw.rectangle((0, tile_size[1] - 36, tile_size[0], tile_size[1]), fill=(238, 238, 238, 255))
-    draw.text((12, tile_size[1] - 28), label, fill=(0, 0, 0, 255), font=ImageFont.load_default())
-    return tile
-
-
-def save_preview(
-    original: Image.Image,
-    trimmed: Image.Image,
-    output: Image.Image,
-    output_path: Path,
-    mode_applied: str,
-) -> Path:
-    tile_size = (420, 260)
-    gutter = 16
-    labels = (
-        ("original", original),
-        ("trimmed", trimmed),
-        (mode_applied, output),
-    )
-    tiles = [label_tile(image, label, tile_size) for label, image in labels]
-    canvas = Image.new(
-        "RGBA",
-        (len(tiles) * tile_size[0] + (len(tiles) - 1) * gutter, tile_size[1]),
-        (255, 255, 255, 255),
-    )
-    for index, tile in enumerate(tiles):
-        canvas.alpha_composite(tile, (index * (tile_size[0] + gutter), 0))
-
-    preview_path = output_path.with_name(output_path.stem + "-preview.jpg")
-    canvas.convert("RGB").save(preview_path, quality=92)
-    return preview_path
-
-
 def default_output_path(input_path: Path) -> Path:
     return input_path.with_name(input_path.stem + "-prepared.png")
 
@@ -395,12 +351,9 @@ def main() -> None:
         mode_applied = "fit"
 
     save_image(output, output_path)
-    preview_path = save_preview(source, trimmed, output, output_path, mode_applied) if args.preview else None
-
     summary = FigureSummary(
         input=str(input_path),
         output=str(output_path),
-        preview=str(preview_path) if preview_path else None,
         mode_requested=args.mode,
         mode_applied=mode_applied,
         target_size=target_size,

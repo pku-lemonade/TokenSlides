@@ -31,14 +31,12 @@ Use `scripts/prepare_figure.py` to make figure handling reproducible.
 - supports explicit `fit` when you deliberately want target-aspect cropping
 - supports explicit `pad` when you deliberately want a fixed canvas
 - can bias the crop toward `top`, `bottom`, `left`, or `right` when labels sit near one edge
-- can write a preview sheet showing `original`, `trimmed`, and `final`
 
 ### Default Behavior
 
 ```bash
 python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
-  path/to/figure.png \
-  --preview
+  path/to/figure.png
 ```
 
 Default settings:
@@ -56,8 +54,7 @@ Wide slide figure:
 ```bash
 python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
   figure.png \
-  --preset wide \
-  --preview
+  --preset wide
 ```
 
 4:3 or table-style slide:
@@ -65,8 +62,7 @@ python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
 ```bash
 python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
   figure.png \
-  --preset standard \
-  --preview
+  --preset standard
 ```
 
 Protect bottom labels or legends:
@@ -74,8 +70,7 @@ Protect bottom labels or legends:
 ```bash
 python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
   figure.png \
-  --anchor bottom \
-  --preview
+  --anchor bottom
 ```
 
 Force padding into a fixed canvas:
@@ -83,8 +78,7 @@ Force padding into a fixed canvas:
 ```bash
 python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
   figure.png \
-  --mode pad \
-  --preview
+  --mode pad
 ```
 
 Force aspect-ratio crop:
@@ -92,8 +86,7 @@ Force aspect-ratio crop:
 ```bash
 python3 .codex/skills/academic-paper-to-slides/scripts/prepare_figure.py \
   figure.png \
-  --mode fit \
-  --preview
+  --mode fit
 ```
 
 ### How To Read the Result

@@ -75,14 +75,14 @@ Compile a deck directly:
 typst compile --root . out/<paper>/<paper>.typ /tmp/out.pdf
 ```
 
-Use the repo helper when you also want preview images:
+Use the repo helper when you want a validation PDF in a stable temp location:
 
 ```bash
 bash .codex/skills/academic-paper-to-slides/scripts/validate_deck.sh \
   out/<paper>/<paper>.typ
 ```
 
-The validation helper writes the PDF and page previews under `/tmp/academic-paper-to-slides/` by default.
+The validation helper writes the PDF under `/tmp/academic-paper-to-slides/` by default.
 
 ## Theme Conventions Codex Follows
 

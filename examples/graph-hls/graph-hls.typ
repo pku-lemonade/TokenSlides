@@ -20,7 +20,7 @@
   ),
 )
 
-#let asset(name) = image("assets/" + name + "-preview.png")
+#let asset(name) = image("assets/" + name + ".pdf")
 
 #title-slide()
 
