@@ -127,10 +127,21 @@ The validation helper writes the PDF and page previews under `/tmp/academic-pape
 ]
 
 #imgs(
-  ("/out/paper/assets/figure.png", [Short caption]),
+  (image("assets/figure.png"), [Short caption]),
   width: 80%,
 )
 ```
+
+## VS Code Workspace Defaults
+
+The repo ships shared VS Code workspace settings in `.vscode/`:
+
+- recommends the Tinymist extension
+- formats Typst with Tinymist / Typstyle on save
+- runs Tinymist lint on save
+- stores pasted or dragged images under `assets/` next to the current deck file
+
+For local edits, use relative paths such as `image("assets/figure.png")`. The shared `#imgs(...)` helper accepts preloaded `image(...)` content so the file still resolves relative to the deck file instead of the theme package.
 
 ## Where To Edit
 

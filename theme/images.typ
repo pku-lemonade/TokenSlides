@@ -69,11 +69,31 @@
 
     let parsed = items.map(item => {
         if type(item) == array {
-            (path: item.at(0), caption: item.at(1, default: none))
+            (source: item.at(0), caption: item.at(1, default: none))
         } else {
-            (path: item, caption: none)
+            (source: item, caption: none)
         }
     })
+
+    let render-image = (source, resolved-width, resolved-height) => {
+        if type(source) == str or type(source) == bytes {
+            if resolved-height == auto {
+                image(source, width: resolved-width)
+            } else {
+                image(source, width: resolved-width, height: resolved-height, fit: img-fit)
+            }
+        } else {
+            block(width: resolved-width)[
+                #if resolved-height == auto [
+                    #set image(width: 100%)
+                    #source
+                ] else [
+                    #set image(width: 100%, height: resolved-height, fit: img-fit)
+                    #source
+                ]
+            ]
+        }
+    }
 
     let col-widths = if widths == auto {
         range(count).map(_ => 1fr)
@@ -108,11 +128,8 @@
 
     let single-image = resolved-height => {
         let item = parsed.at(0)
-        let img = if resolved-height == auto {
-            image(item.path, width: img-width)
-        } else {
-            image(item.path, width: 100%, height: resolved-height, fit: img-fit)
-        }
+        let resolved-width = if resolved-height == auto { img-width } else { 100% }
+        let img = render-image(item.source, resolved-width, resolved-height)
         let cell = if border != none {
             box(
                 stroke: border,
@@ -138,11 +155,7 @@
                 ..parsed.enumerate().map(((i, item)) => {
                     // Fit images to their grid cell width by default to avoid overflow across pages.
                     // (Slide decks prioritize predictable layout over intrinsic image sizing.)
-                    let img = if resolved-height == auto {
-                        image(item.path, width: img-width)
-                    } else {
-                        image(item.path, width: img-width, height: resolved-height, fit: img-fit)
-                    }
+                    let img = render-image(item.source, img-width, resolved-height)
                     let cell = if border != none {
                         box(
                             stroke: border,
