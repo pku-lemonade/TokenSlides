@@ -5,6 +5,7 @@ Use a small set of reusable compositions. The goal is predictable, readable page
 ## Selection Rules
 
 - Default to simpler archetypes before inventing a custom composition.
+- Choose by rendered geometry, not by semantic label alone. A figure called `overview`, `workflow`, or `pipeline` still belongs in a side column if the recovered asset is portrait-oriented or vertically stacked.
 - On figure-led slides, keep the figure as the main evidence; the text explains why it matters.
 - Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.
 - Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.
@@ -49,7 +50,7 @@ Notes:
 
 Use when:
 
-- one architecture or pipeline figure needs 3 or 4 short mechanism boxes
+- one architecture or pipeline figure needs 2 to 4 short mechanism boxes
 - the figure is tall enough to live in a side column or can be cropped into a tall evidence slice
 
 Avoid when:
@@ -80,6 +81,7 @@ Avoid when:
 Notes:
 
 - This is the default method slide for architecture papers in this repo.
+- Use this even for a composite `workflow + operator summary` figure when the recovered asset is tall or thin and the text budget is still short. Do not switch to `Wide or Fat Evidence` just because the figure is an overview page.
 - Keep mechanism boxes terse and preferably single-line. If 3 or 4 boxes cannot stay short, split the content into an overview slide and one or more mechanism slides.
 - The evidence column should feel vertically intentional. One tall figure is good; one short centered figure floating in whitespace is not.
 - If the figure shrinks below readable size, first check whether the manifest already has another compatible asset or sub-asset from the same source. Then switch to a wide figure page, use the stacked-evidence variant below, or split the method across two slides.
@@ -262,6 +264,8 @@ Avoid when:
 
 - the slide also needs a large table
 - the page needs dense explanatory text
+- the recovered figure is portrait-oriented, tall-thin, or vertically stacked enough to live comfortably in a side column
+- the only reason to choose this archetype is that the figure is semantically an `overview` or `workflow`
 
 ```typst
 #ibox[
@@ -276,6 +280,7 @@ Avoid when:
 Notes:
 
 - Lower the text budget before lowering the figure size.
+- This archetype is for actual width-dominant evidence. It is not the default for all overview figures.
 - If the figure still reads like a small footer illustration, crop tighter, change the evidence split, or dedicate another slide.
 
 ## 6. Progress or Status Matrix
