@@ -1,0 +1,835 @@
+        GAMMA: Automating the HW Mapping of DNN Models on
+                Accelerators via Genetic Algorithm
+                                 Sheng-Chun Kao                                                                                        Tushar Krishna
+                        Georgia Institute of Technology                                                                Georgia Institute of Technology
+                              felix@gatech.edu                                                                            tushar@ece.gatech.edu
+                                                                                                           S                                                X                               Y
+ABSTRACT                                                                                          C
+                                                                                                               R                  X’
+                                                                                                                                                    For
+                                                                                                                                                    K1
+                                                                                                                                                                       Y
+                                                                                                                                                                                  C    PE       PE
+                                                                                                      K1                                              C
+
+
+
+
+                                                                                                                                                                                                     SG
+DNN layers are multi-dimensional loops that can be ordered, tiled,                                                        Y            Y’
+                                                                                                      K2                                                                               PE       PE
+and scheduled in myriad ways across space and time on DNN                                     K                                                                    L1-mapper            2D PE array       SL
+
+
+
+
+                                                                                                                                        L3-mapper
+accelerators. Each of these choices is called a mapping. It has been                                               X                                 L2-mapper                K             Y
+
+
+
+
+                                                                                                                              …
+                                                                                                                                                                                                          MAC
+shown that the mapping plays an extremely crucial role in overall                                                                                   For                           C                       ⊗⊕
+                                                                                                                                                    K2                                 PE       PE
+
+
+
+
+                                                                                                      …
+                                                                                                               Input      Output                                                                           PE
+performance and efficiency, as it directly determines the amount of
+
+
+
+
+                                                                                                                                                                                                     SG
+                                                                                                  Weight
+                                                                                                               Activation Activation                                                   PE       PE
+reuse that the accelerator can leverage from the DNN. Moreover,
+                                                                                                                                                     L2-mapper    L1-mapper             2D PE array
+instead of using a fixed mapping for every DNN layer, research has                                (a) CONV and its notation                         (b) A 3-level Mapper          (c) The physical mapping
+revealed the benefit of optimizing per-layer mappings. However,
+                                                                                              Figure 1: (a) The six dimensions of a CONV operation. K: output
+determining the right mapping, given an accelerator and layer is still                        channels, C: input channels, Y: input height, X: input width, R: fil-
+an open question. The immense space of mappings (or map-space)                                ter height, S: filter width, Y’: output height, X’: output width. (b)
+makes brute-forced exhaustive search methods unapproachable. In                               A 3-level mapping example on input activations. Each level repre-
+this paper, we propose a domain-specific genetic algorithm-based                              sents parallelism across a spatial dimension of the accelerator. (c)
+method, GAMMA, which is specially designed for this HW-mapping                                Physical mapping on accelerator. The L1-mapper parallelizes dim
+problem. In contrast to prior works that either target simple rigid                           C across rows, L2-mapper parallelizes dim Y across cols, and L3-
+accelerators with a limited map-space or choose from a restricted                             mapper parallelizes dim K across multiple arrays.
+set of mappings, we construct an extremely flexible map-space                                 recommendation systems. However, DNNs are often strictly con-
+and show that GAMMA can explore the space and determine an                                    strained by end-to-end latency or energy. This has opened up ex-
+optimized mapping with high sample efficiency. We quantitatively                              tensive research on computationally efficient DNN models [44, 59]
+compare GAMMA with many popular optimization methods and                                      and inference hardware accelerators [1, 10, 15, 25, 30].
+observe GAMMA consistently finds better solutions.                                                The architecture of DNN accelerators is determined by two key
+                                                                                              components: HW resources and HW mapping strategy. The HW
+CCS CONCEPTS                                                                                  resources (Fig. 1(c)) comprise of the total on-chip compute (hereby
+• Hardware → Hardware accelerators.                                                           referred to as “PEs"), local scratchpad (SL) buffer in each PE, a global
+                                                                                              scratchpad (SG), and a network on chip (NoC) connecting them.
+KEYWORDS                                                                                      The HW mapping strategy comprises of the tile sizes, computation
+                                                                                              order, and parallelization strategy (Fig. 1(b)). The design of compu-
+Genetic Algorithm, ML accelerator, Reconfigurable device
+                                                                                              tation order and parallelization strategy is also known as dataflow
+ACM Reference Format:                                                                         [10, 31]. The HW mapping and/or the HW resources are either
+Sheng-Chun Kao and Tushar Krishna. 2020. GAMMA: Automating the                                fixed at design-time [1, 10, 15], or can be tuned at compile time
+HW Mapping of DNN Models on Accelerators via Genetic Algorithm. In                            (if the accelerator is reconfigurable, such as CGRA-based [30, 62]
+IEEE/ACM International Conference on Computer-Aided Design (ICCAD ’20),
+                                                                                              or FPGA [68]). The architectures are often designed based on the
+November 2–5, 2020, Virtual Event, USA. ACM, New York, NY, USA, 9 pages.
+https://doi.org/10.1145/3400302.3415639
+                                                                                              expected dimensions and shapes of the DNNs and heuristics. For
+                                                                                              example, the NVDLA [1] dataflow keeps weights stationary at PEs
+1     INTRODUCTION                                                                            and parallelizes across input channels and output channels, opti-
+Deep neural networks (DNNs) are being deployed into many real-                                mizing for mid and late layers of many CNNs like ResNet [21] that
+time applications such as autonomous driving, mobile VR/AR, and                               exhibit this property. The Eyeriss [10] dataflow parallelizes across
+                                                                                              the activation and filter rows and keeps filter rows stationary.
+This work was supported by NSF Award 1909900. We thank Hyoukjun Kwon for help
+with MAESTRO setup and feedback on the paper.
+                                                                                                  Prior research [31, 35, 63, 68] has shown that there are no map-
+                                                                                              ping strategies that can be efficient across all the layers of a DNN
+Permission to make digital or hard copies of all or part of this work for personal or         model. To exploit the benefit of different mappings, in this paper,
+classroom use is granted without fee provided that copies are not made or distributed         we consider accelerators where the number of PEs and buffer sizes
+for profit or commercial advantage and that copies bear this notice and the full citation
+on the first page. Copyrights for components of this work owned by others than ACM            are fixed at design time, but the mapping can be configured at
+must be honored. Abstracting with credit is permitted. To copy otherwise, or republish,       compile-time for each layer. The goal is to find the HW mapping
+to post on servers or to redistribute to lists, requires prior specific permission and/or a
+fee. Request permissions from permissions@acm.org.
+                                                                                              for each layer of DNN models that optimizes the objective (min.
+ICCAD ’20, November 2–5, 2020, Virtual Event, USA                                             latency/ energy).
+© 2020 Association for Computing Machinery.                                                       Although multiple prior works [3, 14, 28, 29, 32, 34, 39, 53, 65,
+ACM ISBN 978-1-4503-8026-3/20/11. . . $15.00
+https://doi.org/10.1145/3400302.3415639
+                                                                                              68] have studied the mapping problem for DNN accelerators, the
+ICCAD ’20, November 2–5, 2020, Virtual Event, USA                                                                 Sheng-Chun Kao and Tushar Krishna
+
+
+HW-mapping search space (exceeding 𝑂 (1036 ) even for a single                an end-to-end workflow, which generates outputs compatible
+layer of a DNN, as shown later in Section 2.6) makes the problem              with an open-source cost model [2]. We will open-source the
+highly challenging. To cope with this challenge, most prior works             GAMMA infrastructure after the paper gets published.
+restrict the search space. For e.g., coarse-grained strided exhaustive        The paper is organized as follows. Section 2 provides relevant
+search [33, 47, 52, 54, 56], random search [35], fixed parallelism [32,    background on DNN accelerators and optimization methods; Sec-
+34, 52, 54, 56, 68], or limited search for tile sizes for one or more      tion 4 describes GAMMA; Section 5 presents comprehensive evalu-
+fixed dataflows [33, 66]). Alternately, ML-based search techniques         ations; Section 6 discusses related works and Section 7 concludes.
+have also been leveraged for guided search to increase sampling
+efficiency [4, 8, 41, 61]; however, they need to restrict some aspects     2 BACKGROUND AND MOTIVATION
+of the mapping space (e.g., fixing the parallelism levels) to adapt        2.1 Layer types in DNNs
+to the ML algorithms. Such restrictions of the mapping space can           There are myriads of DNN models and most of them are built us-
+lead to local optimal mappings which are significantly sub-optimal,        ing different combinations of some common layers. Convolutional
+as recent works have highlighted [35, 46].                                 layers (2D/depth-wise/point-wise) dominate in DNNs like ResNet-
+   To efficiently deal with the massive search space of HW-mappings,       50 [21], MobileNet-V2 [44], and InceptionNet [58] targeting image
+we propose GAMMA (Genetic Algorithm-based Mapper for ML                    processing tasks. Fully connected layers or MLPs are often used
+Accelerators). Unlike prior works, GAMMA performs a complete               as the last layer in many DNNs and as hidden layers of RNNs.
+search, considering all three aspects of HW-mapping (tiling strat-         Different layer types expose different amounts of data reuse oppor-
+egy, computation order, and parallelization strategy). Furthermore,        tunities, which can be exploited by DNN accelerators. In this work,
+GAMMA can explore up to three levels of parallelism within the             we consider both CNNs and MLPs that dominate modern DNNs.
+mapping, as shown in Fig. 1(b), unlike prior works that target
+one to two levels. Thus GAMMA can work across both single-                 2.2    DNN Accelerator Architectures
+accelerator [11, 25] and multi-accelerator [46] systems. The key           2.2.1 HW resources. Spatial DNN accelerators comprise of a 2D
+novelty in GAMMA is (i) a specialized genetic encoding of all three        array of Processing Elements (PEs), as shown in Fig. 1(c). Each
+aspects of HW mapping, (ii) specialized mutation and crossover             PE has a MAC to compute partial sums, and local scratchpad (SL)
+operators to evolve new mappings, and (iii) new genetic operators          buffers to store weights, activations, and partial sums. The accel-
+to model the behavior of adding and removing levels of parallelism.        erators also house a global scratchpad (SG), shared among PEs, to
+We also develop a closed-loop workflow by integrating GAMMA                prefetch activations and weights from DRAM for the next tile of
+with a popular analytical cost-model for DNN mappings called               computation that will be mapped over the PEs and SL buffers.
+MAESTRO [2] to fully automate the mapping search problem.                  2.2.2 Dataflow. In addition to the HW resources, each accelerator
+   We examine GAMMA on multiple popular DNN models, VGG16 [49],            needs to select a dataflow strategy to stage data movement in order
+MobileNet-V2 [44], ResNet-18 [21], ResNet-50 [21], and MnasNet [60].       to leverage data reuse. Dataflow comprises of computation order
+We make quantitative comparisons with eight popular optimiza-              and parallelism strategy, which we describe in Section 2.3. It directly
+tions methods[13, 20, 22, 23, 26, 38, 42]. We observe that GAMMA           affects the amount of data reuse the accelerator is able to leverage.
+can find HW-mapping with the HW performance (latency/energy)               Dataflows can be fixed at design-time [1, 11, 15] or configured at
+consistently better than other methods. Further, we show that              compile-time [30, 33]. In this work, we assume an accelerator with
+GAMMA can be run over multiple stages, enabling it to leverage             configurable dataflows.
+throughput slack from non-bottlenecked DNN layers and further
+reduce total system energy by 58% (for ResNet-18) and 78% (for             2.3    Mapping DNNs over Accelerators
+VGG16) and power by 95% (for ResNet-18) and 99% (for VGG16).               Mapping refers to the dataflow strategy (i.e., computation order and
+   The contributions of this paper are as follows:                         parallelism) coupled with the tiling strategy [31, 35]. We describe the
+ • Comprehensive Map Space. GAMMA constructs and searches                  three components of a DNN mapping next.
+   through a comprehensive map-space comprising of computa-                   Computation order. 2D convolution, shown in Fig. 1(a), is a six
+   tion order, tile-sizes, parallelization strategy, and up to three       loop-nest (or seven loops when considering batching). We can swap
+   parallelization levels, enabling it to target a wide variety of fixed   the order of these loops randomly, incurring 6! choices. Different
+   and flexible single and multi-accelerator systems.                      orderings lead to different temporal reuse (aka “stationary" [10]) or
+                                                                           spatial reuse (multi-casting) opportunities for the operands.
+ • Generic Encoding scheme. The proposed encoding scheme
+                                                                              Parallelism strategy. The parallelism strategy comprises of (i)
+   transforms the HW-mapping problem to an optimization prob-
+                                                                           the number of levels of parallelism, and (ii) the specific loops to
+   lem, which enables the user to directly use off-the-shelf opti-
+                                                                           parallelize or spatially unroll [67] at each level). Different dimen-
+   mization algorithms for mapping. These form our baselines.
+                                                                           sions of parallelism at each level incur different data movement
+ • New Genetic Algorithm operators. GAMMA introduces three                 patterns, multi-casting behavior, and reuse opportunities [31]. A
+   new GA operators, enabling a domain-specific flexible search            simple example is the NVDLA [1] architecture that employs a fixed
+   space unlike most off-the shelf optimization algorithms.                2-level mapping along the K and C dimensions for convolutions.
+ • Autonomous Workflow. We automate GAMMA as a black-
+                                                                              The number of parallelism levels depends on the number of
+   box optimizer for the HW-mapping problem. This reduces the
+                                                                           independent spatial dimensions within the accelerator substrate. In
+   learning curve and saves manual-tuning effort for ML practition-
+                                                                           this work, we assume up to three levels of parallelism (e.g,. rows x
+   ers exploring the HW-mapping space. GAMMA encapsulates
+                                                                           cols x multiple arrays) as shown in Fig. 1(b). This sets the possible
+GAMMA: Automating the HW Mapping of DNN Models on Accelerators via Genetic Algorithm                                           ICCAD ’20, November 2–5, 2020, Virtual Event, USA
+
+                               (cycles)
+   (nJ)                                                                 Min           Max
+                                                          Latency
+                                                                      8.18E+06   1.85E+09
+                                                                                            a DNN layer, a HW resource configuration (PE, SL size, SG size,
+                                                          (cycles)
+                                                        Energy (nJ)   1.12E+10   8.34E+10   NoC latency and bandwidth), and a mapping strategy, MAESTRO
+                                                        Power (mW)    1.52E+05   2.24E+09
+                                                        Area (!"!)    1.77E+09   4.57E+13   estimates the statistics such as latency, energy, runtime, power, and
+                                                          SL size
+                                                          (Bytes)
+                                                                      2.62E+02   9.90E+06   area.
+                                                          SG size
+                                                          (Bytes)
+                                                                      2.82E+03   1.54E+07      Impact of Mapping on Performance and Energy. In Fig. 2(a)
+          (a) Energy-Latency         (b) Latency-Area        (c)HW perf. statistics         and (b), we randomly sampled 10K possible HW mappings and use
+Figure 2: The HW performance of randomly sampled HW-mapping                                 the cost model to estimate its corresponding HW performance. Each
+in the design space on an example layer (second layer of VGG16). (a)                        datapoint reflects a valid HW mapping design for the same DNN
+The Energy to Latency plot, (b) The Latency to Area plot, and (c) The
+                                                                                            layer (the second layer of VGG16). From Fig. 2(c), we can observe
+HW performance statistics of the sampled HW mappings.
+                                                                                            several order of difference on HW performance when the mapping
+choices to 6 × 5 × 4 = 120. A 3-level mapping can work on a flexible
+                                                                                            varies. This validates similar studies [35] and shows how critical
+accelerator fabric [30] or multiple 2D accelerators (Fig. 1(c)).
+                                                                                            the HW-mapping is to the performance of a DNN accelerator.
+    Tiling strategy. We refer to tiling strategy as designing the
+tiling size of each dimension (e.g., input(C)/output(K) channel di-                         2.6      Mapping Search-Space aka Map Space
+mensions, Y/X dimensions of activations, R/S dimensions of weights                          The mapping space of a 1-level mapper in the example of the second
+in Fig. 1(a)). The tile size of each dimension could range from 1 to                        layer of VGG16 is 𝑂 (1012 ) = 𝑂 (109 × 6! × 6). A N-level mapper
+the size of the dimension. For e.g., the second layer of VGG16 [49],                        increase the mapping space by the power of N, leading to 𝑂 (1012𝑁 ),
+(K=64, C=64, Y=224, X=224, R=3, S=3), forms a tile size search space                        which is 𝑂 (1036 ) when considering three level of parallelism. This
+of 𝑂 (109 ) = 642 × 2242 × 32 .                                                             design space is hard to enumerate even with coarse-grained stridden
+    The tile sizes determine the number of operands of each tensor                          enumeration. Therefore, a domain-specific specialized optimiza-
+(input/weight/output) that need to be present within the accelerator                        tion algorithm is needed to search the design space with sample
+buffers at each time-step. Tile sizes depend on both the dataflow                           efficiency.
+strategy and the size of the buffers. Tiles of data move between
+DRAM and the SG buffers, and between the SG and SL buffers. (As
+                                                                                            2.7      Baseline Search Methods
+discussed above, some of these data items may remain stationary                             Many search/optimization methods exist today for architects to per-
+in the buffers for longer, while some stream in and out, depend-                            form Design-Space Exploration (DSE) and form our baselines. We
+ing on the computation order). The rate at which different tiles                            leverage eight optimization methods, including Random Search, Ge-
+move determines the off-chip and on-chip bandwidth requirement;                             netic Algorithm (GA) [23], Differential Evolution (DE)[38], (1 + 𝜆)-
+bandwidth less than this leads to stalls.                                                   ES [42], Covariance matrix adaptation evolution strategy (CMA-ES)
+                                                                                            [20], Test-based Population-Size Adaptation (TBPSA) [22], Particle
+2.4       Target Accelerator Systems                                                        Swarm Optimisation (PSO) [26], Passive Portfolio (pPortfolio)[13].
+Many DNN accelerators come with a fixed dataflow strategy baked                             We summarize them in Table 4.
+into silicon at design-time [1, 11, 15, 25]. The job of a mapper is to
+simply find tile sizes for each layer to fit within the buffers. However,                   3 GAMMA ALGORITHM AND WORKFLOW
+there is no perfect dataflow that is supreme for all layers in a DNN                        3.1 Challenges with Baseline Methods
+model [31, 35]. This led to a suite of flexible accelerators [30, 33]                       The baseline methods in Section 2.7 can all be used for HW-mapping
+that allow dataflow configurability [31, 35] at compile-time via                            search. However many algorithms (e.g., CMA-ES, PSO, DE, and
+flexible buffering and connectivity to make the accelerator future-                         also standard GA) work in rigid search space, i.e., the number of
+proof to emerging DNNs. This work considers such accelerators                               parameters in a design point is pre-defined, which restricts the levels
+and hence assumes that the mapping (computation order, paral-                               of parallelism (Section 2.3) to a pre-defined number and shrinks the
+lelizing dimensions and tile sizes) are configured at compile-time.                         potential search space by log scale. Our goal is to parameterize the
+The only constraint for the mapper from hardware is the maximum                             level of parallelism as well. We need a framework that accepts input
+number of parallelism levels (which depends on the accelerator ar-                          with flexible lengths. There are many possible ways to realize such
+ray flexibility) and maximum tile-sizes (limited by the buffer sizes).                      a flexible framework, such as adding an extra auto-encoder [27]
+It is certainly possible to restrict further aspects of the mapping,                        or using an sequence-to-sequence structure [57] at the input layer.
+if the hardware desires, within our framework. Alternately, our                             However, they require another level of optimization, training, or
+proposed framework can also be used at design-time to determine                             approximation, which brings in relatively large overhead comparing
+the optimal dataflow for accelerators built for specific DNNs types.                        to the optimization algorithm (DE, ES, standard GA) itself.
+We present our target accelerators in Section 4 and Table 3.                                              Table 1: Terminology in Genetic Algorithm (GA).
+2.5       MAESTRO: A Cost Model for evaluating the                                                Term                                        Description
+                                                                                                  Gene        The encoded value of one of the dimensions of a design point.
+          cost of DNN Mappings                                                                 Genome
+                                                                                                              A complete series of genes representing a deign point.
+Frameworks like MAESTRO [2] and Timeloop [35] use detailed                                   (Individual)
+analytical modeling to evaluate different mapping strategies of                                   Elite       A set of genomes that has the highest evaluated fitness.
+                                                                                                              An entire set of genomes forms a population (one generation).
+a DNN on the accelerators. We leverage MAESTRO [2] as our                                     Population
+                                                                                                              The populations evolves with time by mutation/crossover and selection of
+underlying cost model because of its ability to support the target                           (Generation)
+                                                                                                              the well-performing genomes to the next generation.
+detailed mapping space. It supports most of the common DNN                                    Crossover       Blend two parents’ genes to reproduce children genomes.
+layers such as CONV, depth-wise CONV, and Fully connected. Given                              Mutation        Randomly perturb a parent’s genes to reproduce children genomes.
+ICCAD ’20, November 2–5, 2020, Virtual Event, USA                                                                                                                                     Sheng-Chun Kao and Tushar Krishna
+
+                                                    Compute order                                                                                                                                  Accelerator
+                     Genome                                                                                                                   DNN model/                    Objective             HW resources
+                L1 mapper K            C        R        S        X       K       Y        Gene                                               DNN layers                (Latency/Energy)           (PE/SL/SG)
+
+    Parallelizing dim.        -        20        3      3    15 64                10              Tile size
+                                                                                                                                                                                  Evolution
+                 L2 mapper                       (a) 1-level mapper                L1 mapper
+                                                                                                                                           Crossover             Mutation           Reorder         Growth             Aging
+   K        C      R    S         X         K       Y        C        X       Y      S    R           K       C              Init.
+   -  20          3       3       15       64       10   !!"    5     5     1        1      8      1
+ Genome                                                      !!" < min(#PEs, tile size in L2 (20))
+                                                                                                                                            Parents                                                                  Children
+                                                (b) 2-level mapper                                                                                                  Elites
+Figure 3: The GAMMA encoding example of (a) 1-level mapper and                                                               Sol.            Select                              Evaluation
+
+(b) 2-level mapper.                                                                                                                                   Fitness Evaluation                          HW Perf.            Decode
+                                                                                                                                                                                    HW           Estimation
+                                                                                                                                                         Extract Obj.          Evaluate                                Gene
+                                                                                                                                                                                statistics
+                        L2-Mapper                                                 L1-Mapper                                                               Check cstr.
+                                                                                                                                                                                                 (MAESTRO)            decoder
+                                                                                                                                                                             HW eval. environment
+   K        K      C      R       S         X       Y        C        C       K        Y     X        R       S
+                                                                                                                                                                        GAMMA
+    -       1     64      3       3         3       3        64       1       1        3     3         3      3
+                                                                                                                                                                                                              Low power       Energy
+                                                                                                                                                                               Configure
+                                   (a) Genome of 2-level mapper                                                                                                       DNN                 Accel.                              eﬃcient
+                                                                                                                                                                   HW Mapper
+                                                                                                                                                                     (Sol.)                                         High speed
+        L2: Par. dim.                      SpatialMap(1,1) K;                                                                                                               (FPGA/ Programmable ASIC)
+                                           TemporalMap(64,64) C;                                                                                           (a) Structure and algorithm flow
+                                           TemporalMap(3,3) R;
+               Decoded.                                                                Tile sizes                                                                                                                Mapping Space Aspects
+ Level of Par. L2-Mapping                  TemporalMap(3,3) S;                                                         Optimization
+                                                                                                                                                                   Description                                  Tile Com.        Par.   Par.
+                                                                                                                        methods
+                                           TemporalMap(3,3) Y’;                                                                                                                                                Strat. Ord.       Dim.   Level
+                                           TemporalMap(3,3) X’;                                                    Baseline Methods
+                                                                                                                                       Defined a Par. Level. Encode Tile Strat., Com. Ord., Par. Dim. into
+                                                                                                                                                                                                                ✓         ✓        ✓     ✘
+                                           Cluster(64);                           !!" = 64                                             fixed length inputs, and evolve them with algorithms.
+                                                                                                                                       Randomly pick two genomes from the parent subset.
+        L1: Par. dim.                      SpatialMap(1,1) C;                                                              Crossover
+                                                                                                                                       Interchange the value of their tile size.
+                                                                                                                                                                                                                ✓
+
+                                           TemporalMap(1,1) K;                                                             Mutation
+                                                                                                                                       Mutate Dim.: Sample a new Par. Dim.
+                                                                                                                                                                                                                ✓                  ✓
+                                                                                       Compute
+                                                                                                                   GAMMA
+                                                                                                                                       Mutate Tile size: Randomly pick a gene pair, sample a new tile size.
+                 Decoded.                  TemporalMap(3,3) Y’;
+                                           TemporalMap(3,3) X’;                        order                                Reorder    Randomly pick two gene pairs. Swap their order.                                    ✓
+                 L1-Mapping                                                                                                 Growth     Concatenate a randomly initiated L1-mapper at the tail.                                           ✓
+                                           TemporalMap(3,3) R;                                                               Aging     Remove the L1-mapper at the tail.                                                                 ✓
+                                           TemporalMap(3,3) S;                                                             Summary                                                                              ✓         ✓        ✓     ✓
+                                                                                                                                                       (b) The summary of evolution in GAMMA
+   (b) Decoded 2-level genome in cost model (MAESTRO) ’s description
+                                                                                                                  Figure 5: (a)The structure and algorithm flow of GAMMA, and (b)
+Figure 4: (a) GAMMA’s description of a 2-level mapper and (b) its
+                                                                                                                  The summary of evolution in GAMMA.
+decoded description for cost model (MAESTRO) of a NVDLA-like
+[1] 2-level mapper.                                                                                               by the number of available PEs (the number of PEs defines the
+3.2        Genetic Algorithms (GA)                                                                                maximum amount of parallelism.), and the corresponding tile size
+                                                                                                                  of the chosen parallelizing dimension (since we need at least one
+In this work, we develop a GA-based search technique. We list some
+                                                                                                                  element to distribute into each parallelism unit). The L1-mapper
+common terminology for GA, namely gene, genome, elite, population,
+                                                                                                                  describes the inner loop. The L2-mapper describes the outer loop,
+we will use across this paper in Table 1. A genome is a mapping
+                                                                                                                  while containing 𝑃𝐿1 number of instances of L1-mapper.
+solution in our context. We reproduce the next generation by mu-
+tation and crossover. The goal of GA is to retain well-performing                                                 3.4         Decoding Genomes into a Mapping
+genes across the evolution.                                                                                       We outline how we describe the three aspects of mapping space
+   Benefits of GA. GA is one of the most popular algorithms for                                                   in the cost model, and show how the genomes from GAMMA are
+the scheduling problem for its lightness and simplicity [12, 24,                                                  decoded into the cost model’s description. Fig. 4(a) is a mapper de-
+48, 50, 64]. Research shows GA reaches competitive performance                                                    scription in GAMMA and Fig. 4(b) is its corresponding description
+with deep reinforcement learning [43, 55], and hyperparameter                                                     in the cost model (MAESTRO). The order of K, C, X, Y, R, S from
+optimization problem. STOKE [45] and TensorComprehensions                                                         left to right in (a) and top to bottom in (b) reflect the computation
+[61] use GA to search the space of DNN code optimization.                                                         order. The number paired with dimension in (a) and the number
+   Challenges with standard GA. Standard GA still falls into the                                                  inside the bracket in (b) reflects the tiling size on each dimension.
+pits of the algorithm needing rigid input length. To this end, we                                                 In MAESTRO, we note the parallelized dimension as SpatialMap
+develop a way to adopt GA to our problem by designing a novel                                                     and remaining dimensions as TemporalMap. Therefore we mark
+evolution mechanism, which allows it to be flexible, without adding                                               the first element (indicating parallelizing dimension) in (a) as Spa-
+up immense overhead such as adding encoder or training an seq-                                                    tialMap in (b). A level of mapper in GAMMA can be translated
+to-seq model. We discuss these details next.                                                                      as a 𝐶𝑙𝑢𝑠𝑡𝑒𝑟 in MAESTRO, in which tiling strategy, computation
+                                                                                                                  order and parallelism dimensions are fully described. We formulate
+3.3        GAMMA Encoding scheme                                                                                  multiple level of parallelism by concatenating the cluster. The L1
+We design a specific genetic encoding scheme for the HW mapping                                                   and L2 mapper are decoded into the bottom and upper cluster.
+problem. For a 1-level mapper, we encode them into a (7, 2) dimen-
+sions of the genome, which contains 7 pairs of genes, as shown in                                                 3.5         Algorithm Flow
+Fig. 3(a). A pair of the gene contains a DNN layer tensor notation                                                Fig. 5 shows the flow of the GAMMA algorithm. We discuss the de-
+(e.g, K, C) and its tile size. The ordering of pairs reflects the compu-                                          tail of each function block next. We first describe how we adopt the
+tation order. The first pair of gene tells the parallelizing dimension.                                           generic evolution operators, Crossover and Mutation, to the HW-
+The 2-level mapper in Fig. 3(b) is encoded in the same manner.                                                    mapping problem, and then introduce three additional evolution
+𝑃𝐿1 describes number of parallel L1-mappers, which is constrained                                                 operators (Reorder, Growth and and Aging) in GAMMA.
+GAMMA: Automating the HW Mapping of DNN Models on Accelerators via Genetic Algorithm                                    ICCAD ’20, November 2–5, 2020, Virtual Event, USA
+                                                                                             Table 2: The HW resources in different platforms.
+    Initialization. Assuming population size 𝑃, we randomly ini-                                         # PEs              SL size (on-chip)                  SG size (on-chip)
+tialize 𝑃 number of the 1-level mappers. The only restriction is each             Edge Platform           168                      512B                               108KB
+tile size is smaller than the corresponding layer dimension.                      Cloud Platform         65,536                    4MiB                               24MiB
+    Evolution: Crossover. Crossover is to take advantage of the                            Table 3: Three target systems (Accel’s infrastructures).
+genes in some well-performing genomes, which forms a parents                      System                                             Description
+subset. We randomly pick two genomes from the parents subset.                    S1:Fixed Accelerator with 2D PE array (row x col) with fixed aspect ratio. This fixes !!" to number of
+                                                                                 2D Accel rows, and level of parallelism to 2. Example: TPU, NVDLA.
+We blend their genes by interchanging the value of the tile size.                S2:        Accelerator with 2D PE array with flexible aspect ratio. The PE array can be configured to
+    Evolution: Mutation - Parallel Dim. With a certain probabil-                 Flexible   flexible 2D shape, which relax the choices of !!" . We also relax the level of parallelism to be
+                                                                                 2D Accel   1 or 2. Example: Eyeriss, Eyeriss_v2.
+ity, which is set by the mutation rate of the algorithm, we mutate the           S3:       Accelerator scaling out 2D structure. Accelerator comprises multiple 2D PE array instances,
+parallelism dimension by randomly sampling one of the 6 dimen-                   Scale-out enabling parallelism across PE arrays. The level of parallelism is either 2 or 3. L1 and L2
+                                                                                 2D Accel mappers map within and L3 mapper maps across the PE arrays. Example: Simba, Tetris.
+sions of the tensor and setting it as a new parallelism dimension.
+    Evolution: Mutation - Tile Size. With a certain probability, we             at the late layers in CNN becomes challenging when involving HW
+randomly pick paired genes and assign a new random tile size for                resource constraint and the multi-level parallelism flexibility of
+them. If the tile-size in the mapping does not fit within the SL buffer         mapping strategy.
+of the PE for that operand, it is given a large penalty during its              3.6.3 Interactive Environment (Env). Structure: The Env is initial-
+evaluation, as we discuss later in Section 3.6.3.                               ized with the target DNN layer, the accelerator constraint, and the
+    Evolution: Reorder. Reorder is another format of mutation.                  optimization objective (latency/energy/power). Env contains a HW
+We pick two paired genes and swap their position in the genome,                 performance cost model, where we leverage MAESTRO [2] for its
+which reflect the reordering of the mapping.                                    ability to model and evaluate arbitrary spatial accelerators and
+    Evolution: Growth. With a certain probability, we grow the                  mappings. When interacting with GAMMA, Env takes in an entire
+genome by appending a randomly initialized 1-level genome to the                generation of populations, decodes them into the input format of
+current genome, as shown in Fig. 3(b). The original L1 mapper will              the cost model as describe in Section 3.4, and feeds into the cost
+be promoted to L2-mapper, and the newborn genome is noted as                    model to gather the statistics of their HW performance. Finally,
+the new L1-mapper.                                                              using the fitness function, which we discuss next, Env extracts
+    Evolution: Aging. The natural phenomenon of a person’s DNA                  fitness scores and returns them to GAMMA.
+keep shortening in the lifespan is known as DNA aging. With a                      Fitness Function: We extract the corresponding reward value
+certain probability, we will "age" the genome by cutting out the tail           (= -Perf. index) from the statistics according to the set objective,
+of genome, an L1-mapper, which moves genome from (b) back to                    and substitute it into the fitness function. We give the individual a
+(a) in Fig. 3.                                                                  large penalty - a negative infinite - when the constraint is not met.
+    Evaluate and Selection. After evolution, we evaluate the popu-              That is, the evolved mapping require more HW resources than the
+lations by interacting with the evaluation environment (Env), which             accelerators’ constraint, which is then not suitable for the targeting
+we will describe in Section 3.6.3. Env will feedback the fitness of             accelerators. The fitness function is summarized as following.
+                                                                                                          (
+each individual. We select the population that is eligible to enter                                            𝑟𝑒𝑤𝑎𝑟𝑑, if constraint met
+the next generation by the ranking of their fitness.                                            𝐹𝑖𝑡𝑛𝑒𝑠𝑠 =                                           (1)
+                                                                                                               −𝐼𝑛𝑓 𝑖𝑛𝑖𝑡𝑒, others
+3.6    Flow for Automated Mapping Search                                        4 METHODOLOGY
+3.6.1 Constraint. Our target is to find the HW mapping of a DNN
+layer that fits within limited HW resources - PEs and buffers. Dif-             4.1 Models and Platforms
+ferent mapping lead to drastically different requirement of HW                  DNN Models. In our experiment, we consider five CNN models
+resources, especially the buffer sizes, as shown in Fig. 2(c). Note             with different complexity: VGG16 [49], MobileNet-V2 [44], ResNet-
+that a mapping implicitly runs over multiple time iterations if the             50 [21], ResNet-18 [21], MnasNet [60].
+number of computations in the dimension to paralleize exceeds the                  HW resources of Platforms. We consider two platforms with
+number of available PEs; however, the local (SL) buffer and global              different number of HW resource: cloud platform (which resembles
+(SG) buffer sizes to run each iteration (which comes from the tile              the HW resources in cloud TPU[25]) and edge platform (which re-
+sizes) is a hard constraint when searching through the map-space.               sembles the HW resources in Eyeriss chip[11]), as shown in Table 2.
+                                                                                   Target Systems. We consider three kinds of accelerator systems
+3.6.2 Objective. The target is to minimize the objective. The objec-
+                                                                                as shown in Table 3.
+tive could be any HW performance index that the user is interested
+in such as latency, power, energy, area, energy-delay-product (EDP),            4.2         Target Search Methods and Parameters.
+or other combinations of them. Minimizing the objective is not a                We compare three sets of methods, described below. We set the
+trivial task since there is no straight-forward solution even for a             maximum sampling points as 10K for all methods and compare the
+common tensor shape of a DNN layer. Minimizing the latency as                   HW performance of their searched solutions.
+an example, the most efficient choice of parallelizing dimension                   Baseline Optimization Methods. We compare with a suite of
+involves the shape of tensor, available PEs to parallelize, available           optimization methods whose implementations are adopted from
+SL/SG buffers to house the fetched data, and the tile size of each              Nevergrad [40]. The methods, and their experimental parameter
+dimension. All the decisions (or genes) correlate and jointly decide            settings are summarized in Table 4.
+the latency. Some common heuristics of parallelizing across activa-                Fixed Dataflows from prior accelerators. We also compare
+tions dimensions at the early layers and across channel dimensions              with some widely recognized HW-mappings inspired by dataflows
+ICCAD ’20, November 2–5, 2020, Virtual Event, USA                                                                                                     Sheng-Chun Kao and Tushar Krishna
+                     Table 4: Baseline optimization methods.
+  Alg.                                               Description
+                                                                                                               significantly relieve the domain expert’s effort on the back-and-
+  RS      Random Search. We randomly sample design points and keep the best solution.
+          Genetic Algorithm. We encode the design point into a series of genes. We evolve the genes by
+                                                                                                               forth tuning process. The challenge is the occasional failing of some
+  GA      mutation and crossover.                                                                              methods. Moreover, GAMMA can consistently find valid and bet-
+          We use mutation rate: 0.1, crossover rate: 0.1, in the experiment.
+          Differential Evolution. In DE, we mutate by the difference vector (DV). When mutation, we
+                                                                                                               ter solutions than others. Comparing with others, GAMMA finds
+          sample a parent and extract its difference on each dimension with another parent to form a local     solutions costing 224× to 440× less latency in Edge platform
+  DE      DV and with the best parent to form a global DV. Next, we sample another parent and mutate it
+          by adding the weighted sum of found local DV and global DV to it.                                    and 153× to (1.3E+7)× less latency in Cloud platform.
+          We use weighting for local DV: 0.8, weighting for global DV: 0.8, in the experiment.
+          (1 +𝜆)-Evolution Strategy. For each parent we mutate it to reproduce 𝜆 number of mutated             5.2    S2: Flexible 2D Accel.
+ (1 +𝜆 )- children. The parent and children compete with each other by their fitness values and the best one   5.2.1 Objective: Latency. Fig. 6(c)-(d) compares latency for accelera-
+   ES     will go to the next generation.
+          We use (1+1)-ES in the experiment, where one parent generate one child.
+                                                                                                               tors with flexible aspect ratios (i.e., the accelerator can support both
+ CMA-
+          Covariance Matrix Adaptation-ES. We use covariance matrix of the elite group and the entire          1-level and 2-levels of parallelism). One interesting observation is
+          population to estimate the distance to the optimum. We adapt the step size based on covariances.
+  ES
+          We use 1/2 of the best performing individuals as elite group in the experiment.
+                                                                                                               that the fixed ShiDianNao-like dataflow and NVDLA-like dataflow
+      Test-based Population-Size Adaptation. We estimate the trend of the population’s fitness values.         shows better performance than baseline optimization methods at
+TBPSA When the fitness values converge, the algorithm will adapt to have a smaller population size.
+      We set the initial population size as 50 and let it evolve in the experiment.                            early and late layers respectively. This is because ShiDianNao-like
+          Particle Swarm Optimization. We track global best and parent best, which represent the global        dataflow parallelizes along X, Y dimensions and early layers of
+  PSO     and local information respectively. We update the parameters by the weighted sum of them.
+          We use weighting for global best: 0.8, weighting for parent best: 0.8, with momentum 𝜔: 1.6.         ResNet-18 have high X-Y values; similarly NVDLA-like parallelizes
+          Passive Portfolio. We maximize diversity by spreading the risk broadly to multiple instances         along C-K and late layers have high C-K values. For the baseline
+ pPort-   (optimizers). We launch K numbers of optimization methods, each experiencing 1/K samples, and
+  folio   take the best performing solution provided by one of them.                                           methods, since the number of parallelism dimensions is fixed, we
+          We use the passive portfolio of CMA-ES and DE in the experiment.                                     search for the best 1-level and 2-level solution for 5K points each,
+within prior accelerators: NVDLA-like [1] (parallelizing K and C                                               and pick the better one. GAMMA searches across both 1-level and 2-
+dim.), Eyeriss-like [10] (parallelizing Y and R dim.), and ShiDianNao-                                         level via the growth and aging operators described earlier. GAMMA
+like [15] (parallelizing Y and X dim). All three of them have fixed                                            finds valid and better solutions than others. Compared with other
+2-level parallelism dimensions. We create custom mappings (i.e.,                                               techniques, GAMMA finds solutions with 209× to 1,035× less la-
+dataflow + tile-size) by setting appropriate tile sizes that fit within                                        tency in Edge and 337× to (7.1E+5)× less latency in Cloud platform.
+the SL buffers for both the edge and cloud platforms .                                                         5.2.2 Objective: Energy. Energy consumption depends on the num-
+   GAMMA. We set the populations=200, generations=50, and the                                                  ber of active computations, memory accesses, and SL/SG buffer
+mutation/crossover rate and execution rate of other evolving func-                                             usages. In the Edge platform in Fig. 8(a), fixed dataflow show no
+tions as 0.5.                                                                                                  advantage, and most optimization methods can find better solutions
+                                                                                                               than the fixed dataflows. In the Cloud platform in Fig. 8(b), opti-
+5 EVALUATION                                                                                                   mization methods show competitive or better performance than
+5.1 S1: Fixed 2D Accel.                                                                                        Eyeriss-like and ShiDianNao-like dataflow. However, NVDLA-like
+In Fig. 6(a), we run the baseline algorithms and GAMMA to search                                               dataflow shows high energy efficiency, since the K, C dimensions
+for the HW-mapping for each of the 20 layers in ResNet-18 with S1                                              expand in ResNet-18, which gives more advantage to the dataflow
+setting (i.e., 2 levels of parallelism) and edge platform constraint.                                          that is skilled at layer with large K, C dimensions (NVDLA-like).
+We record the best solution (lowest latency) of each algorithm after                                           They finish the computation with shorter time and less memory
+they execute 10K samples (most comparing algorithms converge                                                   access, and hence cost less energy. However, these advantages do
+after 10K samples). Fig. 6(a) shows the latency of each algorithm’s                                            not show up when NVDLA-like dataflow is in the tight constraint
+solutions, where we also plot the corresponding latency when using                                             (Edge platform), which has less SL/SG buffer and limited the par-
+fixed dataflow. We observe the baseline algorithms and the fixed-                                              allelism opportunity. Across all fixed dataflow and optimization
+dataflows are with competitive performance. However, GAMMA                                                     methods, GAMMA finds solutions costing 11× to 36× less energy
+can consistently find better solutions than both methods.                                                      in Edge platform and 2× to 42× less energy in Cloud platform.
+    Valid solution and different platform constraints. The HW-                                                 5.3    S3: Scale-out Flexible 2D Accel.
+mapping is invalid when its requirement of HW resources exceeds                                                5.3.1 The growth of search space. Increasing the level of paral-
+the platform constraint. Some methods cannot find any valid solu-                                              lelism will exponentially increase the search space, which makes
+tions that conform to the constraint after 10K sampling. Therefore                                             the performance of the optimization methods more critical to the
+some methods have no solutions (NAN) in some cases as shown in                                                 found solutions. As shown in Fig. 6(e)-(f), the number of cases
+Fig. 6(a). We did not show the result of Random Search here, since it                                          that methods fail to find solution becomes significant. However,
+ends up finding no solution for most of the cases, which also infers                                           GAMMA can consistently find valid and better solutions, costing
+the complexity of the search space (it cannot find a valid solution in                                         241× to 644× less latency in Edge platform and 657× to (1.2E+5)×
+10K samples). When we have more HW resource budget as Cloud                                                    less latency in Cloud platform. Fig. 6(g)-(h) shows the end-to-end
+platform in Fig. 6(b), all baseline optimization methods can start                                             latency of GAMMA in different accelerator systems. We can find
+to find valid solutions and optimize on them. This shows how the                                               GAMMA performs the best in S3, where the design space is several
+imposed constraints increase the complexity of the problem.                                                    order larger than S1 and S2 but with more flexibility. It shows that
+   Despite the fact that the optimization methods fail in some                                                 GAMMA can explore the design space with sample efficiency and
+cases, their solutions are competitive to manual-design ones (fixed-                                           takes advantage of the flexibility of the mapping space.
+dataflow) when they succeed, as shown in Fig. 6(a)-(b). It shows                                               5.3.2 Deep-dive into found solution. Fig. 7 shows the HW-mapping
+the potential of automating the HW-mapping design process by                                                   solutions found by GAMMA on ResNet-18. At the early layer (Y, X
+properly formulating it into an optimization problem, which can                                                dominant, Y=224, X=224), GAMMA found a mapper that parallelizes
+GAMMA: Automating the HW Mapping of DNN Models on Accelerators via Genetic Algorithm                                                                                                                                                                                                                                    ICCAD ’20, November 2–5, 2020, Virtual Event, USA
+
+                                                           S1: Fixed 2D Accel.                                                                                                                           S2: Flexible 2D Accel.                                                               S3: Scale-out 2D Accel.                                        Statistic of GAMMA
+                                                                                                                                                                                                                                                                                                                                                                                         (cycles)
+                                                                      Dla-like                      Eye-like             Shi-like                               standardGA                                       pPortfolio                          CMA-ES     TBPSA                       PSO          DE         (1+1)-ES              GAMMA
+                                                  (cycles)                                                                                                                                           (cycles)                                                                                  (cycles)                                                                           2.9E+05
+                                        1.0E+09                                                                                                                                   1.0E+09                                                                                               1.0E+09
+                        LATENCY (LOG)
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                  2.8E+05
+
+
+
+
+                                                                                                                                                                  LATENCY (LOG)
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                             End-to-End Latency
+                                                                                                                                                                                                                                                                       LATENCY (LOG)
+                                        1.0E+07                                                                                                                                   1.0E+07                                                                                               1.0E+07
+                                                                                                                                             1.0E+09                                                                                                                                                                                                                              2.7E+05
+
+
+
+
+                                                                                                                             LATENCY (LOG)
+                                        1.0E+05                                                                                                                                   1.0E+05                                                                                               1.0E+05
+Edge Platform
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                  2.6E+05
+                                        1.0E+03                                                                                              1.0E+07                              1.0E+03                                                                                               1.0E+03                                                                                   2.5E+05
+                                        1.0E+01                                                                                                this work
+                                                                                                                                             1.0E+05                              1.0E+01                                                                                               1.0E+01                                                                                   2.4E+05
+                                                            1                   3       5       7    9 11 13 15 17 19                                                                                1       3           5       7       9 11 13 15 17 19                                         1      3     5    7       9 11 13 15 17 19
+                            # of NAN                                                                  LAYER     1.0E+03                                                                                                                   LAYER                                                                              LAYER                                                2.3E+05
+                                                                                                                                                                    # of NAN                                                                                                 # of NAN
+                             sGA Por                                        CM              PSA PSO DE 1+1                                      GAM                  1      2                                    3                   4           5       6       7            8      9                    10           11        12       13                                      2.2E+05
+                                                                                                                                                                     sGA Por                              CM                 PSA PSO DE 1+1                   GAM             sGA Por                    CM        PSA PSO DE 1+1               GAM
+                                                                                                                                                                                                                                                               LAYER
+                                                                                                                                                                                                                                                                                                                                                                                                      S1 S2 S3
+                                          1           8                         2           1        3       5           1                         0                           4                4            0               6               3       5   1      0                                                                                 0
+                                                                                                                                                                                                                                                                                        4     3           12       9         4        6    12
+                                                                                             (a)                                                                                                                                     (c)                                                                                (e)                                                                         (g)
+                                                          (cycles)                                                                                                                                  (cycles)                                                                                      (cycles)                                                                                 (cycles)
+                                          1.0E+11                                                                                                                              1.0E+09                                                                                                  1.0E+09                                                                                          2.0E+04
+
+
+
+
+                                                                                                                                                                                                                                                                        LATENCY (LOG)
+                                                                                                                                                               LATENCY (LOG)
+                          LATENCY (LOG)
+
+
+
+
+                                          1.0E+09                                                                                                                              1.0E+07                                                                                                  1.0E+07
+                                                                                                                                                                                                                                                                                                                                                                                         1.6E+04
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                    End-to-End Latency
+                                          1.0E+07
+                                                                                                                                                                               1.0E+05                                                                                                  1.0E+05
+Cloud Platform
+
+
+
+
+                                          1.0E+05
+                                                                                                                                                                               1.0E+03                                                                                                  1.0E+03                                                                                          1.2E+04
+                                          1.0E+03
+                                          1.0E+01                                                                                                                              1.0E+01                                                                                                  1.0E+01
+                                                                                                                                                                                                                                                                                                                                                                                         8.0E+03
+                                                              1                 3       5       7    9 11 13 15 17 19                                                                               1        3           5       7       9 11 13 15 17 19                                          1      3    5    7       9 11 13 15 17 19
+                                                                                                      LAYER                                                                                                                               LAYER                             # of NAN                                         LAYER
+                         # of NAN                                                                                                                                     # of NAN                                                                                                                                                                                                           4.0E+03
+                          sGA Por                                           CM          PSA PSO DE 1+1                                         GAM                     sGA Por                               CM              PSA PSO DE 1+1                    GAM                sGA         Por        CM        PSA PSO DE 1+1               GAM
+                                                                                                                                                                                                                                                                                                                                                                                         0.0E+00
+                                        0             0                         0           0        0       0           0                         0                               0            0                0            0              0       0    0      0                      0     0           0        0         0        0    1      0
+                                                                                                                                                                                                                                                                                                                                                                                                      S1 S2 S3
+                     (b)                                   (d)                                 (f)                            (h)
+Figure 6: The performance of found solutions across a suite of optimization methods on different target systems (S1, S2, S3) and different
+platform constraints (Edge, Cloud) for ResNet-18.
+NAN: The method cannot find a solution that fits in the platform constraint within 10K samples.
+
+Table 5: End-to-end performance and energy on S3 for a suite of DNN models using fixed mappings versus GAMMA. Bold means lowest values.
+                                                                        MobileNet-V2                             MnasNet                              ShuffleNet                             ResNet50
+                                                                     NVDLA- Eyeriss- ShiDian             NVDLA- Eyeriss-     ShiDian           NVDLA- Eyeriss-     ShiDian           NVDLA- Eyeriss-      ShiDian
+       Obj.                                 Accel. GAMMA                                         GAMMA                                GAMMA                                 GAMMA
+                                                                        like      like  Nao-like            like      like   Nao-like             like        like Nao-like             like        like  Nao-like
+Latency                                     Edge            9.67E+05 1.46E+07 4.06E+07 7.23E+06 8.31E+05 1.43E+07 5.00E+07 8.44E+06 5.20E+05 8.41E+06 2.29E+07 3.89E+06 6.49E+06 1.04E+11 4.57E+08 1.31E+08
+(cycles)                                    Cloud           1.85E+05 9.33E+05 4.04E+07 6.04E+06 1.39E+05 4.03E+06 4.97E+07 7.46E+06 3.41E+04 6.28E+05 2.28E+07 3.37E+06 3.84E+04 2.91E+06 4.55E+08 1.13E+08
+Energy                                      Edge            5.23E+08 3.31E+09 9.62E+09 1.02E+10 4.58E+08 3.41E+09 9.707E+09 1.031E+10 1.59E+08 1.52E+09 4.647E+09 4.984E+09 1.19E+09 3.53E+10 1.1753E+11 1.245E+11
+  (nJ)                                      Cloud           4.12E+08 8.13E+08 9.61E+09 1.02E+10 3.72E+08 7.71E+08 9.706E+09 1.030E+10 1.17E+08 2.57E+08 4.646E+09 4.978E+09 1.13E+09 2.14E+09 1.1751E+11 1.244E+11
+    Early layer: Layer 1: Dim.: [ 64 3 224 224 7 7]                                                                                                                                Dim.: [ K C Y X R S]                                                                (cycles)                                                                 (cycles)
+                                                                                                                                                                                                                                                                                                                        GAMMA                                                                             GAMMA
+                        Y                     S              X                      C           R        Y       K                C                    S          R                    K             Y               X            C
+                         -                    5            222                      3           1        4       45               2                    2          4                    20            1               1            2
+   Med layer: Layer 8: Dim.: [128 64 56 56 1 1]                                                                                                                                                                                                                                                        GAMMA                                                                         GAMMA
+
+                    Y                     C       R         K                   S       X       Y     K      K       Y             C               S       R           X               C        R        K           X        S          Y       C
+                    -                   38        1         67                  1       22 16 67             1       15 37                         1       1         17                1        1        1           8        1          1       1
+    Late layer: Layer 18: Dim.: [512 256 14 14 1 1]
+        C      S      C     Y      K    R    X    K                                                                                                    X          S                    Y             C               K            R
+                         -                    1            150                      8        475         1       8           168                       7          1                    7            149              1            1
+                                                                                                                                                                                                                                                                                       (a) MobileNet-V2                                                    (b) MnasNet
+Figure 7: GAMMA’s found mapping of early, medium, and late layer                                                                                                                                                                                              Figure 9: End-to-end latency improvement over generations with
+ofDla-like
+   ResNet-18
+           Eye-like in  Fig. 6(e).
+                     Shi-like standardGA pPortfolio CMA-ES TBPSA PSO DE (1+1)-ES GAMMA
+                                                                                                                                                                                                                                                              GAMMA for S3 system and edge platform constraint.
+                                        (nJ)                                        Edge                                                       1.0E+10
+                                                                                                                                                           (nJ)                                     Cloud
+ ENERGY (LOG)
+
+
+
+
+                1.0E+10
+                                                                                                                                                                                                                                                              5.3.3 Other DNN models and end-to-end performance. Table 5 shows
+                                                                                                                                ENERGY (LOG)
+
+
+
+
+                                                                            1.0E+09
+                                                            LATENCY (LOG)
+
+
+
+
+                1.0E+08                                                                                                                        1.0E+08                                                                                                        the performance of GAMMA comparing to fixed dataflow on other
+                                                                            1.0E+07
+                1.0E+06
+                                                                                                                                                                                                                                                              widely-used DNN models. Here, for the interest of space, we only
+                                                                     1.0E+05          this work 1.0E+06
+                                              1       3        5       7 9 11 13 15 17 19                1 3 5 7                                                                                     9 11 13 15 17 19                                         list the end-to-end performance, which is the sum of latency/energy
+   # of NAN                                                          1.0E+03LAYER              # of NAN                                                                                               LAYER
+        sGA                        Por            CM                PSA PSO 1DE 1+1
+                                                                                  2 3GAM4      5sGA 6 Por 7 CM8 PSA
+                                                                                                                  9                                                                                    10 DE
+                                                                                                                                                                                                     PSO    11 1+1
+                                                                                                                                                                                                                12 13
+                                                                                                                                                                                                                   GAM                                        of all the layers. Table 5 shows no fixed dataflow is good across all
+                                                                                                        LAYER
+                1                         3           0                     4           1       1        3       0                             0           0                   0            0            0           0        0              0                DNNs and platforms. For e.g., when considering latency, ShiDianNao-
+                                                                                    (a)                                                                                                             (b)                                                       like performs the best on Edge platform, and NVDLA-like performs
+                                        Figure 8: The energy consumption of S2 on ResNet-18.                                                                                                                                                                  the best on Cloud platform. In contrast, the energy numbers follow
+along Y dim at L2-mapper. At the medium layer (Y=56, K=128, C=64,                                                                                                                                                                                             NVDLA-like < Eyeriss-like < ShiDianNao-like; NVDLA-like gets
+X=56), GAMMA found a 3-level mapper, which maps across Y, K,                                                                                                                                                                                                  advantage over the other two for energy via reuse across K and C di-
+and C dimensions. At the late layer (K, C dominant, K=512, C=256),                                                                                                                                                                                            mensions (which dominate in most CNN-based models). Among all
+GAMMA parallelize C at L2-mapper and K at L1-mapper. From                                                                                                                                                                                                     experiments in Table 5, GAMMA always provides the lowest latency
+the above observation, we find the automatically evolved solutions                                                                                                                                                                                            and energy. Across models and platforms, GAMMA finds solu-
+are consistent with some heuristic and insight from the manual-                                                                                                                                                                                               tions costing 5× to (1.2E+5)× less latency and 2× to (1.6E+4)×
+designed dataflows 1 [1, 10, 15].                                                                                                                                                                                                                             less energy. Fig. 9 tracks how GAMMA converges to its solution
+1 The found solutions also show that by relaxing some tile size heuristics such as                                                                                                                                                                            across generations; this shows its sample efficiency via rapid im-
+deciding tile size by the integral multiple of PEs array sizes could help reach better                                                                                                                                                                        provement over generations.
+solutions.
+ICCAD ’20, November 2–5, 2020, Virtual Event, USA                                                                                        Sheng-Chun Kao and Tushar Krishna
+Table 6: Two stage optimization for inter-layer parallelism on
+ResNet-18 * and VGG16 † for a multi-accelerator (S3) pipelined de-                                the pipeline latency, we optimize power at the second stage and
+ployment. In the 1st state, we optimize for latency and identify
+                                                                                                  find we could reduce the power by 95% comparing to the first stage
+the bottleneck layer (highlighted in bold), which determines the
+pipeline latency. In the 2nd stage, we optimize for energy (or power)
+                                                                                                  when remaining at the same pipeline latency. The Latency-Energy
+by allowing the latency of other layers to increase, while staying less                           experiment shows 58% reduction on energy consumption. Likewise,
+than the pipeline latency.                                                                        we execute the same flow on VGG16 and found it also effectively
+ResNet           Exp: Latency - Power                    Exp: Latency - Energy                    reduce the power by 99% and energy by 78% respectively.
+  18        1st stage            2nd stage          1st stage             2nd stage
+       Latency Power        Latency Power      Latency Energy Latency Energy
+                                                                                                  6 RELATED WORKS
+ Layer
+       (cycles)    (mW)     (cycles)    (mW)   (cycles)     (nJ)     (cycles)     (nJ)            6.1 Dataflow Design in DNN Accelerators
+   1   4.9E+03 8.0E+02 7.1E+04 2.5E+02 1.1E+02 3.2E+06 3.8E+04 2.8E+06
+   2   1.6E+05 5.1E+02 1.6E+05 4.4E+02 1.0E+04 1.2E+08 5.2E+04 2.5E+07                            Dataflow design has been a popular topic in the research of DNN
+   6   4.2E+04 4.2E+02 1.3E+05 2.5E+02 2.9E+04 1.4E+08 6.1E+04 7.6E+07                            Accelerators. Multiple hand-designed dataflows have been used
+   7   4.6E+03 3.3E+02 6.5E+04 2.5E+02 8.9E+02 8.8E+06 2.4E+04 5.8E+06                            across accelerators, categorized [10] as output-stationary [15, 19,
+   8   4.9E+04 2.6E+02 1.5E+05 2.5E+02 6.1E+04 1.8E+07 6.1E+04 1.8E+07
+  11   2.9E+04 5.6E+03 1.5E+05 2.5E+02 2.6E+04 9.7E+07 3.7E+04 5.5E+07                            37], weight-stationary [1, 5, 6, 16, 36], row-stationary [10], input
+  12   1.3E+04 1.5E+04 1.4E+05 2.5E+02 2.2E+04 6.9E+07 4.2E+04 2.1E+07                            stationary, and no local reuse [7, 69]. In this work, we provide
+  13   4.1E+04 3.0E+02 1.5E+05 2.5E+02 2.5E+04 1.6E+07 5.1E+04 8.9E+06                            a framework to automatically determine an optimized dataflow
+  16   2.1E+04 5.8E+02 5.9E+04 2.5E+02 2.3E+04 1.8E+08 3.7E+04 6.5E+07
+  18   4.9E+04 9.0E+03 1.5E+05 2.5E+02 5.5E+04 1.3E+07 5.9E+04 9.0E+06
+                                                                                                  and mapping. GAMMA can be used at compile-time to configure
+  19   2.6E+04 2.0E+04 1.4E+05 2.5E+02 1.0E+04 8.9E+07 3.8E+04 6.7E+07                            in the mapping if the underlying accelerator supports multiple
+ Max. 1.6E+05 2.0E+04 1.6E+05 4.4E+02 6.1E+04 1.8E+08 6.1E+04 7.6E+07                             dataflows [30, 33], or at design-time to determine the right dataflow
+ Ave. 5.0E+04 6.4E+03 1.3E+05 2.8E+02 1.8E+04 7.1E+07 4.3E+04 3.1E+07
+                                                                                                  for a custom accelerator developed for running a fixed set of DNNs.
+VGG16                             Summary for Model VGG16
+ Max. 2.7E+06 1.3E+05 2.7E+06 2.5E+02 1.8E+06 1.3E+09 1.8E+06 3.3E+08                             6.2    HW Mapping Space Search and Exploration
+ Ave. 3.3E+05 3.3E+04 1.3E+06 2.5E+02 3.1E+05 6.7E+08 1.1E+06 1.4E+08
+                                                                                                  Many recent works have been developed to tackle DNN HW map-
+* We only display the layers with unique shape. Maximum and Average are calculated based on all
+20 layers of ResNet-18. † We display the summary of VGG16 for the interest of space.              ping. However, since the search space is extremely large, many
+5.4      Two-stage Optimization for Inter-layer                                                   of them restrict the search space by considering only part of the
+                                                                                                  aspects of the HW mapping search space. Some consider a limited
+So far in this paper, we consider three systems: S1, S2, and S3, to
+                                                                                                  combination of HW mappings and pick among them [33]. Some con-
+parallelize the computation of a DNN layer, whose scenario can
+                                                                                                  strain the parallelizing dimension to a few choices [17, 18, 56, 63].
+be termed as intra-layer parallelism. Next, we show how GAMMA
+                                                                                                  Some fixed the computation order to a subset of all combinations
+can also be applied to the scenario of inter-layer parallelism. We
+                                                                                                  [47, 51, 62, 66, 68]. Some vastly reduce the space of tiling sizes [52]
+consider a S3 system with inter-layer parallelism scenario, used in
+                                                                                                  by a heuristic, or large step size, e.g., power of two [54]. Interstel-
+prior multi-accelerator systems [18, 46, 62], where each accelerator
+                                                                                                  lar [14, 67] considers all three aspects of HW-mapping, but they
+is handling one layer of a model, and the entire model is executed
+                                                                                                  constrain the search space by limiting the choice on each aspect
+as layer-wise pipeline manner on the system.
+                                                                                                  such as the choices of loop order, parallelizing dimension. All these
+5.4.1 Motivation. The pipelined system can often bring higher
+                                                                                                  prior arts exclusively rely on exhaustive/random search with the
+throughput. However, it also owns the problem of being bottle-
+                                                                                                  help of coarse-grained striding enumeration or heuristics-based
+neck by critical block. The layer-wise pipelined accelerator can be
+                                                                                                  pruning. On the other hand, to search the mapping space with
+bottlenecked by some computation-heavy layer. As the bottleneck
+                                                                                                  sample efficiency, Suda et. al[56] and TensorComprehensions [61]
+latency exists and may not be able to be further optimized, in this
+                                                                                                  uses genetic algorithm, AutoTVM [8, 9] uses simulated annealing
+case, we relax other non-critical blocks by relaxing their timing
+                                                                                                  and boosted tree, Reagen et. al, [41] uses Bayesian optimization,
+constraint to achieve overall lower energy/power of the system.
+                                                                                                  RELEASE [4] uses RL to formulated a more guided search by ML
+5.4.2 Structure. We apply a two-stage optimization method, where
+                                                                                                  technique. However, these ML-based algorithms need to work in
+we optimize latency first and then power/energy at the second stage.
+                                                                                                  a pre-defined rigid design space, where the level of parallelism is
+   Stage I: optimize latency. We use GAMMA to find the mapping
+                                                                                                  restricted, and hence the mapping space is constrained. The map-
+that optimizes the latency of each layer. We identify the bottleneck
+                                                                                                  pers in Timeloop [35] and Simba [46] explore the full search space;
+layer, whose latency decides the pipeline latency of the system.
+                                                                                                  however, they rely on exhaustive/random search. In this work, we
+   Stage II: optimize power/energy. With the pipeline latency
+                                                                                                  explore a full search space, but with a ML-based guided search
+decided, we relax other layers by applying GAMMA again but
+                                                                                                  method with sample efficiency.
+optimizing power/energy at this stage with the awareness of not
+exceeding the pipeline latency. This is formulated by adding a heavy                              7     CONCLUSION
+penalty when the searched solution exceeds the pipeline latency.                                  Finding optimum mappings of DNNs on accelerators is critical for
+   With the designed two-stage optimization, we could optimize the                                performance, but is challenging to automate due to an extremely
+throughput of a layer-wise pipelined system at the first stage and                                large layer-specific and HW-specific search-space. In this paper, we
+further optimize its power/energy efficiency at the second stage.                                 propose a GAMMA, a genetic algorithm-based technique for the
+5.4.3 Results. Table 6 shows the HW performance of each layer in                                  HW-mapping problem. GAMMA consistently outperforms other
+ResNet-18 in the 2-stage optimization scheme. In the Latency-Power                                search techniques. With new DNN models and new accelerators be-
+experiment, we optimize latency first and their power next. After                                 ing proposed at an unprecedented rate, GAMMA allows researchers
+the first stage, it shows that the latency is bottleneck by the second                            to quickly explore the HW efficiency of emerging DNNs without
+layer, and it decides the pipeline latency. With the awareness of                                 time-consuming human-in-the-loop mapping and tuning processes.
+GAMMA: Automating the HW Mapping of DNN Models on Accelerators via Genetic Algorithm                                        ICCAD ’20, November 2–5, 2020, Virtual Event, USA
+
+
+REFERENCES                                                                                 [37] Maurice Peemen et al. 2013. Memory-centric accelerator design for convolutional
+ [1] 2017. NVDLA Deep Learning Accelerator. http://nvdla.org.                                   neural networks. In 31st ICCD. IEEE, 13–19.
+ [2] 2020. MAESTRO tool. http://maestro.ece.gatech.edu/.                                   [38] Kenneth V Price. 2013. Differential evolution. In Handbook of Optimization.
+ [3] Martín Abadi et al. 2016. Tensorflow: A system for large-scale machine learning.           Springer, 187–214.
+     In OSDI 16. 265–283.                                                                  [39] Jonathan Ragan-Kelley et al. 2013. Halide: a language and compiler for optimizing
+ [4] Byung Hoon Ahn et al. 2019. Reinforcement Learning and Adaptive Sampling                   parallelism, locality, and recomputation in image processing pipelines. Acm
+     for Optimized DNN Compilation. arXiv preprint arXiv:1905.12799 (2019).                     Sigplan Notices 48, 6 (2013), 519–530.
+ [5] Lukas Cavigelli et al. 2015. Origami: A convolutional network accelerator. In         [40] J. Rapin and O. Teytaud. 2018. Nevergrad - A gradient-free optimization platform.
+     Proceedings of the 25th edition on Great Lakes Symposium on VLSI. 199–204.                 https://GitHub.com/FacebookResearch/Nevergrad.
+ [6] Srimat Chakradhar et al. 2010. A dynamically configurable coprocessor for             [41] Brandon Reagen et al. 2017. A case for efficient accelerator design space explo-
+     convolutional neural networks. In ISCA. 247–257.                                           ration via Bayesian optimization. In ISLPED. IEEE, 1–6.
+ [7] Tianshi Chen et al. 2014. Diannao: A small-footprint high-throughput accelerator      [42] Ingo Rechenberg. 1994. Evolutionsstrategie: Optimierung technischer Systeme
+     for ubiquitous machine-learning. ACM SIGARCH Computer Architecture News 42,                nach Prinzipien der biologischen Evolution. frommann-holzbog, Stuttgart, 1973.
+     1 (2014), 269–284.                                                                         Step-Size Adaptation Based on Non-Local Use of Selection Information. In PPSN3
+ [8] Tianqi Chen et al. 2018. Learning to optimize tensor programs. In Advances in              (1994).
+     Neural Information Processing Systems. 3389–3400.                                     [43] Tim Salimans et al. 2017. Evolution strategies as a scalable alternative to rein-
+ [9] Tianqi Chen et al. 2018. TVM: An automated end-to-end optimizing compiler                  forcement learning. arXiv (2017).
+     for deep learning. In OSDI 18. 578–594.                                               [44] Mark Sandler et al. 2018. Mobilenetv2: Inverted residuals and linear bottlenecks.
+[10] Yu-Hsin Chen et al. 2016. Eyeriss: A spatial architecture for energy-efficient             In CVPR. 4510–4520.
+     dataflow for convolutional neural networks. In ISCA, Vol. 44. 367–379.                [45] Eric Schkufza et al. 2013. Stochastic superoptimization. ACM SIGARCH Computer
+[11] Chen, Yu-Hsin and others. 2016. Eyeriss: An Energy-Efficient Reconfigurable                Architecture News 41, 1 (2013), 305–316.
+     Accelerator for Deep Convolutional Neural Networks. In ISSCC. 262–263.                [46] Yakun Sophia Shao et al. 2019. Simba: Scaling deep-learning inference with
+[12] Ricardo C Corrêa et al. 1999. Scheduling multiprocessor tasks with genetic                 multi-chip-module-based architecture. In MICRO. 14–27.
+     algorithms. IEEE Transactions on Parallel and Distributed systems 10, 8 (1999),       [47] Yongming Shen et al. 2017. Maximizing CNN accelerator efficiency through
+     825–837.                                                                                   resource partitioning. In ISCA. IEEE, 535–547.
+[13] Christopher C Cox. 2017. A Comparison of Active and Passive Portfolio Manage-         [48] Pankaj Shroff et al. 1996. Genetic simulated annealing for scheduling data-
+     ment. (2017).                                                                              dependent tasks in heterogeneous environments. In 5th Heterogeneous Computing
+[14] Shail Dave et al. 2019. DMazerunner: Executing perfectly nested loops on dataflow          Workshop (HCW’96). 98–117.
+     accelerators. TECS 18, 5s (2019), 1–27.                                               [49] Karen Simonyan et al. 2014. Very deep convolutional networks for large-scale
+[15] Zidong Du et al. 2015. ShiDianNao: Shifting vision processing closer to the sensor.        image recognition. arXiv preprint arXiv:1409.1556 (2014).
+     In ISCA.                                                                              [50] Harmel Singh et al. 1996. Mapping and scheduling heterogeneous task graphs
+[16] Clément Farabet et al. 2011. Neuflow: A runtime reconfigurable dataflow proces-            using genetic algorithms. In 5th IEEE heterogeneous computing workshop (HCW’96).
+     sor for vision. In Cvpr 2011 Workshops. IEEE, 109–116.                                     86–97.
+[17] Mingyu Gao et al. 2017. Tetris: Scalable and efficient neural network acceleration    [51] Linghao Song et al. 2019. HyPar: Towards hybrid parallelism for deep learning
+     with 3d memory. In ASPLOS. 751–764.                                                        accelerator array. In HPCA. IEEE, 56–68.
+[18] Mingyu Gao et al. 2019. Tangram: Optimized coarse-grained dataflow for scalable       [52] Mingcong Song et al. 2018. Towards efficient microarchitectural design for
+     NN accelerators. In ASPLOS. 807–820.                                                       accelerating unsupervised gan-based deep learning. In HPCA. IEEE, 66–77.
+[19] Suyog Gupta et al. 2015. Deep learning with limited numerical precision. In           [53] Michel Steuwer et al. 2017. Lift: a functional data-parallel IR for high-performance
+     ICML. 1737–1746.                                                                           GPU code generation. In CGO. IEEE, 74–85.
+[20] Nikolaus Hansen. 2006. The CMA evolution strategy: a comparing review. In             [54] Arthur Stoutchinin et al. 2019. Optimally scheduling CNN convolutions for
+     Towards a new evolutionary computation. Springer, 75–102.                                  efficient memory access. arXiv preprint arXiv:1902.01492 (2019).
+[21] Kaiming He et al. 2016. Deep residual learning for image recognition. In CVPR.        [55] Felipe Petroski Such et al. 2017. Deep neuroevolution: Genetic algorithms are
+     770–778.                                                                                   a competitive alternative for training deep neural networks for reinforcement
+[22] Michael Hellwig et al. 2016. Evolution under strong noise: A self-adaptive                 learning. arXiv (2017).
+     evolution strategy can reach the lower performance bound-the pccmsa-es. In            [56] Naveen Suda et al. 2016. Throughput-optimized OpenCL-based FPGA accelerator
+     International Conference on PPSN3. Springer, 26–36.                                        for large-scale convolutional neural networks. In FPGA’16. 16–25.
+[23] John H Holland. 1992. Genetic algorithms. Scientific american 267, 1 (1992),          [57] Ilya Sutskever et al. 2014. Sequence to sequence learning with neural networks.
+     66–73.                                                                                     In Advances in neural information processing systems. 3104–3112.
+[24] Edwin SH Hou et al. 1994. A genetic algorithm for multiprocessor scheduling.          [58] Christian Szegedy et al. 2017. Inception-v4, inception-resnet and the impact of
+     IEEE Transactions on Parallel and Distributed systems 5, 2 (1994), 113–120.                residual connections on learning. In 21st AAAI conference on artificial intelligence.
+[25] Norman P Jouppi et al. 2017. In-datacenter performance analysis of a tensor           [59] Mingxing Tan et al. 2019. Efficientnet: Rethinking model scaling for convolutional
+     processing unit. In ISCA. IEEE, 1–12.                                                      neural networks. arXiv preprint arXiv:1905.11946 (2019).
+[26] James Kennedy et al. 1995. Particle swarm optimization. In ICNN, Vol. 4. IEEE,        [60] Mingxing Tan et al. 2019. Mnasnet: Platform-aware neural architecture search
+     1942–1948.                                                                                 for mobile. In Proceedings of the IEEE Conference on Computer Vision and Pattern
+[27] Diederik P Kingma et al. 2013. Auto-encoding variational bayes. arXiv preprint             Recognition. 2820–2828.
+     arXiv:1312.6114 (2013).                                                               [61] Nicolas Vasilache et al. 2018. Tensor comprehensions: Framework-agnostic high-
+[28] Fredrik Kjolstad et al. 2017. The tensor algebra compiler. Proceedings of the ACM          performance machine learning abstractions. arXiv preprint arXiv:1802.04730
+     on Programming Languages 1, OOPSLA (2017), 1–29.                                           (2018).
+[29] Andreas Klöckner. 2014. Loo. py: transformation-based code generation for GPUs        [62] Swagath Venkataramani et al. 2017. Scaledeep: A scalable compute architecture
+     and CPUs. In ACM SIGPLA Workshop on Libraries, Languages, and Compilers for                for learning and evaluating deep networks. In MICRO. 13–26.
+     Array Programming. 82–87.                                                             [63] Swagath Venkataramani et al. 2019. DeepTools: Compiler and Execution Runtime
+[30] Hyoukjun Kwon et al. 2018. Maeri: Enabling flexible dataflow mapping over dnn              Extensions for RaPiD AI Accelerator. IEEE Micro 39, 5 (2019), 102–111.
+     accelerators via reconfigurable interconnects. ACM SIGPLAN Notices 53, 2 (2018),      [64] Lee Wang et al. 1996. A genetic-algorithm-based approach for task matching and
+     461–475.                                                                                   scheduling in heterogeneous computing environments. In Proc. Heterogeneous
+[31] Hyoukjun Kwon et al. 2019. Understanding Reuse, Performance, and Hardware                  Computing Workshop. 72–85.
+     Cost of DNN Dataflow: A Data-Centric Approach. In MICRO. 754–768.                     [65] Richard Wei et al. 2017. DLVM: A modern compiler infrastructure for deep
+[32] Nicholas D Lane et al. 2016. Deepx: A software accelerator for low-power deep              learning systems. arXiv preprint arXiv:1711.03016 (2017).
+     learning inference on mobile devices. In IPSN. IEEE, 1–12.                            [66] Xuechao Wei et al. 2017. Automated systolic array architecture synthesis for
+[33] Wenyan Lu et al. 2017. Flexflow: A flexible dataflow accelerator architecture for          high throughput CNN inference on FPGAs. In DAC. 1–6.
+     convolutional neural networks. In HPCA. IEEE, 553–564.                                [67] Xuan Yang et al. 2020. Interstellar: Using Halide’s Scheduling Language to
+[34] Yufei Ma et al. 2017. Optimizing loop operation and dataflow in FPGA acceleration          Analyze DNN Accelerators. In ASPLOS. 369–383.
+     of deep convolutional neural networks. In FPGA’17. 45–54.                             [68] Chen Zhang et al. 2015. Optimizing fpga-based accelerator design for deep
+[35] Angshuman Parashar et al. 2019. Timeloop: A systematic approach to dnn                     convolutional neural networks. In FPGA’15. 161–170.
+     accelerator evaluation. In ISPASS. IEEE, 304–315.                                     [69] Chen Zhang et al. 2015. Optimizing fpga-based accelerator design for deep
+[36] Seongwook Park et al. 2015. 4.6 A1. 93TOPS/W scalable deep learning/inference              convolutional neural networks. In FPGA’15. 161–170.
+     processor with tetra-parallel MIMD architecture for big-data applications. In
+     2015 ISSCC Digest of Technical Papers. IEEE, 1–3.
+

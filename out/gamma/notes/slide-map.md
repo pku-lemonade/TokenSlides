@@ -1,0 +1,25 @@
+# GAMMA Slide Map
+
+Artifact Progress:
+- [x] Extract paper text to `notes/source.txt`
+- [x] Recover likely visuals and write `notes/asset-manifest.md`
+- [x] Write `notes/brief.md` from the paper text and manifest
+- [x] Write `notes/slide-map.md` with evidence and archetypes
+
+Section divider slides will be generated automatically from level-1 headings in the Typst deck.
+
+- `Title` | `GAMMA` | Takeaway: accelerator mapping is the main optimization target, and GAMMA searches it as a full systems problem rather than a fixed-parameter tuning task. | Evidence: paper title, authors, venue metadata. | Archetype: title slide
+- `Motivation` | `What Mapping Controls` | Takeaway: one mapping jointly chooses parallelism, order, and tile sizes, so it directly determines reuse and efficiency. | Evidence: `Figure 1` plus the paper's definition of mapping in Sections 1 and 2. | Archetype: wide or fat evidence
+- `Motivation` | `The Search Space Is the Barrier` | Takeaway: the same VGG16 layer spans orders of magnitude in latency and energy, yet a full 3-level map space already reaches `O(10^36)`. | Evidence: `Figure 2`, `O(10^12)` for one-level VGG16 layer 2, `O(10^36)` for three levels, Random Search often finding no valid solution in `10K` samples. | Archetype: figure-led vertical
+- `Design` | `GAMMA Thesis` | Takeaway: the paper's real contribution is a flexible mapping representation plus mapping-specific operators, not GA in isolation. | Evidence: contribution list from the introduction and `Figure 5a`. | Archetype: method overview side-by-side
+- `Design` | `Encoding the Full Map Space` | Takeaway: GAMMA represents the parallel dimension, compute order, and tile sizes in one genome, and multi-level mappings are just concatenated mapper levels. | Evidence: `Figure 3` and `Figure 4`. | Archetype: two-up comparison
+- `Design` | `Why Fixed-Length Baselines Break` | Takeaway: most generic optimizers assume fixed-length inputs, so they freeze mapping depth and cannot search the full flexible map space directly. | Evidence: Section 3.1 and the paper's comparison against rigid baseline methods. | Archetype: summary boxes
+- `Design` | `Variable-Depth Operators` | Takeaway: `reorder`, `growth`, and `aging` let GAMMA move across `1`, `2`, and `3` levels of parallelism within one search loop. | Evidence: `Figure 5b` and Sections 3.5-3.6. | Archetype: wide or fat evidence
+- `Evaluation` | `Experimental Setup` | Takeaway: the evaluation covers two hardware budgets, three accelerator organizations, five CNNs, and both latency and energy objectives. | Evidence: `Table 2`, `Table 3`, and Section 4.1. | Archetype: method overview with stacked evidence
+- `Evaluation` | `Baselines and Search Budget` | Takeaway: GAMMA is compared against both generic optimizers and fixed accelerator dataflows under the same `10K`-sample budget, and valid-solution discovery is part of the task. | Evidence: `Table 4` and Section 4.2. | Archetype: summary boxes
+- `Evaluation` | `GAMMA Wins on the Hard Cases` | Takeaway: GAMMA both finds valid mappings and beats generic search when constraints are tight or when the map space becomes more flexible. | Evidence: `Figure 6`, including `224x-440x` lower latency on `S1` Edge, `209x-1,035x` on `S2` Edge, `11x-36x` lower `S2` Edge energy, and `241x-644x` on `S3` Edge. | Archetype: wide or fat evidence
+- `Evaluation` | `The Learned Mappings Match Layer Shape` | Takeaway: GAMMA does not discover arbitrary solutions; it shifts from `Y/X`-oriented early layers to `C/K`-oriented late layers, with a richer three-level mapping in the middle. | Evidence: `Figure 7`, including early `Y`, middle `Y/K/C`, and late `C`-then-`K` mapping patterns. | Archetype: figure-led vertical
+- `Evaluation` | `End-to-End Wins Persist` | Takeaway: on `S3`, GAMMA stays best after moving from per-layer search to end-to-end DNN pipelines. | Evidence: `Table 5`, including `7.5x-20.2x` Edge latency gains and `5.0x-75.8x` Cloud latency gains over the best fixed mapping. | Archetype: table-led structured slide
+- `Evaluation` | `Convergence Is Fast` | Takeaway: most of the improvement arrives early in the run, so GAMMA keeps its advantage without needing the full sample budget to show progress. | Evidence: `Figure 9a`, `Figure 9b`, and the final `9.67E+05` / `8.31E+05` cycle endpoints for MobileNet-V2 and MnasNet. | Archetype: two-up comparison
+- `Evaluation` | `Pipeline Slack Can Be Reinvested` | Takeaway: a second GAMMA pass preserves the bottleneck latency while cutting non-bottleneck power and energy. | Evidence: `Table 6`, including ResNet-18 `95%` power and `58%` energy reduction, plus VGG16 `99%` power and `78%` energy reduction. | Archetype: table-led structured slide
+- `Takeaways` | `What This Paper Establishes` | Takeaway: full-space mapping search becomes feasible when the optimizer understands mapping structure, but the evidence is still simulator-based and centered on CNN-style accelerators. | Evidence: synthesis of `Figures 2, 5, 6, 7, 9` and `Table 6`. | Archetype: summary boxes
