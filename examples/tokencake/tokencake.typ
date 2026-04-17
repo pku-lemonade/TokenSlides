@@ -82,8 +82,15 @@
   inset: 8pt,
   align: (left, left, left, left),
   [*View*], [*Examples*], [*Optimizes*], [*Still misses*],
-  [Agent-aware], [Parrot / Autellix / Teola], [DAG order, stage overlap], [No KV-cache control, so critical inversion remains.],
-  [KV-cache-centric], [vLLM / Mooncake / CachedAttention / LMCache], [Fragmentation or offload], [No agent criticality or function-call trigger.],
+  [Agent-aware],
+  [Parrot / Autellix / Teola],
+  [DAG order, stage overlap],
+  [No KV-cache control, so critical inversion remains.],
+
+  [KV-cache-centric],
+  [vLLM / Mooncake / CachedAttention / LMCache],
+  [Fragmentation or offload],
+  [No agent criticality or function-call trigger.],
 )
 
 = Design
@@ -266,7 +273,10 @@
 ]
 
 #imgs(
-  (image("assets/overhead-mitigation.jpg"), [CPU buffering and gradual reservation keep transfer latency in single-digit milliseconds]),
+  (
+    image("assets/overhead-mitigation.jpg"),
+    [CPU buffering and gradual reservation keep transfer latency in single-digit milliseconds],
+  ),
 )
 
 == What Matters in Tokencake
@@ -293,3 +303,16 @@
     ]
   ],
 )
+
+#thank-you-slide(
+  title: [Questions?],
+)[
+  #place-image(
+    assets.qr-code,
+    caption: "pku-lemonade",
+    width: 20%,
+    position: bottom + right,
+    dx: 0em,
+    dy: 1em,
+  )
+]
