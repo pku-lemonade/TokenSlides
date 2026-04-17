@@ -33,7 +33,6 @@ Avoid when:
 
 #imgs(
   (asset("result.jpg"), [What the figure is]),
-  width: 90%,
 )
 ```
 
@@ -72,8 +71,6 @@ Avoid when:
   [
     #imgs(
       (asset("overview.jpg"), [System overview]),
-      width: 100%,
-      fill-height: false,
       cap-size: 16pt,
     )
   ],
@@ -112,14 +109,10 @@ Avoid when:
   [
     #imgs(
       (asset("overview.jpg"), [Overall pipeline]),
-      width: 100%,
-      fill-height: false,
     )
     #v(0.6em)
     #imgs(
       (asset("zoom.jpg"), [Critical submodule or zoomed path]),
-      width: 100%,
-      fill-height: false,
     )
   ],
 )
@@ -133,6 +126,63 @@ Notes:
 - If only one source figure exists and no companion asset is available, try a tighter tall crop or extract a smaller reusable sub-asset from the source figure before falling back to post-processing cleanup.
 - Otherwise switch to `Wide or Fat Evidence` instead of faking a stack.
 - The stack should read as one argument, not two separate slides squeezed together.
+
+## 2c. Method Cards (2 or 3 Only)
+
+Use when:
+
+- the paper presents 2 or 3 named methods, stages, or operators and each one has its own figure
+- each method deserves equal visual weight
+- the text and evidence should stay bundled together instead of split into one text column and one figure column
+
+Avoid when:
+
+- there are 4 or more methods
+- one method is much denser than the others
+- any card needs more than 1 short text block plus 1 figure
+
+```typst
+#grid(
+  columns: (1fr, 1fr, 1fr),
+  gutter: 0.8em,
+  [
+    #mbox(title: [Method A])[
+      *Role:* ...
+      #v(0.5em)
+      #imgs(
+        (asset("method-a.pdf"), [Method A]),
+      )
+    ]
+  ],
+  [
+    #mbox(title: [Method B])[
+      *Role:* ...
+      #v(0.5em)
+      #imgs(
+        (asset("method-b.pdf"), [Method B]),
+      )
+    ]
+  ],
+  [
+    #mbox(title: [Method C])[
+      *Role:* ...
+      #v(0.5em)
+      #imgs(
+        (asset("method-c.pdf"), [Method C]),
+      )
+    ]
+  ],
+)
+```
+
+Notes:
+
+- Use `2` cards or `3` cards only. If a fourth item matters, split the slide or group the methods more cleanly.
+- `#mbox(title: [...])[...]` is for self-contained method cards: a top emphasis bar, a centered bold title, then concise local text and one figure inside one container.
+- `#mbox[...]` uses smaller body text by default, so keep the wording very short. If a card needs paragraph text, split the slide or switch archetype.
+- Keep each card to one short setup line and one figure. If you need multiple boxes inside a card, the slide is no longer this archetype.
+- Prefer figures with similar visual weight so the row reads as one structured comparison.
+- This works especially well for per-method operator diagrams, scheduler stages, or one-figure-per-mechanism papers.
 
 ## 3. Two-Up Comparison
 
@@ -158,7 +208,6 @@ Avoid when:
 #imgs(
   (asset("left.jpg"), [Condition A]),
   (asset("right.jpg"), [Condition B]),
-  width: 100%,
   gap: 0.8em,
 )
 ```
@@ -221,7 +270,6 @@ Avoid when:
 
 #imgs(
   (asset("wide-figure.jpg"), [What the wide figure shows]),
-  width: 100%,
 )
 ```
 

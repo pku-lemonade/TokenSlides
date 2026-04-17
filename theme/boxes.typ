@@ -30,6 +30,10 @@
     border-width: 0.8pt,
 )
 
+#let topbar-box-config = (
+    top-bar-width: 4pt,
+)
+
 #let make-box(
     style-name,
     body,
@@ -79,6 +83,53 @@
 #let sbox(body, compact: auto, breakable: false) = make-box("success", body, compact: compact, breakable: breakable)
 #let nbox(body, compact: auto, breakable: false) = make-box("neutral", body, compact: compact, breakable: breakable)
 #let pbox(body, compact: auto, breakable: false) = make-box("purple", body, compact: compact, breakable: breakable)
+
+#let mbox(
+    body,
+    title: none,
+    compact: auto,
+    breakable: false,
+    title-size: font-sizes.body,
+    body-size: font-sizes.small,
+    title-gap: 0.35em,
+) = {
+    context {
+        let compact = if compact == auto { cur-box-compact.get() } else { compact }
+        let colors = cur-colors.get()
+        let spacing-config = if compact { box-config.compact } else { box-config.normal }
+        let frame-width = box-config.frame-width
+
+        block(
+            breakable: breakable,
+            fill: none,
+            width: 100%,
+            inset: (
+                left: spacing-config.inset-left,
+                right: spacing-config.inset-right,
+                top: spacing-config.inset-top,
+                bottom: spacing-config.inset-bottom,
+            ),
+            radius: box-config.radius,
+            above: spacing-config.box-spacing-above,
+            below: spacing-config.box-spacing-below,
+            stroke: (
+                top: topbar-box-config.top-bar-width + colors.primary,
+                left: frame-width + colors.table-stroke,
+                right: frame-width + colors.table-stroke,
+                bottom: frame-width + colors.table-stroke,
+            ),
+        )[
+            #if title != none [
+                #align(center)[
+                    #text(size: title-size, weight: "bold")[#title]
+                ]
+                #v(title-gap)
+            ]
+            #set text(size: body-size)
+            #body
+        ]
+    }
+}
 
 #let cbox(body, breakable: false) = {
     context {
