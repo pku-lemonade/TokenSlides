@@ -42,7 +42,6 @@ esac
 deck_rel="${deck_abs#${repo_root}/}"
 deck_name="$(basename "${deck_abs}" .typ)"
 pdf_path="${output_dir}/${deck_name}.pdf"
-preview_dir="${output_dir}/${deck_name}-pages"
 
 echo "Compiling ${deck_rel}"
 (
@@ -54,13 +53,4 @@ echo "PDF: ${pdf_path}"
 
 if command -v pdfinfo >/dev/null 2>&1; then
   echo "Pages: $(pdfinfo "${pdf_path}" 2>/dev/null | awk -F': *' '/^Pages:/ {print $2}')"
-fi
-
-if command -v pdftoppm >/dev/null 2>&1; then
-  rm -rf "${preview_dir}"
-  mkdir -p "${preview_dir}"
-  pdftoppm -jpeg -r 150 "${pdf_path}" "${preview_dir}/slide" >/dev/null 2>/dev/null
-  echo "Preview pages: ${preview_dir}"
-else
-  echo "Preview export skipped: pdftoppm not found"
 fi

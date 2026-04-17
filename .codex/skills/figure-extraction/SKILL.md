@@ -35,7 +35,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
    - Run `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`.
    - When you want one detected panel or subfigure exactly as localized by the helper, prefer `capture-candidate` over copying bbox coordinates by hand.
    - `auto` preserves native raster bytes only when the bbox matches one displayed embedded image cleanly.
-   - If the figure is vector or page-composed, the helper emits a cropped PDF as the primary asset and a PNG preview beside it.
+   - If the figure is vector or page-composed, the helper emits a cropped PDF as the primary asset.
    - When a figure has reusable top/bottom panels, left/right subpanels, or one overview plus one useful zoom, prefer capturing those as separate stable assets during extraction if they are likely to become independent evidence on slides.
 4. Prefer preserving the visible figure over forcing native extraction.
    - If text, legends, axes, or overlays are separate page objects near the image, treat the figure as composite and keep the cropped PDF path.
@@ -52,7 +52,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 ## Routing Rules
 
 - If `inspect-page` reports a high-confidence `raster` candidate and the requested bbox matches it closely, keep native raster bytes.
-- If `inspect-page` reports `vector` or `composite`, capture the bbox as cropped PDF and keep the PNG only as preview or compatibility output.
+- If `inspect-page` reports `vector` or `composite`, capture the bbox as cropped PDF and use that PDF directly in Typst.
 - If the bbox intentionally cuts into a larger raster candidate, use `capture-figure --mode raster` and accept raster fallback instead of silently returning the full uncropped image.
 - Do not use whole-page rendering as the default fallback. The helper should return the best figure-sized region it can localize.
 
@@ -60,9 +60,8 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
 
 - This workflow is PyMuPDF-only. The helper depends on `pymupdf` and does not route through Poppler tools.
 - Cropped PDF is the preferred vector-preserving artifact for LaTeX, TikZ, and mixed raster+vector figures.
-- PNG preview output is for quick inspection and slide compatibility. It is not the preferred source of truth when a cropped PDF is available.
 - After extraction, keep scale bars, legends, subplot labels, and in-figure titles if they are part of how the figure is interpreted.
-- Parent agents should pass figure number, page hints, or a rough target description when they know them, and they should expect `bbox`, `primary_output`, and `preview_output` back from `figure_extractor`.
+- Parent agents should pass figure number, page hints, or a rough target description when they know them, and they should expect `bbox` and `primary_output` back from `figure_extractor`.
 - When supporting a parent asset manifest, also report enough context to transcribe the entry cleanly: source file, page number, capture kind, and whether follow-up crop cleanup is likely.
 - If you recover both a whole figure and smaller reusable sub-assets from the same source, report all of them explicitly so the parent can choose layouts based on what is already available.
 

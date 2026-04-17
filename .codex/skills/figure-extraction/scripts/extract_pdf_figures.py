@@ -588,12 +588,6 @@ def analyze_page(doc, page_number: int) -> dict[str, Any]:
     }
 
 
-def preview_path_for(primary_output: Path) -> Path:
-    if primary_output.suffix.lower() == ".png":
-        return primary_output
-    return primary_output.with_name(f"{primary_output.stem}-preview.png")
-
-
 def candidate_region(candidate: dict[str, Any], region: str):
     if region == "expanded":
         return candidate["_bbox"]
@@ -673,7 +667,7 @@ def select_capture_mode(requested_mode: str, _clip, matches: list[dict[str, Any]
     return "cropped-vector-pdf", best_match
 
 
-def save_preview(page, clip, path: Path, dpi: int) -> Path:
+def save_raster_clip(page, clip, path: Path, dpi: int) -> Path:
     pix = page.get_pixmap(clip=clip, dpi=dpi, alpha=False)
     pix.save(path)
     return path
@@ -681,13 +675,9 @@ def save_preview(page, clip, path: Path, dpi: int) -> Path:
 
 def save_native_raster(
     doc,
-    page,
-    clip,
     candidate: dict[str, Any],
     out: Path,
-    preview_dpi: int,
-    write_preview: bool,
-) -> tuple[Path, Path | None]:
+) -> Path:
     fitz = fitz_module()
     xref = candidate.get("xref")
     if not xref:
@@ -711,12 +701,7 @@ def save_native_raster(
         primary = ensure_output_path(out, ext)
         primary.write_bytes(extracted["image"])
 
-    preview = preview_path_for(primary)
-    if write_preview and preview != primary:
-        save_preview(page, clip, preview, preview_dpi)
-    if not write_preview and preview != primary:
-        preview = None
-    return primary, preview
+    return primary
 
 
 def save_cropped_pdf(doc, page_number: int, clip, out: Path) -> Path:
@@ -730,10 +715,10 @@ def save_cropped_pdf(doc, page_number: int, clip, out: Path) -> Path:
     return primary
 
 
-def save_fallback_raster(page, clip, out: Path, preview_dpi: int) -> tuple[Path, Path]:
+def save_fallback_raster(page, clip, out: Path) -> Path:
     primary = ensure_output_path(out, ".png")
-    save_preview(page, clip, primary, preview_dpi)
-    return primary, primary
+    save_raster_clip(page, clip, primary, dpi=300)
+    return primary
 
 
 def cmd_inspect_page(args: argparse.Namespace) -> None:
@@ -769,27 +754,11 @@ def cmd_capture_figure(args: argparse.Namespace) -> None:
     out = Path(args.out)
 
     if selection_mode == "native-raster":
-        primary_output, preview_output = save_native_raster(
-            doc,
-            page,
-            clip,
-            selected_candidate,
-            out,
-            args.preview_dpi,
-            args.preview_png,
-        )
+        primary_output = save_native_raster(doc, selected_candidate, out)
     elif selection_mode in ("cropped-vector-pdf", "cropped-composite-pdf"):
         primary_output = save_cropped_pdf(doc, args.page, clip, out)
-        preview_output = preview_path_for(primary_output)
-        if args.preview_png:
-            save_preview(page, clip, preview_output, args.preview_dpi)
-        else:
-            preview_output = None
     else:
-        primary_output, preview_output = save_fallback_raster(page, clip, out, args.preview_dpi)
-
-    if not args.preview_png:
-        preview_output = None
+        primary_output = save_fallback_raster(page, clip, out)
 
     output = {
         "pdf": str(pdf),
@@ -797,7 +766,6 @@ def cmd_capture_figure(args: argparse.Namespace) -> None:
         "bbox": rect_to_list(clip),
         "selection_mode": selection_mode,
         "primary_output": str(primary_output),
-        "preview_output": str(preview_output) if preview_output else None,
         "matched_candidates": [
             {
                 "id": item["candidate"]["id"],
@@ -857,27 +825,11 @@ def cmd_capture_candidate(args: argparse.Namespace) -> None:
     out = Path(args.out)
 
     if selection_mode == "native-raster":
-        primary_output, preview_output = save_native_raster(
-            doc,
-            page,
-            clip,
-            selected_candidate,
-            out,
-            args.preview_dpi,
-            args.preview_png,
-        )
+        primary_output = save_native_raster(doc, selected_candidate, out)
     elif selection_mode in ("cropped-vector-pdf", "cropped-composite-pdf"):
         primary_output = save_cropped_pdf(doc, args.page, clip, out)
-        preview_output = preview_path_for(primary_output)
-        if args.preview_png:
-            save_preview(page, clip, preview_output, args.preview_dpi)
-        else:
-            preview_output = None
     else:
-        primary_output, preview_output = save_fallback_raster(page, clip, out, args.preview_dpi)
-
-    if not args.preview_png:
-        preview_output = None
+        primary_output = save_fallback_raster(page, clip, out)
 
     output = {
         "pdf": str(pdf),
@@ -887,7 +839,6 @@ def cmd_capture_candidate(args: argparse.Namespace) -> None:
         "bbox": rect_to_list(clip),
         "selection_mode": selection_mode,
         "primary_output": str(primary_output),
-        "preview_output": str(preview_output) if preview_output else None,
         "matched_candidates": [
             {
                 "id": item["candidate"]["id"],
@@ -920,8 +871,6 @@ def build_parser() -> argparse.ArgumentParser:
     capture_parser.add_argument("--bbox", required=True, type=parse_bbox)
     capture_parser.add_argument("--mode", choices=("auto", "raster", "vector", "composite"), default="auto")
     capture_parser.add_argument("--out", required=True)
-    capture_parser.add_argument("--preview-png", action=argparse.BooleanOptionalAction, default=True)
-    capture_parser.add_argument("--preview-dpi", type=int, default=300)
     capture_parser.set_defaults(func=cmd_capture_figure)
 
     candidate_parser = subparsers.add_parser("capture-candidate", help="Capture one inspected candidate directly by id")
@@ -931,8 +880,6 @@ def build_parser() -> argparse.ArgumentParser:
     candidate_parser.add_argument("--region", choices=("auto", "source", "expanded"), default="auto")
     candidate_parser.add_argument("--mode", choices=("auto", "raster", "vector", "composite"), default="auto")
     candidate_parser.add_argument("--out", required=True)
-    candidate_parser.add_argument("--preview-png", action=argparse.BooleanOptionalAction, default=True)
-    candidate_parser.add_argument("--preview-dpi", type=int, default=300)
     candidate_parser.set_defaults(func=cmd_capture_candidate)
 
     return parser

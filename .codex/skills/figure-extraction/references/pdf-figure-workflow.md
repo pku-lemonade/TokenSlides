@@ -6,7 +6,6 @@
 - Inspect the PDF page structure before capturing anything. Start from image placements, drawing regions, and nearby text blocks.
 - If the figure is a standalone embedded raster image, keep the native bytes when the requested bbox matches it closely.
 - If the figure is vector or page-composed, generate a cropped PDF region rather than a whole-page render.
-- Emit a PNG preview beside the primary asset so slide work can proceed without discarding the vector-preserving source.
 - Do not use an automatic whole-page fallback chain by default. Inspect first, then choose the bbox and capture mode explicitly.
 
 ## Why
@@ -23,7 +22,7 @@
 1. Run `inspect-page` for the target page.
 2. If you see a high-confidence `raster` candidate and your intended bbox matches it closely, keep native raster bytes.
 3. If the figure is `vector` or `composite`, use `capture-figure` and keep the cropped PDF as primary output.
-4. Always write a PNG preview beside the primary asset for quick slide iteration.
+4. Use the primary output directly in Typst: PDF for vector/composite captures, original raster bytes for embedded images.
 5. Then run a separate crop/trim step only if the recovered bbox still includes paper chrome or inconsistent padding.
 
 ## Local Evidence

@@ -66,13 +66,13 @@ Rules:
      - Recover all likely reusable slide assets early. Save detailed cleanup for the subset that survives into the final deck.
      - If a paper figure likely needs to be split across slides or stacked beside method text, recover the promising sub-assets during the extraction pass rather than assuming a late crop-prep step will solve the layout.
      - Delegate PDF or deck figure recovery to `figure_extractor`.
-     - When you already know the figure number, page, or rough target region, pass that hint to `figure_extractor` and expect `bbox`, `primary_output`, and `preview_output` back.
+     - When you already know the figure number, page, or rough target region, pass that hint to `figure_extractor` and expect `bbox` and `primary_output` back.
      - Treat `figure_extractor` as script-first infrastructure. If figure recovery behavior is wrong, fix the extraction skill or script instead of adding parent-side PDF extraction workarounds.
      - When `inspect-page` reveals several image candidates on one page, recover the likely reusable sub-assets as stable files during this pass instead of only capturing the whole figure group.
      - Prefer candidate-level recovery for obvious left/right or top/bottom panels so later slide planning can reuse them without manual bbox work.
      - Record each recovered asset in `out/<paper>/notes/asset-manifest.md`.
      - Keep all likely candidates in the manifest even if some will not be used later.
-     - For each entry capture: figure or table identifier if known, source file, page number, `bbox`, capture kind, `primary_output`, `preview_output` if present, what claim or evidence the asset might support, and whether follow-up cleanup or additional sub-asset recovery is likely.
+     - For each entry capture: figure or table identifier if known, source file, page number, `bbox`, capture kind, `primary_output`, what claim or evidence the asset might support, and whether follow-up cleanup or additional sub-asset recovery is likely.
    - Paper brief:
      - Build it after the asset manifest so the brief can refer to recovered visuals instead of rediscovering them later.
      - Use the manifest plus the paper text as the source of truth for available visuals.
@@ -103,8 +103,8 @@ Rules:
    - Introduce deck-local wrappers such as `figcell` only after confirming that `theme/images.typ` cannot express the needed layout.
    - If the same layout or helper problem appears across multiple slides, inspect the owning theme file first and fix the root cause there when appropriate.
 5. Validate as a deck.
-   - Prepare cropped figures with `scripts/prepare_figure.py <image> --preview` when a selected manifest asset carries paper chrome or inconsistent margins and the current asset inventory still lacks the needed shape.
-   - Run `scripts/validate_deck.sh <deck.typ>` to compile and export preview images when available.
+   - Prepare cropped figures with `scripts/prepare_figure.py <image>` when a selected manifest asset carries paper chrome or inconsistent margins and the current asset inventory still lacks the needed shape.
+   - Run `scripts/validate_deck.sh <deck.typ>` to compile the deck to a validation PDF.
    - Use `references/visual-qa.md` as a pass/fail rubric.
    - Fix visual failures in this order: reuse another recovered asset or change archetype, recover or split a better source asset, crop cleanup, split slide, then consider local overrides.
    - On figure-led slides, default to one or two short takeaway boxes. Each box should preferably fit on one line and should rarely exceed two.
