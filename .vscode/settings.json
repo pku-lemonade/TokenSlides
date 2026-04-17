@@ -1,3 +1,13 @@
 {
-    "tinymist.rootPath": "${workspaceFolder}"
+    "tinymist.rootPath": "${workspaceFolder}",
+    "tinymist.formatterMode": "typstyle",
+    "tinymist.lint.enabled": true,
+    "tinymist.lint.when": "onSave",
+    "tinymist.copyAndPaste": "enable",
+    "tinymist.dragAndDrop": "enable",
+    "tinymist.onPaste": "$dir/assets/$name",
+    "[typst]": {
+        "editor.defaultFormatter": "myriad-dreamin.tinymist",
+        "editor.formatOnSave": true
+    }
 }

@@ -2,8 +2,6 @@
 
 #set text(lang: "zh")
 
-#let asset(name) = "/examples/vstack/assets/" + name
-
 #show: lemonade-theme.with(
   config-info(
     title: [vStack：面向高效 LLM 推理的异构 HBM-PIM 架构与运行时],
@@ -17,7 +15,6 @@
   imgs-config: (
     cap-size: 15pt,
     cap-weight: "bold",
-    fill-height: false,
   ),
 )
 
@@ -75,8 +72,7 @@
   ],
   [
     #imgs(
-      asset("fig2-baselines.png"),
-      width: 100%,
+      image("assets/fig2-baselines.png"),
     )
   ],
 )
@@ -131,8 +127,7 @@
   ],
   [
     #imgs(
-      asset("fig3-architecture.png"),
-      width: 100%,
+      image("assets/fig3-architecture.png"),
     )
   ],
 )
@@ -179,8 +174,7 @@
   ],
   [
     #imgs(
-      asset("fig5-kv-layout.png"),
-      width: 100%,
+      image("assets/fig5-kv-layout.png"),
     )
   ],
 )
@@ -207,8 +201,7 @@
   ],
   [
     #imgs(
-      asset("fig6-lifecycle.png"),
-      width: 100%,
+      image("assets/fig6-lifecycle.png"),
     )
   ],
 )
@@ -278,8 +271,7 @@
 ]
 
 #imgs(
-  asset("fig8-throughput.png"),
-  width: 100%,
+  image("assets/fig8-throughput.png"),
 )
 
 == 时延优势主要来自 TTFT
@@ -301,8 +293,7 @@
 )
 
 #imgs(
-  asset("fig9-latency.png"),
-  width: 100%,
+  image("assets/fig9-latency.png"),
 )
 
 == 最大收益先来自布局，再来自调度与压缩
@@ -329,8 +320,7 @@
   ],
   [
     #imgs(
-      asset("fig12-ablation.png"),
-      width: 100%,
+      image("assets/fig12-ablation.png"),
     )
   ],
 )
@@ -346,8 +336,7 @@
 ]
 
 #imgs(
-  asset("fig10-energy.png"),
-  width: 82%,
+  image("assets/fig10-energy.png"),
 )
 
 == 论文的边界

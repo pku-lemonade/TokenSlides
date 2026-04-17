@@ -2,8 +2,6 @@
 
 #set text(lang: "en")
 
-#let asset(name) = "/examples/tokencake/assets/" + name
-
 #show: lemonade-theme.with(
   aspect-ratio: "16-9",
   title-align: "left",
@@ -34,11 +32,9 @@
 ]
 
 #imgs(
-  (asset("workload-coding.jpg"), [Multi-agent coding]),
-  (asset("workload-research.jpg"), [Deep research]),
-  width: 100%,
+  (image("assets/workload-coding.jpg"), [Multi-agent coding]),
+  (image("assets/workload-research.jpg"), [Deep research]),
   gap: 0.8em,
-  fill-height: true,
 )
 
 == Space Contention
@@ -52,12 +48,10 @@
 ]
 
 #imgs(
-  (asset("space-contention-analysis.jpg"), [Critical inversion events are frequent]),
-  (asset("space-contention-diagram.jpg"), [A non-critical agent preempts a critical one]),
-  width: 100%,
+  (image("assets/space-contention-analysis.jpg"), [Critical inversion events are frequent]),
+  (image("assets/space-contention-diagram.jpg"), [A non-critical agent preempts a critical one]),
   widths: (1.05fr, 0.95fr),
   gap: 0.8em,
-  fill-height: true,
 )
 
 == Time Underutilization
@@ -71,12 +65,10 @@
 ]
 
 #imgs(
-  (asset("time-underutilization-usage.jpg"), [Idle KV-cache blocks over time]),
-  (asset("time-underutilization-lifecycle.jpg"), [Inference1 -> function call -> Inference2 lifecycle]),
-  width: 100%,
+  (image("assets/time-underutilization-usage.jpg"), [Idle KV-cache blocks over time]),
+  (image("assets/time-underutilization-lifecycle.jpg"), [Inference1 -> function call -> Inference2 lifecycle]),
   widths: (1.05fr, 0.95fr),
   gap: 0.8em,
-  fill-height: true,
 )
 
 == Why Existing Systems Miss It
@@ -112,7 +104,7 @@
   ],
   [
     #imgs(
-      (asset("tokencake-overview.jpg"), [Frontend API + space scheduler + time scheduler]),
+      (image("assets/tokencake-overview.jpg"), [Frontend API + space scheduler + time scheduler]),
     )
   ],
 )
@@ -128,8 +120,8 @@
 ]
 
 #imgs(
-  (asset("api-graph-example.jpg"), [API-level graph and staged `FuncNode` definition]),
-  (asset("scheduler-coordination.jpg"), [Space and time schedulers coordinate on the same memory pool]),
+  (image("assets/api-graph-example.jpg"), [API-level graph and staged `FuncNode` definition]),
+  (image("assets/scheduler-coordination.jpg"), [Space and time schedulers coordinate on the same memory pool]),
   widths: (1.25fr, 0.95fr),
   gap: 0.8em,
 )
@@ -150,7 +142,7 @@
   ],
   [
     #imgs(
-      (asset("time-scheduler-lifecycle.jpg"), [Offload at call start, prefetch before predicted resume]),
+      (image("assets/time-scheduler-lifecycle.jpg"), [Offload at call start, prefetch before predicted resume]),
     )
   ],
 )
@@ -171,7 +163,7 @@
   ],
   [
     #imgs(
-      (asset("space-scheduler-partition.jpg"), [Hybrid priority drives adaptive memory reservation]),
+      (image("assets/space-scheduler-partition.jpg"), [Hybrid priority drives adaptive memory reservation]),
     )
   ],
 )
@@ -218,7 +210,7 @@
 ]
 
 #imgs(
-  (asset("latency-vs-qps.jpg"), [Latency versus application QPS across two workloads and two model sizes]),
+  (image("assets/latency-vs-qps.jpg"), [Latency versus application QPS across two workloads and two model sizes]),
 )
 
 == GPU Memory Stays Productive
@@ -232,7 +224,7 @@
 ]
 
 #imgs(
-  (asset("gpu-kv-utilization.jpg"), [Higher effective GPU KV-cache usage across load levels]),
+  (image("assets/gpu-kv-utilization.jpg"), [Higher effective GPU KV-cache usage across load levels]),
 )
 
 == Critical-Path Agents Stop Stalling
@@ -246,7 +238,7 @@
 ]
 
 #imgs(
-  (asset("abnormal-agent-count.jpg"), [Fewer latency outliers for tool-heavy agents]),
+  (image("assets/abnormal-agent-count.jpg"), [Fewer latency outliers for tool-heavy agents]),
 )
 
 == Reuse Beats Recompute
@@ -260,7 +252,7 @@
 ]
 
 #imgs(
-  (asset("reuse-vs-recompute.jpg"), [Transfer cost stays far below recomputation cost]),
+  (image("assets/reuse-vs-recompute.jpg"), [Transfer cost stays far below recomputation cost]),
 )
 
 == Offload Overhead Needs Mitigation
@@ -274,7 +266,7 @@
 ]
 
 #imgs(
-  (asset("overhead-mitigation.jpg"), [CPU buffering and gradual reservation keep transfer latency in single-digit milliseconds]),
+  (image("assets/overhead-mitigation.jpg"), [CPU buffering and gradual reservation keep transfer latency in single-digit milliseconds]),
 )
 
 == What Matters in Tokencake
