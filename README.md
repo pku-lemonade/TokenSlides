@@ -60,6 +60,7 @@ The local figure helper is PyMuPDF-based. For direct CLI use, install `pymupdf` 
 The paper-to-slides skill keeps each paper self-contained:
 
 - `out/<paper>/<paper>.typ`
+- `out/<paper>/notes/source.txt`
 - `out/<paper>/notes/brief.md`
 - `out/<paper>/notes/slide-map.md`
 - `out/<paper>/assets/...`

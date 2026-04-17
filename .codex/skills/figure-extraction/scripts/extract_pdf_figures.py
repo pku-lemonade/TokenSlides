@@ -594,6 +594,16 @@ def preview_path_for(primary_output: Path) -> Path:
     return primary_output.with_name(f"{primary_output.stem}-preview.png")
 
 
+def candidate_region(candidate: dict[str, Any], region: str):
+    if region == "expanded":
+        return candidate["_bbox"]
+    if region == "source":
+        return candidate["_source_bbox"]
+    if candidate.get("source") == "image" and candidate.get("xref"):
+        return candidate["_source_bbox"]
+    return candidate["_bbox"]
+
+
 def ensure_output_path(path: Path, suffix: str) -> Path:
     resolved = path.expanduser().resolve()
     if resolved.suffix.lower() != suffix.lower():
@@ -803,6 +813,96 @@ def cmd_capture_figure(args: argparse.Namespace) -> None:
     print(json.dumps(output, indent=2))
 
 
+def cmd_capture_candidate(args: argparse.Namespace) -> None:
+    fitz = fitz_module()
+    pdf = Path(args.pdf).expanduser().resolve()
+    doc = fitz.open(pdf)
+    analysis = analyze_page(doc, args.page)
+    page = analysis["page"]
+
+    candidate = next((item for item in analysis["candidates"] if item["id"] == args.id), None)
+    if candidate is None:
+        raise SystemExit(f"candidate {args.id!r} was not found on page {args.page}")
+
+    clip = clip_rect(to_rect(candidate_region(candidate, args.region)), analysis["page_rect"])
+    if rect_area(clip) <= 0:
+        raise SystemExit("selected candidate does not intersect the page")
+
+    matches = matching_candidates(clip, analysis["candidates"])
+    requested_mode = args.mode
+    if (
+        requested_mode == "auto"
+        and args.region != "expanded"
+        and candidate.get("source") == "image"
+        and candidate.get("xref")
+    ):
+        requested_mode = "raster"
+    if requested_mode == "raster" and candidate.get("source") == "image" and candidate.get("xref"):
+        selection_mode, selected_candidate = "native-raster", candidate
+    elif requested_mode == "vector":
+        selection_mode, selected_candidate = "cropped-vector-pdf", candidate
+    elif requested_mode == "composite":
+        selection_mode, selected_candidate = "cropped-composite-pdf", candidate
+    elif requested_mode == "auto":
+        if candidate["kind"] == "vector":
+            selection_mode, selected_candidate = "cropped-vector-pdf", candidate
+        elif candidate["kind"] == "composite":
+            selection_mode, selected_candidate = "cropped-composite-pdf", candidate
+        elif candidate.get("source") == "image" and candidate.get("xref"):
+            selection_mode, selected_candidate = "native-raster", candidate
+        else:
+            selection_mode, selected_candidate = "fallback-raster", candidate
+    else:
+        selection_mode, selected_candidate = select_capture_mode(requested_mode, clip, matches)
+    out = Path(args.out)
+
+    if selection_mode == "native-raster":
+        primary_output, preview_output = save_native_raster(
+            doc,
+            page,
+            clip,
+            selected_candidate,
+            out,
+            args.preview_dpi,
+            args.preview_png,
+        )
+    elif selection_mode in ("cropped-vector-pdf", "cropped-composite-pdf"):
+        primary_output = save_cropped_pdf(doc, args.page, clip, out)
+        preview_output = preview_path_for(primary_output)
+        if args.preview_png:
+            save_preview(page, clip, preview_output, args.preview_dpi)
+        else:
+            preview_output = None
+    else:
+        primary_output, preview_output = save_fallback_raster(page, clip, out, args.preview_dpi)
+
+    if not args.preview_png:
+        preview_output = None
+
+    output = {
+        "pdf": str(pdf),
+        "page": args.page,
+        "candidate_id": args.id,
+        "candidate_region": args.region,
+        "bbox": rect_to_list(clip),
+        "selection_mode": selection_mode,
+        "primary_output": str(primary_output),
+        "preview_output": str(preview_output) if preview_output else None,
+        "matched_candidates": [
+            {
+                "id": item["candidate"]["id"],
+                "kind": item["candidate"]["kind"],
+                "source": item["candidate"]["source"],
+                "score": round(item["score"], 3),
+                "confidence": item["candidate"]["confidence"],
+            }
+            for item in matches[:5]
+        ],
+        "selected_candidate": serialize_candidate(selected_candidate) if selected_candidate else None,
+    }
+    print(json.dumps(output, indent=2))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Inspect PDF page content with PyMuPDF and capture raster or vector figure regions."
@@ -823,6 +923,17 @@ def build_parser() -> argparse.ArgumentParser:
     capture_parser.add_argument("--preview-png", action=argparse.BooleanOptionalAction, default=True)
     capture_parser.add_argument("--preview-dpi", type=int, default=300)
     capture_parser.set_defaults(func=cmd_capture_figure)
+
+    candidate_parser = subparsers.add_parser("capture-candidate", help="Capture one inspected candidate directly by id")
+    candidate_parser.add_argument("pdf")
+    candidate_parser.add_argument("--page", type=int, required=True)
+    candidate_parser.add_argument("--id", required=True)
+    candidate_parser.add_argument("--region", choices=("auto", "source", "expanded"), default="auto")
+    candidate_parser.add_argument("--mode", choices=("auto", "raster", "vector", "composite"), default="auto")
+    candidate_parser.add_argument("--out", required=True)
+    candidate_parser.add_argument("--preview-png", action=argparse.BooleanOptionalAction, default=True)
+    candidate_parser.add_argument("--preview-dpi", type=int, default=300)
+    candidate_parser.set_defaults(func=cmd_capture_candidate)
 
     return parser
 

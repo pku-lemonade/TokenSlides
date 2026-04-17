@@ -16,6 +16,8 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
   - `scripts/extract_pdf_figures.py inspect-page <file.pdf> --page N`
 - Capture second:
   - `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`
+  - Or recover one detected candidate directly:
+    - `scripts/extract_pdf_figures.py capture-candidate <file.pdf> --page N --id image-1 --out <path>`
 - If the script is missing a needed behavior, patch the script and then re-run it instead of bypassing it for a one-off extraction.
 
 ## Workflow
@@ -31,6 +33,7 @@ When a parent workflow delegates figure recovery, stay scoped to PDF inspection 
    - Choose a bbox deliberately. Do not guess from page screenshots if the helper can localize the region.
 3. Capture from a bbox, not from a whole-page render.
    - Run `scripts/extract_pdf_figures.py capture-figure <file.pdf> --page N --bbox x0,y0,x1,y1 --mode auto --out <path>`.
+   - When you want one detected panel or subfigure exactly as localized by the helper, prefer `capture-candidate` over copying bbox coordinates by hand.
    - `auto` preserves native raster bytes only when the bbox matches one displayed embedded image cleanly.
    - If the figure is vector or page-composed, the helper emits a cropped PDF as the primary asset and a PNG preview beside it.
    - When a figure has reusable top/bottom panels, left/right subpanels, or one overview plus one useful zoom, prefer capturing those as separate stable assets during extraction if they are likely to become independent evidence on slides.
