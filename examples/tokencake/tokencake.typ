@@ -8,7 +8,7 @@
   box-compact: true,
   footer: "bar",
   config-info(
-    title: [Tokencake],
+    title: [Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications],
     venue: [arXiv:2510.18586v2],
     author: [Zhuohang Bian et al.],
     institution: [Peking University],
@@ -24,7 +24,7 @@
 == Agentic Workloads Stress KV Cache
 
 #ibox[
-  *Workload:* multi-agent DAGs mix critical-path dependencies with long, external tool stalls.
+  *Workload:* multi-agent DAGs mix critical-path dependencies with long external tool stalls.
 ]
 
 #hbox[
@@ -32,8 +32,8 @@
 ]
 
 #imgs(
-  (image("assets/workload-coding.jpg"), [Multi-agent coding]),
-  (image("assets/workload-research.jpg"), [Deep research]),
+  (image("assets/fig1a-multi-agent-coding.jpeg"), [Multi-agent coding]),
+  (image("assets/fig1b-deep-research.jpeg"), [Deep research]),
   gap: 0.8em,
 )
 
@@ -48,8 +48,8 @@
 ]
 
 #imgs(
-  (image("assets/space-contention-analysis.jpg"), [Critical inversion events are frequent]),
-  (image("assets/space-contention-diagram.jpg"), [A non-critical agent preempts a critical one]),
+  (image("assets/fig2a-space-contention-analysis.jpeg"), [Critical inversion events are frequent]),
+  (image("assets/fig2b-space-contention-diagram.jpeg"), [A non-critical agent preempts a critical one]),
   widths: (1.05fr, 0.95fr),
   gap: 0.8em,
 )
@@ -65,8 +65,8 @@
 ]
 
 #imgs(
-  (image("assets/time-underutilization-usage.jpg"), [Idle KV-cache blocks over time]),
-  (image("assets/time-underutilization-lifecycle.jpg"), [Inference1 -> function call -> Inference2 lifecycle]),
+  (image("assets/fig3a-idle-kv-blocks.jpeg"), [Idle KV-cache blocks over time]),
+  (image("assets/fig3b-kv-cache-lifecycle.jpeg"), [Inference1 -> function call -> Inference2 lifecycle]),
   widths: (1.05fr, 0.95fr),
   gap: 0.8em,
 )
@@ -111,7 +111,7 @@
   ],
   [
     #imgs(
-      (image("assets/tokencake-overview.jpg"), [Frontend API + space scheduler + time scheduler]),
+      (image("assets/fig4-overview.jpeg"), [Frontend API + space scheduler + time scheduler]),
     )
   ],
 )
@@ -127,8 +127,9 @@
 ]
 
 #imgs(
-  (image("assets/api-graph-example.jpg"), [API-level graph and staged `FuncNode` definition]),
-  (image("assets/scheduler-coordination.jpg"), [Space and time schedulers coordinate on the same memory pool]),
+  (image("assets/fig5-api.jpeg"), [API graph + staged `FuncNode`]),
+  (image("assets/fig6-coordination.jpeg"), [Space/time schedulers share one memory pool]),
+  width: 94%,
   widths: (1.25fr, 0.95fr),
   gap: 0.8em,
 )
@@ -149,7 +150,7 @@
   ],
   [
     #imgs(
-      (image("assets/time-scheduler-lifecycle.jpg"), [Offload at call start, prefetch before predicted resume]),
+      (image("assets/fig7-lifecycle.jpeg"), [Offload at call start, prefetch before predicted resume]),
     )
   ],
 )
@@ -170,7 +171,7 @@
   ],
   [
     #imgs(
-      (image("assets/space-scheduler-partition.jpg"), [Hybrid priority drives adaptive memory reservation]),
+      (image("assets/fig8-space-scheduler.jpeg"), [Hybrid priority drives adaptive memory reservation]),
     )
   ],
 )
@@ -217,7 +218,7 @@
 ]
 
 #imgs(
-  (image("assets/latency-vs-qps.jpg"), [Latency versus application QPS across two workloads and two model sizes]),
+  (image("assets/fig9-latency.jpeg"), [Latency versus application QPS across two workloads and two model sizes]),
 )
 
 == GPU Memory Stays Productive
@@ -231,7 +232,7 @@
 ]
 
 #imgs(
-  (image("assets/gpu-kv-utilization.jpg"), [Higher effective GPU KV-cache usage across load levels]),
+  (image("assets/fig10-gpu-utilization.jpeg"), [Higher effective GPU KV-cache usage across load levels]),
 )
 
 == Critical-Path Agents Stop Stalling
@@ -245,7 +246,7 @@
 ]
 
 #imgs(
-  (image("assets/abnormal-agent-count.jpg"), [Fewer latency outliers for tool-heavy agents]),
+  (image("assets/fig12-abnormal-agents.jpeg"), [Fewer latency outliers for tool-heavy agents]),
 )
 
 == Reuse Beats Recompute
@@ -259,7 +260,7 @@
 ]
 
 #imgs(
-  (image("assets/reuse-vs-recompute.jpg"), [Transfer cost stays far below recomputation cost]),
+  (image("assets/fig13-offload-vs-recompute.jpeg"), [Transfer cost stays far below recomputation cost]),
 )
 
 == Offload Overhead Needs Mitigation
@@ -274,7 +275,7 @@
 
 #imgs(
   (
-    image("assets/overhead-mitigation.jpg"),
+    image("assets/fig14-overhead-mitigation.jpeg"),
     [CPU buffering and gradual reservation keep transfer latency in single-digit milliseconds],
   ),
 )

@@ -1,0 +1,402 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/tokencake",
+  "paper": {
+    "title": "Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications",
+    "authors": [
+      "Zhuohang Bian",
+      "Feiyang Wu",
+      "Teng Ma",
+      "Youwei Zhuo"
+    ],
+    "venue": "arXiv preprint",
+    "date": "2025-10-31",
+    "scenario": "paper-reading",
+    "language": "en",
+    "source_pdf": "tokencake.pdf",
+    "institution": "Peking University"
+  },
+  "presentation_thesis": "Tokencake argues that multi-agent LLM serving is bottlenecked by KV-cache management, so the runtime must manage cache lifecycle with both function-call awareness and agent criticality rather than treating memory as a passive byproduct of compute scheduling.",
+  "problem_framing": [
+    {
+      "label": "Workload shift",
+      "value": "Multi-agent applications execute as DAGs with heterogeneous agent importance and frequent external function calls."
+    },
+    {
+      "label": "Pathology 1",
+      "value": "Space contention causes critical inversion when non-critical agents consume scarce GPU KV-cache blocks before critical-path work arrives."
+    },
+    {
+      "label": "Pathology 2",
+      "value": "Time underutilization leaves stalled agents’ KV cache idle on the GPU during long tool calls."
+    },
+    {
+      "label": "Why prior work misses it",
+      "value": "Agent-aware schedulers ignore KV-cache placement, while KV-cache-centric systems remain reactive and agent-agnostic."
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "c1",
+      "statement": "Multi-agent applications create two distinct KV-cache pathologies: critical-path space contention and function-call time underutilization.",
+      "evidence": [
+        "fig1a-coding",
+        "fig1b-deep-research",
+        "fig2a-space-contention-analysis",
+        "fig2b-space-contention-diagram",
+        "fig3a-idle-kv-blocks",
+        "fig3b-kv-cache-lifecycle",
+        "18.5% peak idle-cache waste"
+      ]
+    },
+    {
+      "claim_id": "c2",
+      "statement": "Existing systems optimize either workflow scheduling or KV-cache management, but not both jointly for agentic workloads.",
+      "evidence": [
+        "Parrot",
+        "Autellix",
+        "Teola",
+        "vLLM",
+        "Mooncake",
+        "CachedAttention",
+        "LMCache",
+        "Table 2 trigger comparison"
+      ]
+    },
+    {
+      "claim_id": "c3",
+      "statement": "Tokencake’s central design is a KV-cache-centric runtime that exposes agent structure through the frontend and coordinates space and time schedulers around one memory pool.",
+      "evidence": [
+        "fig4-overview",
+        "fig5-api",
+        "fig6-coordination"
+      ]
+    },
+    {
+      "claim_id": "c4",
+      "statement": "The Time Scheduler should offload only when the predicted stall window exceeds transfer cost and should prefetch before the agent resumes.",
+      "evidence": [
+        "fig7-lifecycle",
+        "eq1-duration-blend",
+        "eq2-transfer-cost",
+        "Algorithm 1"
+      ]
+    },
+    {
+      "claim_id": "c5",
+      "statement": "The Space Scheduler avoids critical inversion by reserving memory for critical agents using hybrid priority and runtime memory-pressure feedback.",
+      "evidence": [
+        "fig8-space-scheduler",
+        "eq3-static-priority",
+        "eq4-dynamic-priority",
+        "Algorithm 2"
+      ]
+    },
+    {
+      "claim_id": "c6",
+      "statement": "The combined policy keeps GPU memory productive and translates into large wins under load: lower end-to-end latency, higher KV-cache utilization, fewer abnormal agents, and viable offload overhead.",
+      "evidence": [
+        "fig9-latency",
+        "fig10-gpu-utilization",
+        "fig12-abnormal-agents",
+        "fig13-offload-vs-recompute",
+        "fig14-overhead-mitigation",
+        "47.06% latency reduction",
+        "16.9% utilization gain"
+      ]
+    }
+  ],
+  "mechanisms": [
+    {
+      "label": "Frontend API",
+      "detail": "Represents the application as a DAG, adds staged FuncNode abstractions, and lets developers provide predict_time hints."
+    },
+    {
+      "label": "Time Scheduler",
+      "detail": "Uses call_start / call_finish events, predictive duration modeling, opportunistic offload, and predictive upload."
+    },
+    {
+      "label": "CPU block buffering",
+      "detail": "Caches freed CPU blocks in an internal free list so bursty offload cycles avoid expensive allocator churn."
+    },
+    {
+      "label": "Gradual GPU reservation",
+      "detail": "Reserves destination blocks over multiple cycles so predictive upload does not stall on one large allocation."
+    },
+    {
+      "label": "Space Scheduler",
+      "detail": "Partitions GPU KV-cache into shared and reserved pools, then adjusts reserve size and per-agent shares from pressure, historical usage, and hybrid priority."
+    }
+  ],
+  "evaluation_setup": [
+    {
+      "label": "Implementation",
+      "value": "About 9k lines of Python with Triton kernels and reused vLLM components."
+    },
+    {
+      "label": "Models / hardware",
+      "value": "Qwen2.5-14B on NVIDIA A100 80GB and Qwen2.5-32B on NVIDIA H200 140GB."
+    },
+    {
+      "label": "Swap space",
+      "value": "100GB of CPU memory reserved for offloaded KV cache."
+    },
+    {
+      "label": "Benchmarks",
+      "value": "Code-Writer and Deep Research."
+    },
+    {
+      "label": "Workload model",
+      "value": "Requests and tool latencies are both generated with Poisson processes."
+    },
+    {
+      "label": "Baselines",
+      "value": "vLLM and LightLLM."
+    },
+    {
+      "label": "Metrics",
+      "value": "End-to-End Latency, GPU KV Cache Utilization, and Abnormal Agent Count (>1.5x mean latency for its type)."
+    }
+  ],
+  "quantitative_anchors": [
+    {
+      "label": "Idle-cache waste",
+      "value": "Up to 18.5% of used GPU KV cache is held by stalled agents."
+    },
+    {
+      "label": "Headline latency gain",
+      "value": "At 1.0 QPS, Tokencake reduces average end-to-end latency by over 47.06% versus vLLM."
+    },
+    {
+      "label": "GPU utilization",
+      "value": "Tokencake sustains about 85.7% to 87.0% utilization, up to 16.9% higher than vLLM."
+    },
+    {
+      "label": "Abnormal agents",
+      "value": "File Write abnormal agents fall from 90 to 27 versus both baselines."
+    },
+    {
+      "label": "Transfer vs recompute",
+      "value": "For 4096 blocks, transfer costs about 60 ms while recomputation costs about 8943 ms."
+    },
+    {
+      "label": "Mitigated upload cost",
+      "value": "At 5120 blocks, optimized upload is 4.4 ms versus 15163 ms in the unoptimized baseline."
+    }
+  ],
+  "evidence_map": [
+    {
+      "claim_id": "c1",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig1a-coding",
+          "detail": "Coding workload DAG"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig1b-deep-research",
+          "detail": "Research workload DAG"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig2a-space-contention-analysis",
+          "detail": "Frequent critical inversions"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig2b-space-contention-diagram",
+          "detail": "Why FCFS causes stalls"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig3a-idle-kv-blocks",
+          "detail": "18.5% idle cache peak"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig3b-kv-cache-lifecycle",
+          "detail": "Keep-vs-evict tradeoff"
+        }
+      ]
+    },
+    {
+      "claim_id": "c2",
+      "support": [
+        {
+          "kind": "text",
+          "ref": "source-introduction",
+          "detail": "Comparison against Parrot, Autellix, Teola, vLLM, Mooncake, CachedAttention, LMCache"
+        },
+        {
+          "kind": "text",
+          "ref": "table-2",
+          "detail": "Trigger and policy differences for offload and prefetch"
+        }
+      ]
+    },
+    {
+      "claim_id": "c3",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig4-overview",
+          "detail": "Three-part architecture"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig5-api",
+          "detail": "DAG and staged FuncNode API"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig6-coordination",
+          "detail": "Space-time cooperation"
+        }
+      ]
+    },
+    {
+      "claim_id": "c4",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig7-lifecycle",
+          "detail": "Event-driven offload/prefetch lifecycle"
+        },
+        {
+          "kind": "equation",
+          "ref": "eq1-duration-blend",
+          "detail": "Predictive duration blend"
+        },
+        {
+          "kind": "equation",
+          "ref": "eq2-transfer-cost",
+          "detail": "Transfer window threshold"
+        },
+        {
+          "kind": "text",
+          "ref": "algorithm-1",
+          "detail": "Benefit-driven offload decision"
+        }
+      ]
+    },
+    {
+      "claim_id": "c5",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig8-space-scheduler",
+          "detail": "Dynamic reservation feedback loop"
+        },
+        {
+          "kind": "equation",
+          "ref": "eq3-static-priority",
+          "detail": "Structural importance"
+        },
+        {
+          "kind": "equation",
+          "ref": "eq4-dynamic-priority",
+          "detail": "Runtime urgency"
+        },
+        {
+          "kind": "text",
+          "ref": "algorithm-2",
+          "detail": "Two-phase reservation update"
+        }
+      ]
+    },
+    {
+      "claim_id": "c6",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig9-latency",
+          "detail": "Latency vs QPS"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig10-gpu-utilization",
+          "detail": "Higher productive memory occupancy"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig12-abnormal-agents",
+          "detail": "Critical-path stability"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig13-offload-vs-recompute",
+          "detail": "Transfer cheaper than recompute"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig14-overhead-mitigation",
+          "detail": "Mitigation keeps overhead in milliseconds"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    {
+      "label": "Prediction model",
+      "detail": "The scheduler relies on a relatively simple execution-time predictor and could benefit from richer features such as function-call arguments."
+    },
+    {
+      "label": "Deployment scope",
+      "detail": "The evaluation is single-GPU; extending the design to multi-GPU and NVLink-backed hierarchies remains future work."
+    }
+  ],
+  "best_asset_matches": [
+    {
+      "topic": "Workload examples",
+      "asset_ids": [
+        "fig1a-coding",
+        "fig1b-deep-research"
+      ]
+    },
+    {
+      "topic": "Workload pathologies",
+      "asset_ids": [
+        "fig2a-space-contention-analysis",
+        "fig2b-space-contention-diagram",
+        "fig3a-idle-kv-blocks",
+        "fig3b-kv-cache-lifecycle"
+      ]
+    },
+    {
+      "topic": "Architecture and coordination",
+      "asset_ids": [
+        "fig4-overview",
+        "fig5-api",
+        "fig6-coordination"
+      ]
+    },
+    {
+      "topic": "Time-scheduler mechanism",
+      "asset_ids": [
+        "fig7-lifecycle",
+        "eq1-duration-blend",
+        "eq2-transfer-cost"
+      ]
+    },
+    {
+      "topic": "Space-scheduler mechanism",
+      "asset_ids": [
+        "fig8-space-scheduler",
+        "eq3-static-priority",
+        "eq4-dynamic-priority"
+      ]
+    },
+    {
+      "topic": "Headline results",
+      "asset_ids": [
+        "fig9-latency",
+        "fig10-gpu-utilization",
+        "fig12-abnormal-agents",
+        "fig13-offload-vs-recompute",
+        "fig14-overhead-mitigation"
+      ]
+    }
+  ],
+  "notes": "Use the Systems Paper Reading / OSDI-SOSP Style arc. Keep titles short and make the KV-cache thesis explicit on every evidence slide."
+}

@@ -1,0 +1,237 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/tokencake",
+  "deck_pdf": "/private/tmp/academic-paper-to-slides-tokencake/tokencake.pdf",
+  "generated_at": "2026-04-18T13:00:17+00:00",
+  "summary": {
+    "status": "pass",
+    "error_count": 0,
+    "warning_count": 0,
+    "page_count": 20,
+    "expected_slide_count": 20,
+    "output_dir": "/private/tmp/academic-paper-to-slides-tokencake/review"
+  },
+  "pages": [
+    {
+      "page_number": 1,
+      "slide_id": "title",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-01.png",
+      "word_count": 19,
+      "image_count": 0,
+      "occupancy_ratio": 0.2916,
+      "image_area_ratio": 0.0,
+      "min_font_size": 32.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 2,
+      "slide_id": "section-motivation",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-02.png",
+      "word_count": 17,
+      "image_count": 0,
+      "occupancy_ratio": 0.13,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 3,
+      "slide_id": "motivation-workloads",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-03.png",
+      "word_count": 4,
+      "image_count": 2,
+      "occupancy_ratio": 0.5591,
+      "image_area_ratio": 0.2528,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 4,
+      "slide_id": "motivation-space-contention",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-04.png",
+      "word_count": 12,
+      "image_count": 2,
+      "occupancy_ratio": 0.5873,
+      "image_area_ratio": 0.2994,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 5,
+      "slide_id": "motivation-time-underutilization",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-05.png",
+      "word_count": 1,
+      "image_count": 2,
+      "occupancy_ratio": 0.5417,
+      "image_area_ratio": 0.2435,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 6,
+      "slide_id": "motivation-prior-systems",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-06.png",
+      "word_count": 70,
+      "image_count": 0,
+      "occupancy_ratio": 0.3637,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 7,
+      "slide_id": "section-design",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-07.png",
+      "word_count": 17,
+      "image_count": 0,
+      "occupancy_ratio": 0.13,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 8,
+      "slide_id": "design-overview",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-08.png",
+      "word_count": 8,
+      "image_count": 1,
+      "occupancy_ratio": 0.5243,
+      "image_area_ratio": 0.324,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 9,
+      "slide_id": "design-agent-context",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-09.png",
+      "word_count": 1,
+      "image_count": 2,
+      "occupancy_ratio": 0.643,
+      "image_area_ratio": 0.3272,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 10,
+      "slide_id": "design-time-scheduler",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-10.png",
+      "word_count": 1,
+      "image_count": 1,
+      "occupancy_ratio": 0.4949,
+      "image_area_ratio": 0.2057,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 11,
+      "slide_id": "design-space-scheduler",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-11.png",
+      "word_count": 6,
+      "image_count": 1,
+      "occupancy_ratio": 0.5197,
+      "image_area_ratio": 0.2473,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 12,
+      "slide_id": "section-evaluation",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-12.png",
+      "word_count": 17,
+      "image_count": 0,
+      "occupancy_ratio": 0.13,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 13,
+      "slide_id": "eval-setup",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-13.png",
+      "word_count": 79,
+      "image_count": 0,
+      "occupancy_ratio": 0.5,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 14,
+      "slide_id": "eval-latency",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-14.png",
+      "word_count": 11,
+      "image_count": 1,
+      "occupancy_ratio": 0.6085,
+      "image_area_ratio": 0.3078,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 15,
+      "slide_id": "eval-utilization",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-15.png",
+      "word_count": 8,
+      "image_count": 1,
+      "occupancy_ratio": 0.665,
+      "image_area_ratio": 0.3674,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 16,
+      "slide_id": "eval-critical-path",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-16.png",
+      "word_count": 6,
+      "image_count": 1,
+      "occupancy_ratio": 0.6037,
+      "image_area_ratio": 0.3139,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 17,
+      "slide_id": "eval-reuse-vs-recompute",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-17.png",
+      "word_count": 7,
+      "image_count": 1,
+      "occupancy_ratio": 0.6058,
+      "image_area_ratio": 0.3187,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 18,
+      "slide_id": "eval-overhead-mitigation",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-18.png",
+      "word_count": 11,
+      "image_count": 1,
+      "occupancy_ratio": 0.5638,
+      "image_area_ratio": 0.2453,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 19,
+      "slide_id": "takeaways",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-19.png",
+      "word_count": 80,
+      "image_count": 0,
+      "occupancy_ratio": 0.4715,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    },
+    {
+      "page_number": 20,
+      "slide_id": "thank-you",
+      "preview_path": "/private/tmp/academic-paper-to-slides-tokencake/review/pages/page-20.png",
+      "word_count": 16,
+      "image_count": 1,
+      "occupancy_ratio": 0.1546,
+      "image_area_ratio": 0.0642,
+      "min_font_size": 16.0,
+      "small_text_spans": 0
+    }
+  ],
+  "issues": []
+}

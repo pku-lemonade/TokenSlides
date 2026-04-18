@@ -1,0 +1,740 @@
+                                             Tokencake: A KV-Cache-centric Serving Framework
+                                                  for LLM-based Multi-Agent Applications
+                                                                Zhuohang Bian                                                    Feiyang Wu
+                                                                Peking University                                              Peking University
+
+                                                                    Teng Ma                                                     Youwei Zhuo
+                                                             Independent Researcher                                            Peking University
+
+                                         Abstract
+                                         Large Language Models (LLMs) are increasingly deployed in
+arXiv:2510.18586v2 [cs.DC] 31 Oct 2025
+
+
+
+
+                                         complex multi-agent applications that use external function
+                                         calls. This workload creates severe performance challenges
+                                         for the KV Cache: space contention leads to the eviction of
+                                         critical agents’ caches and time underutilization leaves the
+                                         cache of agents stalled on long-running tool calls idling in
+                                         GPU memory. We present Tokencake, a KV-Cache-centric
+                                         serving framework that co-optimizes scheduling and mem-
+                                         ory management with an agent-aware design. Tokencake’s
+                                         Space Scheduler uses dynamic memory partitioning to shield
+                                         critical agents from contention, while its Time Scheduler em-           (a) Multi-agent Coding          (b) Deep Research
+                                         ploys a proactive offload and predictive upload mechanism to
+                                         repurpose GPU memory during function call stalls. Our eval-         Figure 1. Example LLM-based Multi-Agent Applications.
+                                         uation on representative multi-agent benchmarks shows that          Each colored box represents a specialized agent. Purple boxes
+                                         Tokencake can reduce end-to-end latency by over 47.06%,             denote function calls to external tools.
+                                         improve effective GPU memory utilization by up to 16.9%
+                                         compared to vLLM.
+                                                                                                                These challenges are rooted in inefficient KV Cache man-
+                                         1   Introduction                                                    agement, which manifests as two critical problems: time
+                                         Large Language Models (LLMs) are powerful reasoning en-             underutilization and space contention.
+                                         gines, and applications built upon them are evolving from              First, time underutilization stems from the frequent and
+                                         single-response generation to complex, multi-agent systems.         long-running function calls inherent to agentic workloads.
+                                         This new approach has enabled powerful applications in do-          An agent’s execution follows an LLM Inference1 ⇒ Func-
+                                         mains like autonomous code generation[11], complex finan-           tion Call ⇒ LLM Inference2 pattern, where its KV Cache
+                                         cial analysis[17], and realistic environment simulation[12].        sits unused during the function call. This forces a difficult
+                                         The defining characteristic of these applications is a dual-        trade-off: retain the cache and waste resources, or evict it
+                                         interaction model: frequent external, agent-tool interaction        and incur a costly recomputation. This inefficiency is sub-
+                                         and complex internal, agent-agent collaboration. Externally,        stantial; as shown in Figure 3a, at peak moments, as much
+                                         these agents use function calls to interact with tools, data        as 18.5% of the GPU KV Cache pool can be wasted by stalled
+                                         sources, and APIs. Internally, these systems orchestrate mul-       agents, directly reducing the system’s capacity for active
+                                         tiple specialized agents that collaborate to solve a larger         requests, lowering the effective batch size, and degrading
+                                         problem.                                                            overall throughput. Systems like Teola [14] have identified
+                                            Figure 1 illustrates this application model. For example,        the latency challenge posed by this pattern and propose a
+                                         Code-Writer[19] and Deep-Research[15] are composed of               workflow-level optimization. Teola intelligently pipelines
+                                         internal pipelines of agents (e.g., programmers, reviewers,         the execution of LLM and non-LLM micro stages, aiming to
+                                         searchers) that in turn make frequent external calls to tools       overlap the tool-use-time of one agent with the computa-
+                                         like file systems and web APIs. The combination of these            tional work of another. While this approach effectively hides
+                                         complex internal dependencies and frequent, long-running            latency by improving the application’s end-to-end execution
+                                         external interactions results in workload patterns distinct         schedule, it is fundamentally compute-centric. Teola’s sched-
+                                         from traditional LLM inference, introducing unique and sig-         uler optimizes the flow of operations but remains blind to
+                                         nificant performance challenges for the underlying serving          the state of the underlying GPU memory resources. Conse-
+                                         infrastructure.                                                     quently, the KV Cache of the stalled agent continues to idly
+                                                                                                         1
+Conference’17, July 2017, Washington, DC, USA                                        Zhuohang Bian, Feiyang Wu, Teng Ma, and Youwei Zhuo
+
+
+
+
+(a) Preemption events over time    (b) KV Cache blocks held by         (a) Idle KV Cache blocks due to   (b) The lifecycle of an agent’s
+of the Code-Writer workload.       non-critical agents.                external function call.           KV Cache during a function call.
+
+          Figure 2. The Space Contention Problem.                             Figure 3. The Time Underutilization Problem.
+
+
+occupy valuable GPU memory, a problem that is exacerbated
+when multiple agents stall concurrently.
+   Second, space contention arises as numerous agents com-             priority metric, to reserve memory for critical-path agents
+pete for limited GPU memory. Agent-unaware memory al-                  (Section 5). We further introduce optimizations such as CPU
+location policies like FCFS often lead to performance bot-             block buffering and gradual GPU block reservation to mini-
+tlenecks, where a non-critical agent causes the eviction of            mize the overhead of these frequent offload operations. Our
+a critical-path agent’s KV Cache, a problem we refer to as             evaluation shows that Tokencake significantly reduces end-
+critical inversion. We do an empirical measurement on the ap-          to-end latency by over 47.06% compared to vLLM under high
+plication Code-Writer, and count the preemption number of              load and improves GPU memory utilization by over 16.9%
+critical inversion. As shown in Figure 2a, these harmful pre-          (Section 7).
+emptions happen are frequent. This forces the evicted critical
+agent to undergo a costly context recomputation, stalling the
+entire application workflow. While systems like Parrot [8]
+                                                                       2     Background and Motivation
+and Autellix [10] are workflow-aware, their optimizations              2.1   LLM-based Multi-Agent Applications
+operate at the request level, agnostic to the fine-grained KV          Agents. A common design pattern in modern agentic sys-
+Cache contention between individual agents. It optimizes               tems is the decomposition of complex problems into a series
+the order and batching of requests but does not manage                 of sub-tasks handled by specialized agents [5, 6, 16]. These
+the underlying memory allocation. Consequently, even with              collaborations are often modeled as a Directed Acyclic Graph
+an optimal schedule, a high-throughput, non-critical task              (DAG), where nodes represent agents and edges represent
+group identified by Parrot could still occupy GPU memory               explicit dependencies. In these workflows, the dependencies
+and inadvertently cause the eviction of a latency-sensitive,           are critically important; for instance, a reviewer agent can-
+critical agent’s KV Cache. This exposes a fundamental limi-            not begin its task until a programmer agent has completed
+tation: scheduling optimization alone cannot solve memory              its code generation. Furthermore, not all agents contribute
+contention.                                                            equally to the application’s end-to-end latency. Some agents
+   To address these challenges, we present Tokencake, a KV-            lie on the critical path, meaning any delay they experience
+Cache-centric serving framework that co-optimizes sched-               directly increases the total time-to-result for the entire ap-
+uling and memory management through an agent-aware                     plication.
+design. Tokencake begins with a frontend API that allows               Function Calls. A key feature of modern agents is the use
+developers to define an application’s internal agent collabo-          of function calls to interact with external data sources or
+rations and external tool interactions as a graph (Section 3.1).       execute actions. These calls connect the LLM to a vast ar-
+This graph enables two specialized schedulers to manage                ray of tools, such as database clients, code interpreters, or
+the KV Cache lifecycle with application-level context. To              third-party web APIs. To standardize these interactions, the
+mitigate time underutilization, the Time Scheduler uses an             Model Context Protocol (MCP) [3] is emerging as an open
+event-driven, opportunistic policy to proactively offload the          standard, providing a unified interface and a rich ecosystem
+KV Cache of stalled agents during function calls and uses              of pre-defined tools. As shown in Table 1, compiled from
+predictive uploading to hide data transfer latency (Section 4).        the official MCP documentation and our empirical measure-
+To resolve space contention, the Space Scheduler employs               ments, the latencies of these common tools have a wide and
+a dynamic memory partitioning policy, guided by a hybrid               often unpredictable distribution.
+                                                                   2
+Tokencake : A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications         Conference’17, July 2017, Washington, DC, USA
+
+
+Table 1. Latency characteristics of common tools in MCP.
+
+Tool                    Device      Latency          Variability
+File System             Short       100 ms           50ms
+Git                     Short       100 ms           100ms-1s
+Web Search              Short       100 ms           50ms-2s
+Database (SQLite)       Short       100-1000 ms      500ms
+Web Search              Medium      1-5s             1-10s
+AI Generation           Long        5-30s            10-60s
+
+
+
+2.2   Challenges
+The unique structure of multi-agent applications leads to
+two significant system-level challenges: space contention                                 Figure 4. Tokencake Overview.
+and time underutilization.
+   The heterogeneity in agent importance creates opportu-                  the order and batching of requests but do not manage the un-
+nities for space contention. As illustrated in Figure 2, an                derlying memory allocation. Consequently, they cannot pre-
+agent on the critical path, like Node D, can be stalled if a               vent critical inversion, as a high-throughput but non-critical
+non-critical agent, like Node C, arrives earlier and occupies              task can still occupy GPU memory and cause the eviction of
+limited GPU memory. A simple memory allocation strategy                    a critical agent’s KV Cache. Furthermore, because they are
+may preempt the critical agent, forcing it into a costly con-              not memory-centric, they do not address time underutiliza-
+text recomputation and delaying the entire workflow. Our                   tion, lacking the mechanisms to manage or repurpose the
+analysis in Figure 2a confirms that these events are frequent              idle KV Cache of stalled agents.
+in agentic workloads.                                                         Another line of work has focused on making serving more
+   The reliance on external tools leads to severe time un-                 KV-Cache-centric, introducing advanced memory manage-
+derutilization of GPU resources. Figure 3b illustrates the                 ment and offloading policies. For instance, vLLM[7]’s Page-
+lifecycle of an agent’s KV Cache during a function call. After             dAttention solves internal memory fragmentation, while
+the first inference phase, the agent’s KV Cache its idle in GPU            systems like Mooncake[13] and CachedAttention[4] have
+memory while it waits for the external tool to respond. This               implemented offloading for general workloads .
+forces the serving system into a difficult trade-off: either re-              However, while these systems are memory-aware, their
+tain the KV Cache, wasting valuable GPU memory, or evict                   policies are fundamentally agent-agnostic. They treat all KV
+it to serve other requests, forcing a costly recomputation                 Cache with equal importance, lacking the context to differ-
+when the agent resumes. Both choices result in inefficiency.               entiate a critical-path agent from a non-critical one, which
+This problem is substantial; as shown in Figure 3a, at peak                leaves them vulnerable to critical inversion. Furthermore,
+moments, as much as 18.5% of the used KV Cache can be                      their offloading policies are typically reactive—triggered by
+occupied by stalled agents.                                                memory pressure or session inactivity—rather than proac-
+                                                                           tive. They are not designed to leverage the predictable idle
+2.3   Limitations of Existing Serving Systems                              periods during function calls to mitigate underutilization.
+The challenges of space contention and time underutilization
+expose the limitations of two distinct categories of state-                3    Overview
+of-the-art serving systems: those that are agent-aware but                 Tokencake is designed to optimize multi-agent application
+compute-centric, and those that are KV-Cache-centric but                   performance by managing KV Cache resources across both
+agent-agnostic.                                                            time and space dimensions. Figure 4 shows the architecture
+   A class of recent work has made serving systems agent-                  of Tokencake, which comprises three primary components:
+aware by incorporating the application’s DAG into the sched-               a Frontend API, a Space Scheduler, and a Time Scheduler,
+uling logic. Systems like Parrot[8] and Autellix[10] use this              which collaborate to orchestrate the lifecycle of KV Cache
+graph structure to mitigate head-of-line blocking by prioritiz-            blocks in GPU memory.
+ing critical requests, while Teola[14] optimizes the execution                The Frontend API (Section 3.1) translates user-defined
+pipeline for an individual agent’s interaction with external               application logic into an optimizable graph structure. This
+tools.                                                                     graph is then consumed by two specialized schedulers: The
+   While these approaches improve high-level orchestration,                Space Scheduler (Section 5) implements a memory reser-
+their focus is fundamentally compute-centric. They optimize                vation policy to guarantee that critical agents receive their
+                                                                       3
+Conference’17, July 2017, Washington, DC, USA                                     Zhuohang Bian, Feiyang Wu, Teng Ma, and Youwei Zhuo
+
+
+
+
+                                                                     Figure 6. Coordination between the Space Scheduler and
+                                                                     the Time Scheduler.
+Figure 5. Example of defining a multi-agent RAG application
+with Tokencake’s API.
+                                                                     user to provide an estimated execution time for the function
+                                                                     call, which is a crucial piece of information that will help the
+required KV Cache blocks, preventing memory-lack waiting             Time Scheduler make more accurate decisions about when
+for high-priority tasks. The Time Scheduler (Section 4) aims         to offload and prefetch an agent’s KV Cache. This ability
+to maximize KV Cache utilization. It offloads an agent’s KV          to embed detailed application knowledge into the graph is
+Cache to CPU memory during long-running external opera-              essential for our co-optimization strategy.
+tions (e.g., a function call) and predictively uploads it back
+to the GPU for its next use, guided by an estimation of the          3.2   Coordination between Space and Time
+external call’s execution time.                                            Schedulers
+                                                                     Figure 6 shows the tight cooperation between the Space
+3.1   Frontend API                                                   Scheduler and Time Scheduler.
+Tokencake provides a programming interface for users to rep-            While the Space Scheduler manages the global memory
+resent multi-agent applications as a Directed Acyclic Graph          allocation between different agents, the Time Scheduler han-
+(DAG). In this graph, nodes represent agents or computa-             dles the memory lifecycle for a single agent’s request over
+tional units, while edges denote data dependencies.                  time. Their coordination is most critical where their policies
+   Figure 5 shows how to use this API to build a simple              intersect.
+Retrieval-Augmented Generation (RAG) application. The                   The Space Scheduler handles the dynamic memory par-
+user should first use the the abstraction of node to define          tition plan for agent types, using both application-level in-
+LLM functions. Line 3-5 shows the definition of a RagNode,           formation and runtime feedback. When a request applies for
+which contains multiple internal stages. Then, by using the          KV Cache, the system first checks for memory availability
+add_edge function, the user define the dataflow between              according to the reservation policy established by the Space
+multiple LLM agents (line 6). This process explicitly maps           Scheduler for that request’s agent type.
+the application’s control flow and data dependencies into a             After a request is scheduled to the GPU, the Time Sched-
+graph structure that Tokencake can analyze.                          uler begins to monitor its function call execution time. If the
+   Tokencake’s frontend API allows users to describe their           agent’s KV Cache is considered underutilized during this pe-
+multi-agent application as a Directed Acyclic Graph (DAG).           riod, the Time Scheduler will offload it to CPU memory. This
+In this representation, nodes correspond to agents or com-           adjustment makes memory allocation more efficient for criti-
+putational units, while edges define the data dependencies           cal agents by freeing up GPU resources. The Space Scheduler
+between them.                                                        then accounts for these offload and prefetch operations in
+   Tokencake provides a specialized FuncNode to represent            its global management of the system’s memory.
+the agents that make external function call. Unlike prior
+systems [8, 10, 14], Tokencake provides the ability to define        4     The Time Scheduler
+fine-grained internal stages within a complex function call.         While the Space Scheduler manages memory contention
+In Figure 5, line 3-5, users can break down the RagNode into         between agents, the Time Scheduler addresses the under-
+multiple sequential steps ("query", "embed", "generate"). This       utilization caused by the function call’s execution time. A
+decomposition provides the scheduler with a more detailed,           common pattern in agentic applications is a sequence of
+real-time view of the function’s progress, enabling more fine-       LLM Inference1 ⇒ Function Call ⇒ LLM Inference2. In this
+grained scheduling decisions rather than treating the entire         sequence, the KV Cache generated during the first inference
+function as a monolithic, black-box operation.                       is a direct prefix for the second. However, during the func-
+   Tokencake also provide the ability to supply critical per-        tion call, the KV Cache blocks that are not shared with other
+formance metadata directly within the FuncNode definition.           running requests remains idle in GPU memory, a state we
+In Figure 5, line 5, the predict_time parameter allows a             call time underutilization. This presents a difficult trade-off:
+                                                                 4
+Tokencake : A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications          Conference’17, July 2017, Washington, DC, USA
+
+
+                              Table 2. Comparison of KV Cache offloading and prefetching policies.
+
+   Category Criteria                             Tokencake                     Mooncake             CachedAttn              LMCache
+                Function Call Aware                   Yes                         No                     No                    No
+   General      Data Granularity                     Block                       Block                  Layer                 Block
+                Strategy                        Proactive                       Reactive               Reactive             Reactive
+   Offload      Trigger                      Function Call Start           Cache Pool Pressure     Session Inactive      Cache Eviction
+                Decision Logic                      Cost                          LRU                  Session                LRU
+            Strategy                             Proactive           Proactive            Reactive                          Reactive
+   Prefetch Trigger                      Predicted FC Completion SLO-based Schedule Session Resumption                     On-demand
+            Decision Logic                  Static and Dynamic         Static              Static                          On-demand
+
+
+evicting the cache frees up GPU memory but forces a costly
+recomputation later, while retaining it wastes resources that
+could be used by other active requests.
+   Offloading the underutilized KV Cache to CPU memory is
+a natural solution to this problem. Prior systems [4, 13, 18]
+have explored offloading, but their policies are designed
+for general server workloads, not for the predictable stalls
+unique to agentic workloads. As detailed in Table 2, these
+systems are not aware of function call, only reactive to the
+cache pressure or offloading a whole session. CachedAt-
+tention [4] triggers an offload when a conversation turn is
+complete and the session becomes inactive. Mooncake [13]                    Figure 7. Lifecycle of the Time Scheduler’s offload and pre-
+and LMCache [18] make offload decisions based on general                    dictive upload mechanism.
+cache management policies, such as high memory pressure
+or evicting the least recently used items, rather than the
+specific state of an agent. In contrast, Tokencake’s policy
+is proactive and event-driven, a key advantage for agentic                     Before the application runs, the scheduler performs an
+applications. It uniquely uses the Function Call event as an                analysis on the static dependency graph to identify patterns
+explicit trigger, allowing it to convert the predictable idle               like LLM Inference1 ⇒ Function Call ⇒ LLM Inference2. This
+period into a planned scheduling window (Section 4.1).                      step finds predictable periods of KV Cache underutilization
+   Furthermore, when it’s time to bring the data back, reac-                and provides initial "cold-start" time predictions for function
+tive systems like CachedAttention and LMCache only start                    call the system has not encountered before, allowing the
+uploading the KV Cache when the request is ready to resume,                 scheduler to make informed decisions based on the function’s
+which can introduce reactive overhead at a critical moment.                 type.
+Mooncake uses a profile-driven upload mechanism, load-                         At runtime, the scheduler’s operations are driven by call_start
+ing the KV Cache that are most likely to be used next. But                  and call_finish events from the inference engine. When a
+these systems are ignore the application-level information.                 call_start event is received, the scheduler consults the benefit-
+Tokencake avoids this bottleneck by using a proactive upload                driven policy (Section 4.2) to decide whether to offload the
+mechanism. By forecasting the function call’s completion                    agent’s KV Cache. If the decision is positive, it initiates an
+time, it begins loading the KV Cache back to the GPU before                 asynchronous transfer to CPU memory. As the function call
+the agent needs it (Section 4.2). In this new, high-frequency               nears its predicted completion time, the scheduler proac-
+offloading scenario, the data transfer overhead becomes a                   tively uploads the KV Cache back to the GPU, aiming to hide
+more critical performance factor, motivating the specialized                the data transfer latency. This design is robust to prediction
+optimizations we introduce to mitigate it (Section 4.3).                    errors; an unexpected call_finish event triggers an immediate
+                                                                            upload to ensure correctness, and the observed execution
+                                                                            time is fed back to the forecasting model to improve future
+4.1   Event-Driven Offload and Predictive Upload                            predictions.
+As illustrated in Figure 7, the Time Scheduler implements a                    The scheduler’s predictive accuracy comes from its dy-
+complete lifecycle for managing the KV Cache, from static                   namic forecasting model. It begins with the cold-start esti-
+analysis to runtime execution and continuous learning.                      mate from the pre-runtime analysis and transitions to an
+                                                                       5
+Conference’17, July 2017, Washington, DC, USA                                              Zhuohang Bian, Feiyang Wu, Teng Ma, and Youwei Zhuo
+
+
+adaptive exponentially weighted moving average model af-                     Algorithm 1 The Decision Logic of the Time Scheduler
+ter the first execution. When a developer provides a time                     1: procedure ShouldOffload(req)
+estimate (𝑡𝑟𝑒𝑞 ) in the graph definition, the model combines                  2:     𝑇𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟 ← CalculateTransferTime(𝑟𝑒𝑞.𝑛𝑢𝑚𝑏𝑙𝑜𝑐𝑘𝑠 )
+this hint with the system’s historical data (𝑡ℎ𝑖𝑠𝑡 ):                         3:     𝑇𝑓 𝑐 ← PredictFCDuration(req.FC)
+                                                                              4:     if 𝑇𝑓 𝑐 ≤ 𝑇𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟 then
+                𝑡 𝑓 𝑖𝑛𝑎𝑙 = 𝛼 · 𝑡𝑟𝑒𝑞 + (1 − 𝛼) · 𝑡ℎ𝑖𝑠𝑡              (1)        5:          return false                 ⊲ Stall is too short.
+                                                                              6:     end if
+4.2   Opportunistic Policy for Proactive Offloading                           7:     𝑇𝑤𝑖𝑛𝑑𝑜𝑤 ← 𝑇𝑓 𝑐 − 𝑇𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟
+The decision to offload a stalled agent’s KV Cache is governed                8:     𝑁𝑐𝑎𝑝𝑎𝑐𝑖𝑡 𝑦 ← 𝑇𝑤𝑖𝑛𝑑𝑜𝑤 × 𝑣𝑡ℎ𝑟𝑜𝑢𝑔ℎ𝑝𝑢𝑡      ⊲ Computable
+by a predictive, opportunistic policy. An offload is only initi-                 tokens.
+ated if the anticipated benefit of freeing up GPU resources                   9:     𝑤𝑎𝑖𝑡𝑖𝑛𝑔_𝑟𝑒𝑞 ← FindBestFitRequestInQueue(𝑁𝑐𝑎𝑝𝑎𝑐𝑖𝑡 𝑦 )
+outweighs the cost of the data transfer. This core principle is                  ⊲ Search for req where total ≤ 𝑁𝑐𝑎𝑝𝑎𝑐𝑖𝑡 𝑦 .
+expressed as: 𝐵𝑒𝑛𝑒 𝑓 𝑖𝑡𝑠𝑐ℎ𝑒𝑑𝑢𝑙𝑖𝑛𝑔 > 𝑂𝑣𝑒𝑟ℎ𝑒𝑎𝑑𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟 . The pol-            10:     return 𝑤𝑎𝑖𝑡𝑖𝑛𝑔_𝑟𝑒𝑞 is not null. ⊲ Decide offloading.
+icy integrates several dynamic factors—such as the predicted                 11: end procedure
+function call duration, the size of the KV Cache, and the state
+of the waiting request queue—to evaluate this inequality in
+real-time.
+Estimating KV Cache Transfer Overhead The primary
+overhead is the data transfer latency (𝑇𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟 ) for the move-
+ment of the KV Cache between the GPU and CPU memory.                         4.3   Mitigating Offload and Predictive Upload
+This cost is a direct function of the number of blocks (𝑁𝑏𝑙𝑜𝑐𝑘𝑠 )                  Overhead
+in the cache. We use an asynchronous CUDA implementation
+                                                                             While Tokencake’s proactive offload and upload mechanism
+for memory transfers to avoid blocking the main scheduling
+                                                                             is central to its performance, the operations themselves can
+loop. Our analysis in Section 7.4 shows that this transfer time
+                                                                             introduce significant overhead if not managed carefully. This
+is orders of magnitude smaller than the cost of recomputa-
+                                                                             overhead originates from a key difference in memory man-
+tion. In Tokencake’s scene, the number of KV Cache blocks
+                                                                             agement patterns for the GPU KV Cache block allocation and
+is bounded to the model’s context length, which is not very
+                                                                             those offloaded to the CPU. On the GPU, KV Cache blocks
+large. In this scenario, for a request with 𝑁𝑏𝑙𝑜𝑐𝑘𝑠 blocks, the
+                                                                             are typically allocated incrementally as new tokens are gen-
+transfer time is generally linear with the number of blocks.
+                                                                             erated by the scheduled running requests. The controlled
+We can estimate the total transfer time as:
+                                                                             batching of requests results in a steady, non-bursty pattern of
+                                                                             memory operations. In contrast, blocks offloaded to the CPU
+       𝑇𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟 = 𝑇𝑜 𝑓 𝑓 𝑙𝑜𝑎𝑑 (𝑁𝑏𝑙𝑜𝑐𝑘𝑠 ) + 𝑇𝑢𝑝𝑙𝑜𝑎𝑑 (𝑁𝑏𝑙𝑜𝑐𝑘𝑠 )             follow a highly bursty lifecycle: an entire agent’s KV Cache
+                                                                             is allocated at the start of a function call and deallocated
+Quantifying Scheduling Benefit. The benefit of offloading                    all at once upon its completion. This bursty pattern of CPU
+is not merely freeing memory, but rather the productive                      memory operations—allocating or freeing a large number
+use of that memory and the associated compute resources                      of blocks simultaneously—can introduce significant latency
+during the stall period. Tokencake quantifies this benefit                   that stalls the main scheduling loop.
+opportunistically: a benefit exists only if there is a waiting                  To mitigate this latency, we introduce two targeted opti-
+request that can be processed and completed within the time                  mizations.
+the stalled agent’s resources are available.                                 CPU Block Buffering. The lifecycle of offloaded KV Cache
+   The scheduler’s decision logic is detailed in Algorithm 1.                blocks induces high-frequency churn in CPU memory. When
+○1 It first (line 7) calculates the available scheduling window              a function call begins, the unshared KV Cache blocks will be
+(𝑇𝑤𝑖𝑛𝑑𝑜𝑤 ) by subtracting the transfer overhead (𝑇𝑡𝑟𝑎𝑛𝑠 𝑓 𝑒𝑟 )               offloaded to the CPU, which leads to a large number of blocks
+from the predicted function call duration (𝑇𝑓 𝑐 ). ○   2 It then             must be allocated at once on the CPU. Conversely, when the
+(line 8) converts this window into the number of tokens                      call completes and the cache is uploaded, all associated CPU
+(𝑁𝑐𝑎𝑝𝑎𝑐𝑖𝑡 𝑦 ) that can be processed. ○  3 If a waiting request is            blocks are released simultaneously. Standard system memory
+found that fits within this capacity, the benefit is realized,               allocators for this bursty allocation pattern are inefficient and
+and the offload is initiated (line 10). ○  4 If no such request              can introduce significant latency due to system call overhead.
+exists, the KV Cache remains on the GPU, as there is no                         To address this, we implement a dedicated CPU block
+immediate benefit to offloading it.                                          buffer. Instead of freeing blocks back to the operating sys-
+   This allows the new request to be admitted into the next                  tem, Tokencake returns them to a lightweight, internal free
+batch, effectively hiding the function call latency of the first             list. Subsequent offload operations service their allocation re-
+request and improving overall system throughput.                             quests from this buffer first, bypassing the costly system calls
+                                                                         6
+Tokencake : A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications           Conference’17, July 2017, Washington, DC, USA
+
+
+                                                                             The Space Scheduler is designed to solve this problem
+                                                                           by managing memory with an awareness of each agent’s
+                                                                           importance. As shown in Figure 8, it uses a dynamic mem-
+                                                                           ory partitioning strategy that is guided by a hybrid priority
+                                                                           metric.
+
+                                                                           5.1    Runtime Control with Dynamic Memory
+                                                                                  Partitioning
+                                                                           To protect critical agents, the scheduler implements a dy-
+                                                                           namic memory partitioning policy. It divides the GPU KV
+                                                                           Cache memory into two regions: a globally shared pool avail-
+                                                                           able to all agents, and a reserved pool accessible only to the
+                                                                           most critical agents. This policy ensures that even when the
+Figure 8. The Space Scheduler’s dynamic memory partition-
+                                                                           shared pool is heavily used, critical agents have guaranteed
+ing feedback loop.
+                                                                           memory resources, preventing them from being stalled by
+                                                                           less important tasks.
+in the critical path. This design reduces the memory manage-               Critical Agent Selection. First, the scheduler periodically
+ment latency for a large offload operation from nearly a sec-              identifies which agents are currently "critical." It does this
+ond in worst-case scenarios to a consistent sub-millisecond                by calculating a combined hybrid priority score for every
+level.                                                                     agent type and designating the top fraction (a configurable
+Gradual GPU Block Reservation. A core challenge in                         critical_ratio) as critical. This ensures the set of protected
+predictive uploading is guaranteeing GPU memory availabil-                 agents adapts to changing application needs.
+ity at the precise moment the data transfer must begin. As                 Dynamic Memory Partitioning. Once the critical agents
+shown in Table 2, compared to reactive systems like Cache-                 are identified, the scheduler updates the memory reserva-
+dAttention and LMCache, which only fetch data when it’s                    tions according to the two-phase process in Algorithm 2.
+needed, Tokencake’s proactive approach, which uses a pre-                     First, in Phase 1 (lines 5-11), the algorithm adjusts the
+dicted function call completion as its trigger, must solve the             total size of the reserved memory pool. It does this based
+memory availability problem to be effective.                               on system-wide memory pressure, calculated from the cur-
+   A naive "all-at-once" allocation of the required GPU blocks             rent GPU block usage ratio. If memory usage is high, the
+is risky. If the GPU memory is highly utilized or fragmented               total_reserve_ratio is increased to provide more protection
+at that moment, the allocation can fail or stall, delaying the             for critical tasks. If usage is low, the ratio is decreased to
+agent’s execution and negating the benefits of predictive up-              avoid wasting memory that could be used by the shared
+loading. To make its proactive strategy reliable, Tokencake                pool.
+leverages its predictive model to perform gradual block reser-                Second, in Phase 2 (lines 13-19), the algorithm partitions
+vation. Based on the function call’s estimated completion                  this total reserved pool (R_total) among the individual crit-
+time, the scheduler proactively begins reserving the required              ical agents. An agent’s share is a weighted average of two
+GPU blocks over several scheduling cycles before the upload                factors: the agent’s historical memory usage (line 15) and
+is initiated. This approach amortizes the allocation process               its relative priority score (line 16). This balanced approach
+over time by making a series of smaller requests instead                   ensures that agents that are both important and typically
+of one large one. This ensures that the destination blocks                 memory-intensive receive a proportionally larger reserva-
+are ready when the predictive upload occurs, preventing                    tion.
+allocation stalls and making the operation far more reliable.
+                                                                           5.2    Hybrid Priority Metric for Agent-Awareness
+5    The Space Scheduler
+                                                                           Tokencake moves beyond simple FIFO scheduling, using a
+Agent workflows are often structured as dependency graphs,                 hybrid priority plan, which considers both an application’s
+some agents are on the critical path, meaning their delay                  static structure and its dynamic runtime state.
+directly increases the application’s total end-to-end latency.                The static priority measures an agent’s structural impor-
+Prior works[8–10] notice the problem of the priority sched-                tance within the application’s Directed Acyclic Graph (DAG).
+uling in LLM application scenario, but dismissing the KV                   The formula is:
+Cache management.
+   However, a simple FCFS memory allocation policy is inef-
+ficient, if a non-critical agent occupies memory, it can stall a
+critical agent, creating a severe performance bottleneck.                        𝑝𝑟𝑖𝑜𝑟𝑖𝑡𝑦𝑠𝑡𝑎𝑡𝑖𝑐 = 𝑤𝑠𝑡𝑎𝑡𝑖𝑐 × 𝑛𝑜𝑑𝑒𝑑𝑒𝑝𝑡ℎ × 𝑛𝑜𝑑𝑒𝑜𝑢𝑡 _𝑑𝑒𝑔𝑟𝑒𝑒
+                                                                       7
+Conference’17, July 2017, Washington, DC, USA                                     Zhuohang Bian, Feiyang Wu, Teng Ma, and Youwei Zhuo
+
+
+Algorithm 2 Memory Reservation Update                                Table 3. FuncNode types available in the Tokencake API.
+    1: procedure UpdateMemoryReservations
+    2: usage ← GetLastGpuBlockUsage()                                Node                  Description
+    3: tot_blks ← GetTotalGPUBlocks()                                FileReadNode          Read the contents of a specified file.
+    4:    ⊲ Phase 1: Adjust the reserved memory pool size            FileWriteNode         Write content to a specified file.
+    5: ratio ← usage / tot_blks                                      SearchNode            Perform a search for a given query.
+    6: if ratio ≥ gpu_usage_high then                                FileQueryNode         Query files under a specified path.
+    7:     total_reserve_ratio += adjustment_step                    DataAnalysisNode      Multi-stage analysis of large datasets.
+ 8:    else if ratio ≤ gpu_usage_low then                            UserConfirmNode       Request user confirmation.
+ 9:        total_reserve_ratio -= adjustment_step                    ExternalTestNode      Use external test tools.
+10:    end if
+11:    𝑅𝑡𝑜𝑡𝑎𝑙 ← tot_blks × total_reserve_ratio
+12:     ⊲ Phase 2: Partition the pool among critical agents          step of the workflow. As shown in Table 3, Tokencake pro-
+                 Í
+13:    𝑆𝑡𝑜𝑡𝑎𝑙 ← 𝑎∈critical_agents GetAgentScore(a)                   vides many common pre-built nodes for common functions
+14:    for all agent_type in critical_agents do                      to streamline development.
+15:        mem_ratio ← GetUsage(agent_type) / tot_blks                  Developers can construct the graph using a set of prede-
+16:        priority_ratio ← GetScore(agent_type) / 𝑆𝑡𝑜𝑡𝑎𝑙            fined and customizable node types.
+17:        final_ratio ← (mem_ratio + priority_ratio) / 2            Execution Engine. The engine tracks the lifecycle of func-
+18:        reserve_num[agent_type] ← final_ratio ×𝑅𝑡𝑜𝑡𝑎𝑙             tion calls through two API endpoints to inform the scheduler.
+19:    end for                                                       When an application begins a function call, it notifies the
+20: end procedure
+                                                                     engine by sending a request to call_start. This request in-
+                                                                     cludes an initial estimate of the call’s execution time, which
+                                                                     helps the scheduler make an immediate decision. Once the
+   The weight 𝑤𝑠𝑡𝑎𝑡𝑖𝑐 is a configurable parameter that nor-          function call completes, the application sends a request to
+malizes the static priority score relative to the dynamic pri-       call_finish. This second notification signals that the sus-
+ority score, balancing structural importance with runtime            pended request is ready to run again and provides the actual
+urgency.                                                             execution time, which is used to refine the engine’s predic-
+   The dynamic priority adapts to changing runtime condi-            tion model for future calls of the same type.
+tions to balance system throughput and fairness. It is calcu-        Asynchronous KV Cache Management. A key challenge
+lated based on how long a request has been waiting (time_wait)       is performing the offload and prefetch operations without
+and the number of tokens to be processed. The linear term for        blocking the main scheduling loop. Synchronous data trans-
+waiting time ensures older requests are eventually scheduled,        fers would introduce significant latency, defeating the pur-
+while the logarithmic term for token count gives a modest            pose of the optimization. Therefore, all KV Cache migration
+preference to shorter requests. The formula is:                      is implemented asynchronously. We use custom CUDA ker-
+                                                                     nels for the physical data transfers between GPU and host
+                                                 𝑡𝑜𝑘𝑒𝑛𝑠𝑟𝑒𝑞           memory.
+          𝑝𝑟𝑖𝑜𝑟𝑖𝑡𝑦𝑑 𝑦𝑛𝑎𝑚𝑖𝑐 = 𝑡𝑖𝑚𝑒 𝑤𝑎𝑖𝑡 × log (              )           The management logic is integrated with the engine’s
+                                                  𝑡𝑖𝑚𝑒 𝑤𝑎𝑖𝑡
+                                                                     scheduling loop. At the start of each scheduling cycle, be-
+6        Implementation                                              fore a new batch is formed, the engine initiates two sets of
+Tokencake is a KV-Cache-centric serving system for multi-            asynchronous memory transfers. First, it identifies requests
+agent applications, composed of a front-end and an execu-            whose function calls are predicted to finish soon and begins
+tion engine. It is implemented in approximately 9k lines of          proactively moving their KV Cache blocks from CPU mem-
+Python code, uses Triton for custom kernels, and reuses some         ory back to the GPU. Second, it processes any new offload
+components from vLLM.                                                decisions by moving the corresponding KV Cache blocks
+Frontend. Tokencake ’s frontend extends OpenAI’s Chat                from the GPU to the CPU. The source GPU blocks are marked
+Completion to provide a stateful interface that appears state-       as pending free and are only returned to the memory pool
+less to developers. The frontend allows developers to define         after the transfer is complete. Each memory block maintains
+multi-agent workflows as a Directed Acyclic Graph (DAG).             a state flag to track its current location, whether in GPU or
+In this graph, nodes represent agents or specific computa-           host memory.
+tional units, while edges define the data dependencies and
+control flow between them. Each node can be configured               7   Evaluation
+with specific metadata, such as the LLM model to use or max-         In this section, we present a comprehensive evaluation of
+imum token limits, providing fine-grained control over each          Tokencake. We first assess its effectiveness in minimizing
+                                                                 8
+Tokencake : A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications         Conference’17, July 2017, Washington, DC, USA
+
+
+the end-to-end latency of multi-agent applications under                   features a lightweight architecture with a fine-grained, token-
+various loads. We then examine each component of Token-                    wise memory manager. However, while its scheduler is opti-
+cake to understand its specific contribution to the overall                mized for high token throughput, it is not designed to handle
+performance improvement.                                                   the long, unpredictable idle times inherent to agentic work-
+                                                                           loads that use external tools.
+                                                                              Neither of these baseline systems includes the proactive of-
+                                                                           floading or predictive uploading mechanisms that are central
+7.1   Experimental Setup                                                   to our design. This comparison allows us to clearly isolate
+Model and Server Configurations. We evaluate Token-                        and highlight the performance gains achieved by Token-
+cake using two versions of the Qwen2.5 model. The 14B                      cake’s KV-Cache-centric approach, which is tailored specifi-
+parameter model runs on a server with an NVIDIA A100                       cally for the challenges of multi-agent applications.
+GPU (80GB), while a larger 32B model runs on a server with                 Metrics. We measure End-to-End Latency, the total time
+an NVIDIA H200 GPU (140GB). For Tokencake’s offloading                     from a user request’s submission to the reception of the
+feature, we set aside 100GB of CPU memory as swap space                    final response, reporting both average latency. To assess
+to store the evicted KV Cache blocks.                                      memory efficiency, we track GPU KV Cache Utilization, the
+Benchmark Applications. To ensure our evaluation re-                       percentage of GPU memory blocks allocated to the KV Cache
+flects realistic scenarios, we implement two representative                over time. Finally, to quantify blocking and contention on the
+multi-agent applications: "Code-Writer" and "Deep Research",               critical path, we use the Abnormal Agent Count, defined as
+shown in Figure 1. The Code-Writer application (Figure 1a)                 the number of agent instances whose execution time exceeds
+is characterized by a large number of specialized agents (e.g.,            1.5 times the average for their type.
+programmer, reviewer, tester) and frequent tool usage (e.g.,
+file I/O), creating significant memory pressure and testing                7.2   Performance Results
+the system’s capacity for managing numerous concurrent KV                  End-to-End Latency. To evaluate Tokencake’s ability to
+Cache states. The Deep Research application (Figure 1b) mod-               handle varying workloads, we measured the average end-to-
+els a research process involving steps like planning, search-              end latency under different request rates, simulated using a
+ing, and summarizing. While it involves fewer agents than                  Poisson distribution. As shown in Figure 9, the performance
+Code-Writer, it features a more intricate control flow with                benefits of Tokencake become increasingly pronounced as
+complex dependencies, challenging the scheduler’s ability                  the system load increases.
+to optimize the critical path and manage inter-agent stalls                   At lower request rates (e.g., 0.05 QPS), Tokencake and the
+effectively.                                                               vLLM baseline exhibit comparable performance, as memory
+Workload. User requests for the benchmarks are synthe-                     contention is not yet a significant issue. However, LightLLM
+sized from the ShareGPT[2] and AgentCode[1] datasets,                      shows worse performance even at this low load. LightLLM
+which contain real-world conversational data. To simulate                  features a fine-grained, token-wise memory manager opti-
+a dynamic user environment, we generate request arrivals                   mized for high token throughput. While effective for continu-
+using a Poisson distribution, varying the rate of applications             ous generation, its architecture is not designed to handle the
+per second to evaluate system performance under different                  long and unpredictable idle times that occur when agents use
+load conditions.                                                           external tools. This architectural mismatch leads to higher
+   For tool-using agents, because the model we use cannot                  initial latency. As the QPS rises and function calls become
+steadily generate tool using output, the external function                 more frequent, the latency for both baseline systems grows
+calls are simulated to ensure a controlled and repeatable                  much more rapidly. The core issue is that both vLLM and
+evaluation of the serving system’s performance. The laten-                 LightLLM keep the KV Cache of stalled agents resident in
+cies for these function calls are also modeled with a Poisson              the GPU, quickly leading to memory saturation. This con-
+distribution, which aligns with the behavior documented in                 tention forces their schedulers to use smaller, less efficient
+the Model Context Protocol (MCP). This simulation method-                  batch sizes and delays the processing of new and existing
+ology allows us to isolate and accurately measure the perfor-              requests.
+mance of our scheduling and memory management frame-                          In contrast, Tokencake’s latency scales much more grace-
+work, independent of the non-deterministic nature of model-                fully with the increasing load. By intelligently offloading the
+generated outputs.                                                         KV Cache of stalled agents, Tokencake frees up valuable GPU
+Baseline. We compare Tokencake against two state-of-the-                   memory, allowing it to maintain larger and more efficient
+art LLM serving frameworks: vLLM and LightLLM. The                         batch sizes for active requests. This proactive memory man-
+vLLM baseline represents the typical behavior of current                   agement prevents the system from becoming a bottleneck.
+serving systems, where the KV Cache of a request blocked                   For instance, at a high load of 1.0 QPS, Tokencake reduces the
+by a function call remains resident in GPU memory, leading                 average end-to-end latency by over 47.06% compared to the
+to inefficient resource use during the stall period. LightLLM              vLLM baseline. This result clearly demonstrates Tokencake’s
+                                                                       9
+Conference’17, July 2017, Washington, DC, USA                                    Zhuohang Bian, Feiyang Wu, Teng Ma, and Youwei Zhuo
+
+
+
+
+Figure 9. End-to-end application latency comparison of Tokencake, vLLM, and LightLLM. Each chart plots average latency
+against queries-per-second (QPS) for the specified application, model, and dataset.
+
+superior ability to maintain high performance and stability         sustain larger, more computationally efficient batch sizes
+under the demanding conditions of multi-agent workloads,            and process more requests concurrently.
+a scenario where other specialized systems like LightLLM               In contrast, the baseline system’s lower utilization reflects
+falter.                                                             a critical inefficiency. In vLLM, the memory quickly becomes
+GPU Utilization and Memory Management. The latency                  fragmented with a mix of active and idle KV Cache from
+improvements in Tokencake are a direct result of its more           stalled agents. While its memory is also occupied, a signif-
+efficient memory management, which leads to higher effec-           icant portion is held by these underutilized caches, which
+tive GPU utilization. As illustrated in Figure 10, Tokencake        are not contributing to active computation but are instead
+consistently maintains a higher average GPU KV Cache us-            blocking new requests from being scheduled. This memory
+age—hovering around 86 − 87% across all load levels—which           contention forces the baseline scheduler to use smaller batch
+is up to 16.9% higher than vLLM.                                    sizes, leading to lower throughput and memory utilization.
+                                                                       This improved memory management translates directly to
+                                                                    higher computational efficiency and generation throughput.
+                                                                    By resolving the memory bottleneck caused by idle caches,
+                                                                    Tokencake enables the GPU’s computational resources to
+                                                                    be used more effectively, ultimately processing more tokens
+                                                                    per second across the entire workload.
+
+                                                                    7.3   Agent Analysis: Optimizing the Critical Path
+                                                                    Agent Latency Comparison. Beyond improving overall
+                                                                    latency, Tokencake enhances the performance of individual
+Figure 10. GPU KV Cache utilization under varying load.             agents by reducing system-wide resource contention. As
+                                                                    shown in Figure 11, every agent type runs faster on Token-
+   Tokencake ’s proactive offloading policy ensures that the        cake. However, the key to minimizing end-to-end applica-
+GPU memory is predominantly occupied by the KV Cache                tion time is optimizing the critical path. Baseline systems
+of active, computation-ready requests. By intelligently mov-        are prone to priority inversion, where a low-priority agent
+ing the caches of agents stalled on function calls to CPU           stalls a critical one, creating a significant bottleneck. Token-
+memory, Tokencake frees up valuable GPU resources that              cake’s agent-aware Space Scheduler prevents this by using a
+can be immediately repurposed. This allows the system to            dynamic memory reservation policy to guarantee resources
+                                                               10
+Tokencake : A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications         Conference’17, July 2017, Washington, DC, USA
+
+
+for critical-path agents. This ensures the most important
+tasks proceed without delay, balancing the entire workflow
+for a shorter total execution time. The effectiveness of this
+strategy is confirmed by the sharp reduction in "abnormal
+agents" (agents with unusually long execution times), as seen
+in Figure 12.
+
+
+
+
+                                                                           Figure 12. Reduction in the count of abnormal agents. An
+                                                                           agent is considered abnormal if its execution time exceeds
+                                                                           1.5x the average for its type.
+
+                                                                           transfer is orders of magnitude faster than recomputation.
+                                                                           For example, transferring 4096 blocks takes about 60 ms,
+                                                                           while recomputing them takes nearly 9,000 ms. This large
+                                                                           time difference confirms that our approach is efficient. The
+                                                                           overhead of moving the KV Cache is very small compared
+                                                                           to the high cost of recomputation, even for long function
+                                                                           call stalls. This allows Tokencake to free up GPU memory
+                                                                           for active tasks without a major penalty when the stalled
+                                                                           agent resumes, creating a good balance between memory
+                                                                           availability and resumption speed.
+
+
+
+          Figure 11. Average latency by agent type
+
+Critical Path Optimization. To quantify how Tokencake
+optimizes the application workflow, we analyze the number
+of "abnormal agents," which are defined as agents whose
+execution time is more than 1.5 times the average for their
+type. A high count of these latency outliers suggests frequent
+blocking and resource contention, a problem that is partic-
+ularly damaging when it delays agents on the critical path.                Figure 13. Time tradeoff between KV Cache reuse and re-
+As shown in Figure 12, Tokencake significantly reduces the                 computation.
+number of abnormal agents compared to the baseline sys-
+tems. This result demonstrates that Tokencake’s agent-aware                Offload Overhead Mitigation The performance of Token-
+scheduling and memory management effectively mitigate                      cake’s time scheduling hinges on the efficiency of its offload
+the worst-case delays caused by contention. By ensuring                    and upload operations. The high frequency of these trans-
+resources are available for critical tasks, Tokencake creates a            fers means that any associated overhead could negate the
+smoother and more stable execution flow, which is essential                benefits of freeing up GPU memory. We designed two key
+for achieving reliable performance in complex multi-agent                  optimizations to address this: CPU Block Buffering and Grad-
+applications.                                                              ual GPU Block Reservation (Section 4.3). To quantify their
+                                                                           impact, we conducted a micro-benchmark comparing To-
+7.4   Analysis of the Offloading Tradeoff                                  kencake with these optimizations against a baseline version
+Tokencake is based on the idea that moving a stalled agent’s               without them.
+KV Cache to CPU memory is much faster than recomputing                        As shown in Figure 14, the results demonstrate the criti-
+it later. To test this, we measured the time cost of both ac-              cal importance of these mitigation techniques. The baseline
+tions. Figure 13 compares the time for transferring the KV                 version incurs prohibitively high latency, scaling from 4,366
+Cache (offload from GPU to CPU and upload back) with the                   ms for 1,024 blocks to an overwhelming 15,163 ms for 5,120
+time for recomputation. The data clearly shows that data                   blocks, which stems from the inefficient handling of bursty
+                                                                      11
+Conference’17, July 2017, Washington, DC, USA                                      Zhuohang Bian, Feiyang Wu, Teng Ma, and Youwei Zhuo
+
+
+                                                                      to agentic applications. Tokencake addresses this specific
+                                                                      challenge by introducing a proactive policy that leverages
+                                                                      application-level events—namely, function calls—to antici-
+                                                                      pate idle periods and manage the KV Cache lifecycle accord-
+                                                                      ingly.
+
+
+
+                                                                      9    Discussion and Future Work
+                                                                      Our evaluation demonstrates the benefits of Tokencake’s
+                                                                      design, though our work also has limitations that point to
+                                                                      several directions for future work.
+                                                                         One limitation is that Tokencake’s scheduling policy relies
+Figure 14. Overhead Mitigation for KV Cache Offload and               on a simple model to predict tool execution times. The de-
+Upload Operations.                                                    sign is robust to prediction inaccuracies. An early call_finish
+                                                                      event triggers an immediate prefetch to ensure correctness,
+                                                                      and the observed execution time is used to improve future
+memory allocation requests. In contrast, the optimized ver-           predictions. Furthermore, our opportunistic policy only ini-
+sion of Tokencake reduces this overhead by several orders             tiates an offload when there is a clear scheduling window
+of magnitude, with both offload and upload latencies re-              and a waiting request that can be completed within it, guar-
+maining in the single-digit milliseconds. For 5,120 blocks,           anteeing a performance benefit even with imperfect time
+the upload time is reduced from 15,163 ms to just 4.4 ms.             estimates. This mechanism opens a promising direction for
+This dramatic improvement confirms that our CPU block                 future work in the co-design of more sophisticated schedul-
+buffering and gradual GPU reservation strategies are essen-           ing policies and prediction models. For instance, a scheduler
+tial, transforming the data transfer from a major bottleneck          could incorporate richer predictive features, such as function
+into a lightweight operation and making Tokencake’s proac-            call arguments, to better balance system throughput with
+tive, high-frequency offloading strategy viable and highly            fairness.
+effective.                                                               A second limitation is the single-GPU scope of our cur-
+                                                                      rent evaluation. We believe that the core principles of agent-
+8    Related Works                                                    aware, dynamic KV Cache management are directly applica-
+LLM Application-Aware Scheduling. Several systems op-                 ble to larger, distributed environments. Extending Tokencake
+timize multi-agent application performance by making the              to a multi-GPU setup is a natural next step. The space and
+scheduler aware of the application’s structure. For instance,         time scheduling could be adapted to manage a tiered memory
+Parrot [8] and Autellix [10] treat the application as a graph         hierarchy, using a neighboring GPU’s memory over high-
+to prioritize requests and mitigate head-of-line blocking.            speed interconnects like NVLink as a faster offload target
+Teola [14] optimizes the execution pipeline for an individ-           than CPU RAM.
+ual agent’s interaction with external tools like RAG. While
+these approaches improve high-level orchestration, they are
+largely ignore the memory management problem. They op-
+erate at the request level and do not manage the underlying           10    Conclusion
+KV Cache, leaving systems vulnerable to performance issues            This paper introduced Tokencake, an LLM serving frame-
+like priority inversion caused by space memory contention.            work designed to solve performance problems in multi-agent
+In contrast, Tokencake’s Space Scheduler directly manages             applications. Long-running function calls often cause an
+memory allocation with a dynamic partitioning policy to pro-          agent’s KV Cache to idly occupy valuable GPU memory,
+tect critical-path agents, resolving contention at its source.        leading to underutilization and high latency.
+KV Cache Optimization. KV-Cache-centric has become                       Tokencake tackles this by dynamically offloading the idle
+a new paradigm for more efficient KV Cache management.                KV Cache to CPU memory and using predictive uploading
+Mooncake [13], a disaggregated serving architecture, treats           to hide data transfer latency when the agent resumes. Our
+KV Cache as first-citizen across different stage of inference.        evaluation on a realistic multi-agent benchmark shows that
+Recent systems have introduced offloading mechanisms to               Tokencake significantly reduces end-to-end latency by up to
+optimize memory usage. CachedAttention [4] used offload-              47.06% compared to a standard vLLM baseline. These results
+ing to reduce the TTFT time. While effective for general              show the benefits of making the serving system aware of the
+workloads, these offload policies are typically reactive and          application’s context, enabling more efficient and responsive
+not designed for the frequent, predictable stalls inherent            agentic applications.
+                                                                 12
+Tokencake : A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications                      Conference’17, July 2017, Washington, DC, USA
+
+
+References                                                                               https://arxiv.org/abs/2407.00079
+ [1] AlignmentLab AI. 2024. AgentCode: A dataset for code generated by              [14] Xin Tan, Yimin Jiang, Yitao Yang, and Hong Xu. 2025. Teola:
+     LLM agents. Hugging Face Datasets. https://huggingface.co/datasets/                 Towards End-to-End Optimization of LLM-based Applications.
+     AlignmentLab-AI/agentcode Accessed: 2025-09-01.                                     arXiv:2407.00326 [cs.DC] https://arxiv.org/abs/2407.00326
+ [2] anon8231489123. 2023.                ShareGPT Vicuna Unfiltered.               [15] Google Gemini Team. 2025. Gemini Fullstack LangGraph Quick-
+     https://huggingface.co/datasets/anon8231489123/ShareGPT_                            start. https://github.com/google-gemini/gemini-fullstack-langgraph-
+     Vicuna_unfiltered. https://huggingface.co/datasets/anon8231489123/                  quickstart. Accessed: 2025-09-23.
+     ShareGPT_Vicuna_unfiltered Hugging Face dataset.                               [16] Qingyun Wu, Gagan Bansal, Jieyu Zhang, Yiran Wu, Beibin Li, Erkang
+ [3] Anthropic, Inc. 2025. Model Context Protocol Specification. https:                  Zhu, Li Jiang, Xiaoyun Zhang, Shaokun Zhang, Jiale Liu, Ahmed Has-
+     //spec.modelcontextprotocol.io/specification/2025-08-20/ Accessed:                  san Awadallah, Ryen W White, Doug Burger, and Chi Wang. 2023.
+     2025-08-20.                                                                         AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Con-
+ [4] Bin Gao, Zhuomin He, Puru Sharma, Qingxuan Kang, Djordje Jevdjic,                   versation. arXiv:2308.08155 [cs.AI] https://arxiv.org/abs/2308.08155
+     Junbo Deng, Xingkun Yang, Zhou Yu, and Pengfei Zuo. 2024. Cost-                [17] Yijia Xiao, Edward Sun, Di Luo, and Wei Wang. 2025. TradingAgents:
+     efficient large language model serving for multi-turn conversations                 Multi-Agents LLM Financial Trading Framework. arXiv:2412.20138 [q-
+     with CachedAttention. In Proceedings of the 2024 USENIX Conference on               fin.TR] https://arxiv.org/abs/2412.20138
+     Usenix Annual Technical Conference (Santa Clara, CA, USA) (USENIX              [18] Jiayi Yao, Hanchen Li, Yuhan Liu, Siddhant Ray, Yihua Cheng, Qizheng
+     ATC’24). USENIX Association, USA, Article 7, 16 pages.                              Zhang, Kuntai Du, Shan Lu, and Junchen Jiang. 2025. CacheBlend: Fast
+ [5] Dawei Gao, Zitao Li, Xuchen Pan, Weirui Kuang, Zhijian Ma, Bingchen                 Large Language Model Serving for RAG with Cached Knowledge Fu-
+     Qian, Fei Wei, Wenhao Zhang, Yuexiang Xie, Daoyuan Chen, Liuyi                      sion. In Proceedings of the Twentieth European Conference on Computer
+     Yao, Hongyi Peng, Zeyu Zhang, Lin Zhu, Chen Cheng, Hongzhu Shi,                     Systems. 94–109. https://doi.org/10.1145/3689031.3696098
+     Yaliang Li, Bolin Ding, and Jingren Zhou. 2024. AgentScope: A Flexible         [19] Kechi Zhang, Jia Li, Ge Li, Xianjie Shi, and Zhi Jin. 2024. CodeAgent:
+     yet Robust Multi-Agent Platform. arXiv:2402.14034 [cs.MA] https:                    Enhancing Code Generation with Tool-Integrated Agent Systems for
+     //arxiv.org/abs/2402.14034                                                          Real-World Repo-level Coding Challenges. arXiv:2401.07339 [cs.SE]
+ [6] Sirui Hong, Mingchen Zhuge, Jiaqi Chen, Xiawu Zheng, Yuheng Cheng,                  https://arxiv.org/abs/2401.07339
+     Ceyao Zhang, Jinlin Wang, Zili Wang, Steven Ka Shing Yau, Zijuan
+     Lin, Liyang Zhou, Chenyu Ran, Lingfeng Xiao, Chenglin Wu, and
+     Jürgen Schmidhuber. 2024. MetaGPT: Meta Programming for A Multi-
+     Agent Collaborative Framework. arXiv:2308.00352 [cs.AI] https:
+     //arxiv.org/abs/2308.00352
+ [7] Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin
+     Zheng, Cody Hao Yu, Joseph Gonzalez, Hao Zhang, and Ion Sto-
+     ica. 2023. Efficient Memory Management for Large Language Model
+     Serving with PagedAttention. In Proceedings of the 29th Symposium
+     on Operating Systems Principles (Koblenz, Germany) (SOSP ’23). As-
+     sociation for Computing Machinery, New York, NY, USA, 611–626.
+     https://doi.org/10.1145/3600006.3613165
+ [8] Chaofan Lin, Zhenhua Han, Chengruidong Zhang, Yuqing Yang, Fan
+     Yang, Chen Chen, and Lili Qiu. 2024. Parrot: Efficient Serving of LLM-
+     based Applications with Semantic Variable. In 18th USENIX Symposium
+     on Operating Systems Design and Implementation (OSDI 24). USENIX
+     Association, Santa Clara, CA. https://www.usenix.org/conference/
+     osdi24/presentation/lin-chaofan
+ [9] Yifei Liu, Zuo Gan, Zhenghao Gan, Weiye Wang, Chen Chen, Yizhou
+     Shan, Xusheng Chen, Zhenhua Han, Yifei Zhu, Shixuan Sun, and Minyi
+     Guo. 2025. Efficient Serving of LLM Applications with Probabilistic
+     Demand Modeling. arXiv:2506.14851 [cs.DC] https://arxiv.org/abs/
+     2506.14851
+[10] Michael Luo, Xiaoxiang Shi, Colin Cai, Tianjun Zhang, Justin Wong,
+     Yichuan Wang, Chi Wang, Yanping Huang, Zhifeng Chen, Joseph E.
+     Gonzalez, and Ion Stoica. 2025. Autellix: An Efficient Serving Engine
+     for LLM Agents as General Programs. arXiv:2502.13965 [cs.LG]
+     https://arxiv.org/abs/2502.13965
+[11] Microsoft. 2023. Microsoft 365 Copilot. Web page.                https:
+     //www.microsoft.com/en-us/microsoft-365/enterprise/microsoft-
+     365-copilot
+[12] Jinghua Piao, Yuwei Yan, Jun Zhang, Nian Li, Junbo Yan, Xiaochong
+     Lan, Zhihong Lu, Zhiheng Zheng, Jing Yi Wang, Di Zhou, Chen
+     Gao, Fengli Xu, Fang Zhang, Ke Rong, Jun Su, and Yong Li. 2025.
+     AgentSociety: Large-Scale Simulation of LLM-Driven Generative
+     Agents Advances Understanding of Human Behaviors and Society.
+     arXiv:2502.08691 [cs.SI] https://arxiv.org/abs/2502.08691
+[13] Ruoyu Qin, Zheming Li, Weiran He, Mingxing Zhang, Yongwei Wu,
+     Weimin Zheng, and Xinran Xu. 2024. Mooncake: A KVCache-centric
+     Disaggregated Architecture for LLM Serving. arXiv:2407.00079 [cs.DC]
+                                                                               13
+
