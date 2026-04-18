@@ -1,0 +1,791 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/tokencake",
+  "source_pdf": "tokencake.pdf",
+  "metadata": {
+    "paper_title": "tokencake",
+    "scenario": "paper-reading",
+    "language": "en",
+    "theme": "lemonade",
+    "created_at": "2026-04-18T11:35:17+00:00",
+    "updated_at": "2026-04-18T11:44:14+00:00"
+  },
+  "source_text": {
+    "path": "out/tokencake/notes/source.txt",
+    "extractor": "pdftotext-layout",
+    "generated_at": "2026-04-18T11:35:17+00:00",
+    "page_count": 13,
+    "notes": ""
+  },
+  "extraction": {
+    "status": "assets-registered",
+    "priority_order": [
+      "figure",
+      "table",
+      "equation"
+    ],
+    "notes": ""
+  },
+  "assets": [
+    {
+      "asset_id": "fig1a-coding",
+      "asset_type": "figure",
+      "label": "Figure 1a: Multi-agent Coding",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 1,
+      "bbox": [
+        324.417,
+        198.747,
+        433.829,
+        321.466
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig1a-multi-agent-coding.jpeg",
+      "normalized_caption": "Multi-agent coding application with collaborating programmer, checker, reviewer, and reviser agents.",
+      "raw_caption": "Multi-agent coding application with collaborating programmer, checker, reviewer, and reviser agents.",
+      "dimensions": {
+        "width": 2220,
+        "height": 2490,
+        "aspect_ratio": 0.8916
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "workload-example"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig1b-deep-research",
+      "asset_type": "figure",
+      "label": "Figure 1b: Deep Research",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 1,
+      "bbox": [
+        442.128,
+        196.44,
+        551.54,
+        321.448
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig1b-deep-research.jpeg",
+      "normalized_caption": "Deep Research application with planner, searcher, summary, reflector, and generation stages.",
+      "raw_caption": "Deep Research application with planner, searcher, summary, reflector, and generation stages.",
+      "dimensions": {
+        "width": 2280,
+        "height": 2605,
+        "aspect_ratio": 0.8752
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "workload-example"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig2-space-contention",
+      "asset_type": "figure",
+      "label": "Figure 2: Space Contention",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 2,
+      "bbox": [
+        53.722,
+        74.904,
+        294.276,
+        211.868
+      ],
+      "capture_kind": "cropped-composite-pdf",
+      "primary_output": "out/tokencake/assets/fig2-space-contention.pdf",
+      "normalized_caption": "Critical-path agents get preempted when non-critical agents occupy KV-cache space first.",
+      "raw_caption": "Critical-path agents get preempted when non-critical agents occupy KV-cache space first.",
+      "dimensions": {
+        "width": 240.554,
+        "height": 136.964,
+        "aspect_ratio": 1.7563
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "pathology-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig3-time-underutilization",
+      "asset_type": "figure",
+      "label": "Figure 3: Time Underutilization",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 2,
+      "bbox": [
+        317.677,
+        74.904,
+        558.003,
+        211.868
+      ],
+      "capture_kind": "cropped-composite-pdf",
+      "primary_output": "out/tokencake/assets/fig3-time-underutilization.pdf",
+      "normalized_caption": "Function-call stalls leave KV-cache blocks idle or force expensive eviction and recomputation.",
+      "raw_caption": "Function-call stalls leave KV-cache blocks idle or force expensive eviction and recomputation.",
+      "dimensions": {
+        "width": 240.326,
+        "height": 136.964,
+        "aspect_ratio": 1.7547
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "pathology-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig4-overview",
+      "asset_type": "figure",
+      "label": "Figure 4: Tokencake Overview",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 3,
+      "bbox": [
+        322.231,
+        76.325,
+        553.716,
+        228.46
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig4-overview.jpeg",
+      "normalized_caption": "Tokencake combines a frontend API with coordinated space and time schedulers around the KV cache.",
+      "raw_caption": "Tokencake combines a frontend API with coordinated space and time schedulers around the KV cache.",
+      "dimensions": {
+        "width": 1940,
+        "height": 1275,
+        "aspect_ratio": 1.5216
+      },
+      "source_section": "Overview",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "thesis",
+        "system-overview"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig5-api",
+      "asset_type": "figure",
+      "label": "Figure 5: Frontend API",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 4,
+      "bbox": [
+        69.852,
+        75.856,
+        278.195,
+        175.905
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig5-api.jpeg",
+      "normalized_caption": "The frontend expresses a multi-agent workflow as a DAG with staged function nodes.",
+      "raw_caption": "The frontend expresses a multi-agent workflow as a DAG with staged function nodes.",
+      "dimensions": {
+        "width": 4927,
+        "height": 2366,
+        "aspect_ratio": 2.0824
+      },
+      "source_section": "Frontend API",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "implementation",
+        "frontend-api"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig6-coordination",
+      "asset_type": "figure",
+      "label": "Figure 6: Scheduler Coordination",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 4,
+      "bbox": [
+        322.231,
+        76.285,
+        553.716,
+        153.808
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig6-coordination.jpeg",
+      "normalized_caption": "The space scheduler and time scheduler cooperate on reservation, offload, and prefetch decisions.",
+      "raw_caption": "The space scheduler and time scheduler cooperate on reservation, offload, and prefetch decisions.",
+      "dimensions": {
+        "width": 2135,
+        "height": 715,
+        "aspect_ratio": 2.986
+      },
+      "source_section": "Overview",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "mechanism-overview",
+        "scheduler-coordination"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig7-lifecycle",
+      "asset_type": "figure",
+      "label": "Figure 7: Time Scheduler Lifecycle",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 5,
+      "bbox": [
+        322.231,
+        243.898,
+        553.716,
+        359.22
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig7-lifecycle.jpeg",
+      "normalized_caption": "The time scheduler analyzes, offloads, predicts completion, and uploads KV cache before resumption.",
+      "raw_caption": "The time scheduler analyzes, offloads, predicts completion, and uploads KV cache before resumption.",
+      "dimensions": {
+        "width": 1375,
+        "height": 685,
+        "aspect_ratio": 2.0073
+      },
+      "source_section": "Time Scheduler",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "time-scheduler",
+        "mechanism-detail"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig8-space-scheduler",
+      "asset_type": "figure",
+      "label": "Figure 8: Space Scheduler Feedback Loop",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 7,
+      "bbox": [
+        58.34,
+        76.276,
+        289.697,
+        214.825
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig8-space-scheduler.jpeg",
+      "normalized_caption": "The space scheduler updates critical-agent reservations from priority and observed memory pressure.",
+      "raw_caption": "The space scheduler updates critical-agent reservations from priority and observed memory pressure.",
+      "dimensions": {
+        "width": 1745,
+        "height": 1045,
+        "aspect_ratio": 1.6699
+      },
+      "source_section": "Space Scheduler",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "space-scheduler",
+        "mechanism-detail"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig9-latency",
+      "asset_type": "figure",
+      "label": "Figure 9: End-to-End Latency",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 10,
+      "bbox": [
+        63.279,
+        80.977,
+        548.734,
+        306.645
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig9-latency.jpeg",
+      "normalized_caption": "Tokencake scales better with load and cuts end-to-end latency versus vLLM and LightLLM.",
+      "raw_caption": "Tokencake scales better with load and cuts end-to-end latency versus vLLM and LightLLM.",
+      "dimensions": {
+        "width": 5279,
+        "height": 2454,
+        "aspect_ratio": 2.1512
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-main",
+        "headline-result"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig10-gpu-utilization",
+      "asset_type": "figure",
+      "label": "Figure 10: GPU KV Utilization",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 10,
+      "bbox": [
+        58.351,
+        515.256,
+        289.687,
+        605.341
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig10-gpu-utilization.jpeg",
+      "normalized_caption": "Tokencake sustains about 86 to 87 percent GPU KV-cache utilization versus roughly 70 to 74 percent for vLLM.",
+      "raw_caption": "Tokencake sustains about 86 to 87 percent GPU KV-cache utilization versus roughly 70 to 74 percent for vLLM.",
+      "dimensions": {
+        "width": 3495,
+        "height": 1361,
+        "aspect_ratio": 2.568
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-support",
+        "utilization-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig11-agent-latency",
+      "asset_type": "figure",
+      "label": "Figure 11: Agent Latency",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 11,
+      "bbox": [
+        58.276,
+        160.696,
+        289.761,
+        390.385
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig11-agent-latency.jpeg",
+      "normalized_caption": "Every agent type runs faster on Tokencake than on the baselines.",
+      "raw_caption": "Every agent type runs faster on Tokencake than on the baselines.",
+      "dimensions": {
+        "width": 4126,
+        "height": 4094,
+        "aspect_ratio": 1.0078
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-support",
+        "critical-path-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig12-abnormal-agents",
+      "asset_type": "figure",
+      "label": "Figure 12: Abnormal Agents",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 11,
+      "bbox": [
+        322.283,
+        76.276,
+        553.664,
+        181.756
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig12-abnormal-agents.jpeg",
+      "normalized_caption": "Tokencake sharply reduces abnormal critical-path agents with unusually long runtimes.",
+      "raw_caption": "Tokencake sharply reduces abnormal critical-path agents with unusually long runtimes.",
+      "dimensions": {
+        "width": 3501,
+        "height": 1596,
+        "aspect_ratio": 2.1936
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-support",
+        "critical-path-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig13-offload-vs-recompute",
+      "asset_type": "figure",
+      "label": "Figure 13: Transfer vs Recomputation",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 11,
+      "bbox": [
+        322.231,
+        383.286,
+        553.716,
+        487.212
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig13-offload-vs-recompute.jpeg",
+      "normalized_caption": "KV-cache transfer is orders of magnitude cheaper than recomputing the same context.",
+      "raw_caption": "KV-cache transfer is orders of magnitude cheaper than recomputing the same context.",
+      "dimensions": {
+        "width": 3497,
+        "height": 1570,
+        "aspect_ratio": 2.2274
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-support",
+        "time-scheduler-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig14-overhead-mitigation",
+      "asset_type": "figure",
+      "label": "Figure 14: Overhead Mitigation",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 12,
+      "bbox": [
+        58.276,
+        76.323,
+        289.761,
+        211.356
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig14-overhead-mitigation.jpeg",
+      "normalized_caption": "CPU block buffering and gradual GPU reservation reduce transfer overhead from seconds to milliseconds.",
+      "raw_caption": "CPU block buffering and gradual GPU reservation reduce transfer overhead from seconds to milliseconds.",
+      "dimensions": {
+        "width": 3600,
+        "height": 2100,
+        "aspect_ratio": 1.7143
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-support",
+        "overhead-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "eq1-duration-blend",
+      "asset_type": "equation",
+      "label": "Equation 1: Duration Blend",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 6,
+      "bbox": null,
+      "capture_kind": null,
+      "primary_output": null,
+      "normalized_caption": "",
+      "raw_caption": "",
+      "dimensions": {
+        "width": null,
+        "height": null,
+        "aspect_ratio": null
+      },
+      "source_section": "Time Scheduler",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "time-scheduler",
+        "policy-formula"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": {
+        "text": "t_final = alpha * t_req + (1 - alpha) * t_hist",
+        "context": "Blend a developer-provided function-call estimate with historical execution time for predictive upload.",
+        "notation_hints": [],
+        "display_preferred": true
+      }
+    },
+    {
+      "asset_id": "eq2-transfer-cost",
+      "asset_type": "equation",
+      "label": "Transfer-Time Model",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 6,
+      "bbox": null,
+      "capture_kind": null,
+      "primary_output": null,
+      "normalized_caption": "",
+      "raw_caption": "",
+      "dimensions": {
+        "width": null,
+        "height": null,
+        "aspect_ratio": null
+      },
+      "source_section": "Time Scheduler",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "time-scheduler",
+        "policy-formula"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": {
+        "text": "T_transfer = T_offload(N_blocks) + T_upload(N_blocks)",
+        "context": "Estimate whether the stall window is long enough to justify offloading the KV cache.",
+        "notation_hints": [],
+        "display_preferred": true
+      }
+    },
+    {
+      "asset_id": "eq3-static-priority",
+      "asset_type": "equation",
+      "label": "Static Priority",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 8,
+      "bbox": null,
+      "capture_kind": null,
+      "primary_output": null,
+      "normalized_caption": "",
+      "raw_caption": "",
+      "dimensions": {
+        "width": null,
+        "height": null,
+        "aspect_ratio": null
+      },
+      "source_section": "Space Scheduler",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "space-scheduler",
+        "policy-formula"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": {
+        "text": "priority_static = w_static * node_depth * node_out_degree",
+        "context": "Measure structural importance of an agent inside the DAG.",
+        "notation_hints": [],
+        "display_preferred": true
+      }
+    },
+    {
+      "asset_id": "eq4-dynamic-priority",
+      "asset_type": "equation",
+      "label": "Dynamic Priority",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 8,
+      "bbox": null,
+      "capture_kind": null,
+      "primary_output": null,
+      "normalized_caption": "",
+      "raw_caption": "",
+      "dimensions": {
+        "width": null,
+        "height": null,
+        "aspect_ratio": null
+      },
+      "source_section": "Space Scheduler",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "space-scheduler",
+        "policy-formula"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": {
+        "text": "priority_dynamic = time_wait * log(tokens_req / time_wait)",
+        "context": "Blend fairness and short-request preference when ranking waiting agents.",
+        "notation_hints": [],
+        "display_preferred": true
+      }
+    },
+    {
+      "asset_id": "fig2a-space-contention-analysis",
+      "asset_type": "figure",
+      "label": "Figure 2a: Contention Analysis",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 2,
+      "bbox": [
+        56.905,
+        74.904,
+        166.317,
+        184.316
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig2a-space-contention-analysis.jpeg",
+      "normalized_caption": "Preemption events accumulate steadily in the Code-Writer workload.",
+      "raw_caption": "Preemption events accumulate steadily in the Code-Writer workload.",
+      "dimensions": {
+        "width": 1200,
+        "height": 1200,
+        "aspect_ratio": 1.0
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "pathology-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig2b-space-contention-diagram",
+      "asset_type": "figure",
+      "label": "Figure 2b: Critical Inversion Diagram",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 2,
+      "bbox": [
+        180.984,
+        83.534,
+        291.872,
+        185.061
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig2b-space-contention-diagram.jpeg",
+      "normalized_caption": "A non-critical agent can occupy memory first and preempt a critical-path agent.",
+      "raw_caption": "A non-critical agent can occupy memory first and preempt a critical-path agent.",
+      "dimensions": {
+        "width": 770,
+        "height": 705,
+        "aspect_ratio": 1.0922
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "pathology-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig3a-idle-kv-blocks",
+      "asset_type": "figure",
+      "label": "Figure 3a: Idle KV Blocks",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 2,
+      "bbox": [
+        320.86,
+        74.904,
+        430.272,
+        184.316
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig3a-idle-kv-blocks.jpeg",
+      "normalized_caption": "Stalled agents can occupy up to 18.5 percent of used GPU KV cache.",
+      "raw_caption": "Stalled agents can occupy up to 18.5 percent of used GPU KV cache.",
+      "dimensions": {
+        "width": 1200,
+        "height": 1200,
+        "aspect_ratio": 1.0
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "pathology-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    },
+    {
+      "asset_id": "fig3b-kv-cache-lifecycle",
+      "asset_type": "figure",
+      "label": "Figure 3b: KV-Cache Lifecycle",
+      "title": "",
+      "source_file": "tokencake.pdf",
+      "page": 2,
+      "bbox": [
+        444.858,
+        77.202,
+        555.922,
+        185.168
+      ],
+      "capture_kind": "native-raster",
+      "primary_output": "out/tokencake/assets/fig3b-kv-cache-lifecycle.jpeg",
+      "normalized_caption": "During a function call, the system must choose between wasting memory and paying recomputation later.",
+      "raw_caption": "During a function call, the system must choose between wasting memory and paying recomputation later.",
+      "dimensions": {
+        "width": 1255,
+        "height": 1220,
+        "aspect_ratio": 1.0287
+      },
+      "source_section": "Introduction",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "pathology-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {},
+      "equation": null
+    }
+  ],
+  "notes": ""
+}
