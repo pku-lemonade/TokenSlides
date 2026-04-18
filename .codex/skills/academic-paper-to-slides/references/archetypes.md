@@ -1,3 +1,5 @@
+<!-- Derived from archetypes.json. Edit the JSON spec, then regenerate this file. -->
+
 # Slide Archetypes
 
 Use a small set of reusable compositions. The goal is predictable, readable pages rather than one-off layouts.
@@ -5,53 +7,123 @@ Use a small set of reusable compositions. The goal is predictable, readable page
 ## Selection Rules
 
 - Default to simpler archetypes before inventing a custom composition.
-- Choose by rendered geometry, not by semantic label alone. A figure called `overview`, `workflow`, or `pipeline` still belongs in a side column if the recovered asset is portrait-oriented or vertically stacked.
+- Choose by rendered geometry, not by semantic label alone.
 - On figure-led slides, keep the figure as the main evidence; the text explains why it matters.
 - Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.
 - Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.
 - If a slide still needs too many words after choosing an archetype, split the material across slides.
 
-## 1. Figure-Led Vertical
+## Title slide
+
+Use when:
+
+- the first slide should be handled entirely by the Lemonade title shell
+
+Avoid when:
+
+- you need to manually compose body content inside the title frame
+
+Contract:
+
+- Renderer: `title_slide`
+- Allowed render modes: `script`
+- QA rules:
+  - first slide only
+  - theme shell owns title layout
+
+Notes:
+
+- This archetype is emitted by the deck wrapper, not by per-slide body rendering.
+
+## Outline / Roadmap
+
+Use when:
+
+- the audience needs a section roadmap or explicit talk structure
+
+Avoid when:
+
+- the slide is really a section divider with no usable roadmap items
+
+Contract:
+
+- Renderer: `outline_roadmap`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `roadmap_or_bullets`: required
+- Limits:
+  - `boxes_max`: `1`
+- QA rules:
+  - clear section ordering
+  - short roadmap labels
+
+Notes:
+
+- Use this only when the roadmap helps navigation. Do not add filler outline slides.
+
+## Motivation / Background
+
+Use when:
+
+- the slide needs concise framing plus one supporting figure or one compact table
+
+Avoid when:
+
+- the slide is evidence-heavy enough to deserve a dedicated figure-led or table-led archetype
+
+Contract:
+
+- Renderer: `motivation_background`
+- Allowed render modes: `script, escape`
+- Limits:
+  - `boxes_max`: `3`
+  - `bullets_max`: `4`
+- QA rules:
+  - short setup text
+  - do not bury the thesis in the background slide
+- Fallbacks: `Figure-Led Vertical`, `Table-Led Structured Slide`
+
+Notes:
+
+- This is the catchment archetype for framing slides that still need one concrete supporting artifact.
+
+## Figure-Led Vertical
 
 Use when:
 
 - one result figure or one pair of comparable figures should dominate the page
-- the page only needs 1 or 2 short takeaways
+- the page only needs one or two short takeaways
 
 Avoid when:
 
 - the figure is horizontally wide and loses legibility when stacked
-- the slide needs 3 substantial text points
+- the slide needs three substantial text points
 
-```typst
-#ibox[
-  *Takeaway:* ...
-]
+Contract:
 
-#hbox[
-  *Key number:* ...
-]
-
-#imgs(
-  (asset("result.jpg"), [What the figure is]),
-)
-```
+- Renderer: `figure_led_vertical`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `asset_ids`: min_items=1, max_items=2
+- Limits:
+  - `boxes_max`: `2`
+  - `bullets_max`: `3`
+- QA rules:
+  - no thumbnail evidence
+  - short title
+  - short caption
+- Fallbacks: `Wide or Fat Evidence`, `Two-Up Comparison`
 
 Notes:
 
-- Keep the stacked text tight. Each takeaway box should preferably fit on one line and should rarely exceed two.
-- Count total page budget, not only box count. The combined boxed text above the figure should usually stay within about 2 to 4 wrapped lines total.
-- Count the title and caption as part of the same visual budget. A long title plus two 2-line boxes is already close to the limit, so split the slide or recrop the evidence early.
-- Captions should preferably fit on one line. Shorten them before accepting a wrapped caption; only widen the figure block if the figure still reads well.
-- If the evidence turns into a thumbnail or narrow strip, change archetype, crop or split the figure, or split the slide.
 - The caption identifies the figure. The box carries the judgment.
 
-## 2. Method Overview Side-by-Side
+## Method Overview Side-by-Side
 
 Use when:
 
-- one architecture or pipeline figure needs 2 to 4 short mechanism boxes
-- the figure is tall enough to live in a side column or can be cropped into a tall evidence slice
+- one architecture or pipeline figure needs two to four short mechanism boxes
+- the figure is tall enough to live in a side column
 
 Avoid when:
 
@@ -59,201 +131,173 @@ Avoid when:
 - the figure is so short that the side column turns into dead whitespace
 - the boxes have turned into paragraphs
 
-```typst
-#grid(
-  columns: (1.05fr, 0.95fr),
-  gutter: 0.8em,
-  [
-    #ibox[*Core idea:* ...]
-    #hbox[*Step 1:* ...]
-    #nbox[*Step 2:* ...]
-    #sbox[*Step 3:* ...]
-  ],
-  [
-    #imgs(
-      (asset("overview.jpg"), [System overview]),
-      cap-size: 16pt,
-    )
-  ],
-)
-```
+Contract:
+
+- Renderer: `method_side_by_side`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `asset_ids`: min_items=1, max_items=1
+- Limits:
+  - `boxes_max`: `3`
+  - `bullets_max`: `2`
+- QA rules:
+  - side evidence stays readable
+  - mechanism boxes stay terse
+- Fallbacks: `Method Overview With Stacked Evidence`, `Wide or Fat Evidence`
 
 Notes:
 
-- This is the default method slide for architecture papers in this repo.
-- Use this even for a composite `workflow + operator summary` figure when the recovered asset is tall or thin and the text budget is still short. Do not switch to `Wide or Fat Evidence` just because the figure is an overview page.
-- Keep mechanism boxes terse and preferably single-line. If 3 or 4 boxes cannot stay short, split the content into an overview slide and one or more mechanism slides.
-- The evidence column should feel vertically intentional. One tall figure is good; one short centered figure floating in whitespace is not.
-- If the figure shrinks below readable size, first check whether the manifest already has another compatible asset or sub-asset from the same source. Then switch to a wide figure page, use the stacked-evidence variant below, or split the method across two slides.
+- This is the default method archetype when the overview asset is tall or thin enough for a side column.
 
-## 2b. Method Overview With Stacked Evidence
+## Method Overview With Stacked Evidence
 
 Use when:
 
 - the method still benefits from text on the left and evidence on the right
 - the available evidence is short, wide, or naturally split into overview plus zoom
-- two related visuals together tell the mechanism better than one undersized side figure
 
 Avoid when:
 
 - the two right-column visuals are unrelated scraps collected only to fill space
 - either panel becomes a thumbnail
 
-```typst
-#grid(
-  columns: (1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #ibox[*Core idea:* ...]
-    #hbox[*Mechanism A:* ...]
-    #nbox[*Mechanism B:* ...]
-  ],
-  [
-    #imgs(
-      (asset("overview.jpg"), [Overall pipeline]),
-    )
-    #v(0.6em)
-    #imgs(
-      (asset("zoom.jpg"), [Critical submodule or zoomed path]),
-    )
-  ],
-)
-```
+Contract:
+
+- Renderer: `method_stacked_evidence`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `asset_ids`: min_items=2, max_items=2
+- Limits:
+  - `boxes_max`: `3`
+  - `bullets_max`: `2`
+- QA rules:
+  - the two visuals read as one argument
+  - stacked evidence remains legible
+- Fallbacks: `Wide or Fat Evidence`, `Method Overview Side-by-Side`
 
 Notes:
 
-- This is the preferred fallback when the default side-by-side method slide leaves a short figure stranded in whitespace.
-- Good right-column pairings include overview plus zoom, architecture plus operator table, or pipeline plus one critical stage.
-- Prefer already recovered assets or extraction-stage sub-assets over ad hoc late crops.
-- If only one source figure exists and no companion asset is available, try a tighter tall crop or extract a smaller reusable sub-asset from the source figure before falling back to post-processing cleanup.
-- Otherwise switch to `Wide or Fat Evidence` instead of faking a stack.
-- The stack should read as one argument, not two separate slides squeezed together.
+- Prefer already recovered companion assets or extraction-stage sub-assets over ad hoc late crops.
 
-## 2c. Method Cards (2 or 3 Only)
+## Method Cards (2 or 3 Only)
 
 Use when:
 
-- the paper presents 2 or 3 named methods, stages, or operators and each one has its own figure
+- the paper presents two or three named methods, stages, or operators and each one has its own figure
 - each method deserves equal visual weight
-- the text and evidence should stay bundled together instead of split into one text column and one figure column
 
 Avoid when:
 
-- there are 4 or more methods
+- there are four or more methods
 - one method is much denser than the others
-- any card needs more than 1 short text block plus 1 figure
+- any card needs more than one short text block plus one figure
 
-```typst
-#grid(
-  columns: (1fr, 1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #mbox(title: [Method A])[
-      *Role:* ...
-      #v(0.5em)
-      #imgs(
-        (asset("method-a.pdf"), [Method A]),
-      )
-    ]
-  ],
-  [
-    #mbox(title: [Method B])[
-      *Role:* ...
-      #v(0.5em)
-      #imgs(
-        (asset("method-b.pdf"), [Method B]),
-      )
-    ]
-  ],
-  [
-    #mbox(title: [Method C])[
-      *Role:* ...
-      #v(0.5em)
-      #imgs(
-        (asset("method-c.pdf"), [Method C]),
-      )
-    ]
-  ],
-)
-```
+Contract:
+
+- Renderer: `method_cards`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `cards_or_asset_ids`: required, asset_id_range=[2, 3], allowed_card_counts=[2, 3]
+- Limits:
+  - `boxes_max`: `1`
+  - `cards_allowed`: `[2, 3]`
+- QA rules:
+  - equal visual weight across cards
+  - no overloaded cards
+- Fallbacks: `Method Overview Side-by-Side`, `Method Overview With Stacked Evidence`
 
 Notes:
 
-- Use `2` cards or `3` cards only. If a fourth item matters, split the slide or group the methods more cleanly.
-- `#mbox(title: [...])[...]` is for self-contained method cards: a top emphasis bar, a centered bold title, then concise local text and one figure inside one container.
-- `#mbox[...]` uses smaller body text by default, so keep the wording very short. If a card needs paragraph text, split the slide or switch archetype.
-- Keep each card to one short setup line and one figure. If you need multiple boxes inside a card, the slide is no longer this archetype.
-- Prefer figures with similar visual weight so the row reads as one structured comparison.
-- This works especially well for per-method operator diagrams, scheduler stages, or one-figure-per-mechanism papers.
+- Use two cards or three cards only. If a fourth item matters, split the slide.
 
-## 3. Two-Up Comparison
+## Two-Up Comparison
 
 Use when:
 
 - two panels have similar visual importance
-- the comparison itself is the story: two workloads, two baselines, before/after
+- the comparison itself is the story
 
 Avoid when:
 
 - one panel is much denser than the other
 - one panel is only supporting evidence and does not deserve equal area
 
-```typst
-#ibox[
-  *Comparison:* ...
-]
+Contract:
 
-#hbox[
-  *Implication:* ...
-]
-
-#imgs(
-  (asset("left.jpg"), [Condition A]),
-  (asset("right.jpg"), [Condition B]),
-  gap: 0.8em,
-)
-```
+- Renderer: `comparison`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `asset_ids`: min_items=2, max_items=2
+- Limits:
+  - `boxes_max`: `2`
+  - `bullets_max`: `2`
+- QA rules:
+  - symmetric captions
+  - comparable visual scale
+- Fallbacks: `Figure-Led Vertical`, `Results Comparison`
 
 Notes:
 
-- Use symmetric captions and similar cropping.
-- Prefer one-line captions for both panels so the comparison reads as one unit.
 - Do not force several weakly related panels into one contact sheet just to keep them on one slide.
-- If one panel needs a different scale, do not force this archetype.
 
-## 4. Table-Led Structured Slide
+## Results Comparison
+
+Use when:
+
+- a results slide needs two equal-weight figures or one compact comparison table
+
+Avoid when:
+
+- the slide has only one dominant artifact and should be figure-led instead
+
+Contract:
+
+- Renderer: `comparison`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `comparison_assets_or_table`: required, asset_id_min_items=2
+- Limits:
+  - `boxes_max`: `2`
+  - `bullets_max`: `2`
+- QA rules:
+  - the comparison itself stays readable
+  - supporting text stays secondary
+- Fallbacks: `Figure-Led Vertical`, `Table-Led Structured Slide`
+
+Notes:
+
+- Use the table path only when a compact structured comparison is stronger than the figures.
+
+## Table-Led Structured Slide
 
 Use when:
 
 - the source material is regular and tabular: setup, baselines, schedules, progress, ablations
-- the user needs precise structured comparison
+- the audience needs precise structured comparison
 
 Avoid when:
 
 - the main evidence is a figure
 - the table is becoming prose pasted into cells
 
-```typst
-#ibox[
-  *Setup:* ...
-]
+Contract:
 
-#table(
-  columns: (1fr, 2fr),
-  inset: 8pt,
-  align: (left, left),
-  [*Item*], [*Detail*],
-  [...], [...],
-  [...], [...],
-)
-```
+- Renderer: `table_structured`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `table`: required
+- Limits:
+  - `boxes_max`: `3`
+- QA rules:
+  - short table cells
+  - no tiny companion figure
+- Fallbacks: `Progress or Status Matrix`, `Motivation / Background`
 
 Notes:
 
-- If a figure must share the slide and becomes tiny, the slide failed. Replace the table with short boxes or split the material.
-- Prefer short noun phrases inside cells instead of paragraph-length explanations.
+- If a figure must share the slide and becomes tiny, the slide failed. Split the material.
 
-## 5. Wide or Fat Evidence
+## Wide or Fat Evidence
 
 Use when:
 
@@ -264,26 +308,81 @@ Avoid when:
 
 - the slide also needs a large table
 - the page needs dense explanatory text
-- the recovered figure is portrait-oriented, tall-thin, or vertically stacked enough to live comfortably in a side column
-- the only reason to choose this archetype is that the figure is semantically an `overview` or `workflow`
+- the recovered figure is portrait-oriented or tall-thin enough to live comfortably in a side column
 
-```typst
-#ibox[
-  *Main point:* ...
-]
+Contract:
 
-#imgs(
-  (asset("wide-figure.jpg"), [What the wide figure shows]),
-)
-```
+- Renderer: `wide_evidence`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `asset_ids`: min_items=1, max_items=2
+- Limits:
+  - `boxes_max`: `2`
+  - `bullets_max`: `3`
+- QA rules:
+  - lower the text budget before lowering the figure size
+  - wide evidence remains primary
+- Fallbacks: `Figure-Led Vertical`, `Method Overview With Stacked Evidence`
 
 Notes:
 
-- Lower the text budget before lowering the figure size.
 - This archetype is for actual width-dominant evidence. It is not the default for all overview figures.
-- If the figure still reads like a small footer illustration, crop tighter, change the evidence split, or dedicate another slide.
 
-## 6. Progress or Status Matrix
+## Equation-Led Explanation
+
+Use when:
+
+- one equation or derivation deserves dedicated attention
+- notation and explanation need to stay adjacent
+
+Avoid when:
+
+- the equation is only a supporting detail and can stay inside a method or appendix slide
+
+Contract:
+
+- Renderer: `equation_led`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `equation_or_equation_ids`: required
+- Limits:
+  - `boxes_max`: `3`
+  - `bullets_max`: `3`
+- QA rules:
+  - equation remains legible
+  - notation hints stay short
+- Fallbacks: `Method Overview Side-by-Side`, `Motivation / Background`
+
+Notes:
+
+- Use this only when the equation materially advances the argument on that page.
+
+## Conclusion / Takeaways
+
+Use when:
+
+- the deck needs a final compression of the argument into short claims and implications
+
+Avoid when:
+
+- the slide is still introducing new evidence that deserves its own page
+
+Contract:
+
+- Renderer: `conclusion_takeaways`
+- Allowed render modes: `script, escape`
+- Limits:
+  - `boxes_max`: `4`
+  - `bullets_max`: `4`
+- QA rules:
+  - no new unsupported claims
+  - conclusion matches shown evidence
+
+Notes:
+
+- Optional supporting evidence is fine, but the summary boxes remain the main content.
+
+## Progress or Status Matrix
 
 Use when:
 
@@ -294,22 +393,19 @@ Avoid when:
 
 - the page should really be a method or results slide with evidence
 
-```typst
-#sbox[
-  *Stage summary:* ...
-]
+Contract:
 
-#table(
-  columns: (1.35fr, 0.8fr, 2fr),
-  inset: 8pt,
-  align: (left, left, left),
-  [*Work item*], [*Status*], [*Meaning*],
-  [...], [...], [...],
-  [...], [...], [...],
-)
-```
+- Renderer: `table_structured`
+- Allowed render modes: `script, escape`
+- Required fields:
+  - `table`: required
+- Limits:
+  - `boxes_max`: `3`
+- QA rules:
+  - status stays factual
+  - interpretation stays outside status cells
+- Fallbacks: `Table-Led Structured Slide`
 
 Notes:
 
-- Match the reporting line the user wants to present.
 - Keep the table factual. Put interpretation in the summary box, not in the status cell.

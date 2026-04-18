@@ -12,6 +12,11 @@ import fitz  # type: ignore[import-not-found]
 
 SCHEMA_VERSION = "academic-paper-to-slides/v1"
 SEVERITY_ORDER = {"none": 0, "warning": 1, "error": 2}
+SCRIPT_DIR = Path(__file__).resolve().parent
+ARCHETYPE_SPECS_PATH = SCRIPT_DIR.parent / "references" / "archetypes.json"
+ALLOWED_RENDER_MODES = ("script", "escape")
+ESCAPE_HINT_MAX_WORDS = 18
+ESCAPE_HINT_MAX_CHARS = 140
 
 
 def iso_now() -> str:
@@ -38,6 +43,30 @@ def save_json(path: Path, payload: dict[str, Any]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
+
+
+def load_archetype_specs() -> dict[str, dict[str, Any]]:
+    if not ARCHETYPE_SPECS_PATH.exists():
+        return {}
+    with ARCHETYPE_SPECS_PATH.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    archetypes = payload.get("archetypes")
+    return archetypes if isinstance(archetypes, dict) else {}
+
+
+def normalize_render_mode(value: Any) -> str:
+    mode = str(value or "script").strip().lower()
+    return mode if mode in ALLOWED_RENDER_MODES else mode
+
+
+def escape_hint_issue(hint: str) -> str | None:
+    if not hint:
+        return "missing escape_hint"
+    if len(hint) > ESCAPE_HINT_MAX_CHARS:
+        return f"escape_hint exceeds {ESCAPE_HINT_MAX_CHARS} characters"
+    if len(hint.split()) > ESCAPE_HINT_MAX_WORDS:
+        return f"escape_hint exceeds {ESCAPE_HINT_MAX_WORDS} words"
+    return None
 
 
 def page_area(rect: fitz.Rect) -> float:
@@ -118,6 +147,122 @@ def append_issue(
 def slide_id_for_index(slides: list[dict[str, Any]], index: int) -> str:
     slide = slides[index - 1] if 0 < index <= len(slides) else {}
     return slide.get("slide_id") or f"slide-{index:02d}"
+
+
+def build_render_plan(slides: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not slides:
+        return []
+
+    has_explicit_outline_slides = any(
+        isinstance(slide, dict)
+        and (
+            slide.get("archetype") == "Outline / Roadmap"
+            or slide.get("rhetorical_role") == "section-divider"
+        )
+        for slide in slides
+    )
+
+    if has_explicit_outline_slides:
+        plan = []
+        for index, slide in enumerate(slides, start=1):
+            if not isinstance(slide, dict):
+                continue
+            kind = "title" if index == 1 and slide.get("archetype") == "Title slide" else "slide"
+            if slide.get("archetype") == "Outline / Roadmap" or slide.get("rhetorical_role") == "section-divider":
+                kind = "outline"
+            plan.append(
+                {
+                    "kind": kind,
+                    "slide_id": slide.get("slide_id") or f"slide-{index:02d}",
+                    "section": slide.get("section"),
+                }
+            )
+        return plan
+
+    plan: list[dict[str, Any]] = []
+    first_slide = slides[0] if slides else {}
+    title_slide_id = first_slide.get("slide_id") if first_slide.get("archetype") == "Title slide" else "title-slide"
+    plan.append({"kind": "title", "slide_id": title_slide_id or "title-slide"})
+
+    current_section = None
+    for index, slide in enumerate(slides, start=1):
+        if not isinstance(slide, dict):
+            continue
+        if index == 1 and slide.get("archetype") == "Title slide":
+            continue
+        section = slide.get("section")
+        if section and section != current_section:
+            plan.append({"kind": "outline", "slide_id": None, "section": section})
+            current_section = section
+        plan.append({"kind": "slide", "slide_id": slide.get("slide_id") or f"slide-{index:02d}"})
+    return plan
+
+
+def append_escape_issues(
+    issues: list[dict[str, Any]],
+    slides: list[dict[str, Any]],
+    compile_metadata: dict[str, Any] | None,
+) -> None:
+    archetype_specs = load_archetype_specs()
+    for index, slide in enumerate(slides, start=1):
+        if not isinstance(slide, dict):
+            continue
+        render_mode = normalize_render_mode(slide.get("render_mode"))
+        if render_mode != "escape":
+            continue
+        slide_id = slide.get("slide_id") or f"slide-{index:02d}"
+        append_issue(
+            issues,
+            None,
+            slide_id,
+            "escape-hatch-used",
+            "warning",
+            "Slide used escape render mode instead of the scripted archetype body.",
+            {"archetype": slide.get("archetype"), "escape_hint": slide.get("escape_hint")},
+        )
+
+        spec = archetype_specs.get(str(slide.get("archetype") or ""))
+        allowed_modes = (spec or {}).get("allowed_render_modes") or ["script"]
+        if "escape" not in allowed_modes:
+            append_issue(
+                issues,
+                None,
+                slide_id,
+                "escape-invalid-config",
+                "warning",
+                "Escape render mode is not allowed for this archetype.",
+                {"archetype": slide.get("archetype"), "allowed_render_modes": allowed_modes},
+            )
+
+        hint_issue = escape_hint_issue(str(slide.get("escape_hint") or "").strip())
+        if hint_issue:
+            append_issue(
+                issues,
+                None,
+                slide_id,
+                "escape-invalid-config",
+                "warning",
+                f"Escape render mode is configured incorrectly: {hint_issue}.",
+                {"archetype": slide.get("archetype")},
+            )
+
+    if compile_metadata and compile_metadata.get("escape_fallback_used"):
+        slide_ids = compile_metadata.get("escape_fallback_slide_ids") or []
+        issues.append(
+            {
+                "issue_id": "",
+                "issue_type": "escape-fallback-used",
+                "severity": "warning",
+                "detected_stage": "rendered-slide-qa",
+                "page_number": None,
+                "slide_ids": slide_ids,
+                "summary": "Validation re-emitted the deck with escape disabled after a compile failure.",
+                "details": {
+                    "fallback_deck": compile_metadata.get("compiled_deck_typ"),
+                    "original_deck": compile_metadata.get("original_deck_typ"),
+                },
+            }
+        )
 
 
 def analyze_page(
@@ -287,28 +432,52 @@ def build_review(
     workspace: Path | None,
     output_dir: Path,
     output_json: Path,
+    compile_metadata_path: Path | None = None,
 ) -> dict[str, Any]:
     slides_doc = load_json(slides_json_path) if slides_json_path and slides_json_path.exists() else {}
     slides = slides_doc.get("slides", [])
+    render_plan = build_render_plan(slides) if slides else []
+    compile_metadata = (
+        load_json(compile_metadata_path)
+        if compile_metadata_path and compile_metadata_path.exists()
+        else {}
+    )
     previews = write_previews(pdf_path, output_dir)
     page_results = []
     issues: list[dict[str, Any]] = []
 
+    if slides:
+        append_escape_issues(issues, slides, compile_metadata)
+
     with fitz.open(pdf_path) as doc:
-        if slides and len(slides) != len(doc):
+        expected_pages = len(render_plan) if render_plan else len(slides)
+        if slides and expected_pages != len(doc):
             append_issue(
                 issues,
                 None,
                 None,
                 "page-count-mismatch",
                 "error",
-                "Rendered page count does not match slides.json.",
-                {"expected_slides": len(slides), "rendered_pages": len(doc)},
+                "Rendered page count does not match the expected render plan.",
+                {
+                    "planned_slides": len(slides),
+                    "expected_rendered_pages": expected_pages,
+                    "rendered_pages": len(doc),
+                },
             )
 
         for index, page in enumerate(doc, start=1):
-            slide_id = slide_id_for_index(slides, index) if slides else f"slide-{index:02d}"
+            if render_plan and index <= len(render_plan):
+                plan_entry = render_plan[index - 1]
+                slide_id = plan_entry.get("slide_id") or f"outline:{plan_entry.get('section', index)}"
+            else:
+                slide_id = slide_id_for_index(slides, index) if slides else f"slide-{index:02d}"
             page_result, page_issues = analyze_page(page, index, slide_id, previews[index - 1])
+            if render_plan and index <= len(render_plan):
+                plan_entry = render_plan[index - 1]
+                page_result["page_kind"] = plan_entry.get("kind")
+                if plan_entry.get("section"):
+                    page_result["section"] = plan_entry.get("section")
             page_results.append(page_result)
             issues.extend(page_issues)
 
@@ -329,7 +498,9 @@ def build_review(
             "warning_count": warning_count,
             "page_count": len(page_results),
             "expected_slide_count": len(slides) if slides else None,
+            "expected_rendered_page_count": len(render_plan) if render_plan else (len(slides) if slides else None),
             "output_dir": rel_or_abs(output_dir),
+            "escape_fallback_used": bool(compile_metadata.get("escape_fallback_used")),
         },
         "pages": page_results,
         "issues": issues,
@@ -345,6 +516,7 @@ def main() -> None:
     parser.add_argument("--slides-json")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--output-json")
+    parser.add_argument("--compile-metadata")
     parser.add_argument("--fail-on", choices=("none", "warning", "error"), default="error")
     args = parser.parse_args()
 
@@ -369,7 +541,9 @@ def main() -> None:
     else:
         output_json = output_dir / "review.json"
 
-    review = build_review(pdf_path, slides_json_path, workspace, output_dir, output_json)
+    compile_metadata_path = Path(args.compile_metadata).expanduser().resolve() if args.compile_metadata else None
+
+    review = build_review(pdf_path, slides_json_path, workspace, output_dir, output_json, compile_metadata_path)
     print(json.dumps(review, indent=2))
 
     threshold = SEVERITY_ORDER[args.fail_on]

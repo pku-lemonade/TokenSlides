@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,41 +19,79 @@ SCHEMA_VERSION = "academic-paper-to-slides/v1"
 ALLOWED_ASSET_TYPES = ("figure", "table", "equation")
 ALLOWED_DENSITY_TARGETS = ("low", "medium", "high")
 ALLOWED_REVIEW_STATUSES = ("pending", "pass", "warning", "fail")
+ALLOWED_RENDER_MODES = ("script", "escape")
 SCRIPT_DIR = Path(__file__).resolve().parent
+ARCHETYPE_SPECS_PATH = SCRIPT_DIR.parent / "references" / "archetypes.json"
 REFERENCE_ARCHETYPES_PATH = SCRIPT_DIR.parent / "references" / "archetypes.md"
-FALLBACK_ARCHETYPES = {
-    "Title slide",
-    "Outline / Roadmap",
-    "Motivation / Background",
-    "Figure-Led Vertical",
-    "Method Overview Side-by-Side",
-    "Method Overview With Stacked Evidence",
-    "Method Cards (2 or 3 Only)",
-    "Two-Up Comparison",
-    "Table-Led Structured Slide",
-    "Wide or Fat Evidence",
-    "Equation-Led Explanation",
-    "Results Comparison",
-    "Conclusion / Takeaways",
+ESCAPE_HINT_MAX_WORDS = 18
+ESCAPE_HINT_MAX_CHARS = 140
+ESCAPE_FRAGMENT_MAX_CHARS = 5000
+FALLBACK_ARCHETYPE_RENDERERS = {
+    "Title slide": "title_slide",
+    "Outline / Roadmap": "outline_roadmap",
+    "Motivation / Background": "motivation_background",
+    "Figure-Led Vertical": "figure_led_vertical",
+    "Method Overview Side-by-Side": "method_side_by_side",
+    "Method Overview With Stacked Evidence": "method_stacked_evidence",
+    "Method Cards (2 or 3 Only)": "method_cards",
+    "Two-Up Comparison": "comparison",
+    "Table-Led Structured Slide": "table_structured",
+    "Wide or Fat Evidence": "wide_evidence",
+    "Equation-Led Explanation": "equation_led",
+    "Results Comparison": "comparison",
+    "Conclusion / Takeaways": "conclusion_takeaways",
+    "Progress or Status Matrix": "table_structured",
 }
+DEFAULT_SELECTION_RULES = [
+    "Default to simpler archetypes before inventing a custom composition.",
+    "Choose by rendered geometry, not by semantic label alone.",
+    "On figure-led slides, keep the figure as the main evidence; the text explains why it matters.",
+    "Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.",
+    "Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.",
+    "If a slide still needs too many words after choosing an archetype, split the material across slides.",
+]
 
 
-def load_known_archetypes() -> set[str]:
-    if not REFERENCE_ARCHETYPES_PATH.exists():
-        return set(FALLBACK_ARCHETYPES)
+def build_fallback_archetype_doc() -> dict[str, Any]:
+    archetypes: dict[str, Any] = {}
+    for name, renderer in FALLBACK_ARCHETYPE_RENDERERS.items():
+        allowed_render_modes = ["script"] if name == "Title slide" else ["script", "escape"]
+        archetypes[name] = {
+            "renderer": renderer,
+            "allowed_render_modes": allowed_render_modes,
+            "use_when": [],
+            "avoid_when": [],
+            "required_fields": {},
+            "limits": {},
+            "qa_rules": [],
+            "fallbacks": [],
+            "notes": [],
+        }
+    return {
+        "schema_version": "academic-paper-to-slides/archetypes/v1",
+        "selection_rules": list(DEFAULT_SELECTION_RULES),
+        "archetypes": archetypes,
+    }
 
-    headings: set[str] = set()
-    for line in REFERENCE_ARCHETYPES_PATH.read_text(encoding="utf-8").splitlines():
-        if not line.startswith("## "):
-            continue
-        heading = line[3:].strip()
-        heading = re.sub(r"^\d+[a-z]?\.?\s*", "", heading, flags=re.IGNORECASE)
-        if heading and heading.lower() != "selection rules":
-            headings.add(heading)
-    return headings.union(FALLBACK_ARCHETYPES) if headings else set(FALLBACK_ARCHETYPES)
+
+def load_archetype_spec_doc() -> dict[str, Any]:
+    if not ARCHETYPE_SPECS_PATH.exists():
+        return build_fallback_archetype_doc()
+    with ARCHETYPE_SPECS_PATH.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
-KNOWN_ARCHETYPES = load_known_archetypes()
+def load_archetype_specs() -> dict[str, dict[str, Any]]:
+    spec_doc = load_archetype_spec_doc()
+    archetypes = spec_doc.get("archetypes")
+    if not isinstance(archetypes, dict) or not archetypes:
+        return build_fallback_archetype_doc()["archetypes"]
+    return archetypes
+
+
+ARCHETYPE_SPEC_DOC = load_archetype_spec_doc()
+ARCHETYPE_SPECS = load_archetype_specs()
+KNOWN_ARCHETYPES = set(ARCHETYPE_SPECS)
 
 
 def iso_now() -> str:
@@ -187,7 +226,8 @@ def skeleton_slides_json(workspace: Path, pdf_path: Path, title: str, scenario: 
         },
         "archetype_policy": {
             "mode": "fixed-theme",
-            "reference": rel_or_abs(REFERENCE_ARCHETYPES_PATH),
+            "reference": rel_or_abs(ARCHETYPE_SPECS_PATH),
+            "derived_doc": rel_or_abs(REFERENCE_ARCHETYPES_PATH),
         },
         "slides": [],
         "notes": "",
@@ -525,24 +565,25 @@ def render_slide_map_md(slides_doc: dict[str, Any]) -> str:
     lines = [
         f"# {deck.get('title', 'Paper')} Slide Map",
         "",
-        "| # | Section | Title | Takeaway | Evidence | Archetype | Role | Density |",
-        "|---|---|---|---|---|---|---|---|",
+        "| # | Section | Title | Takeaway | Evidence | Archetype | Render | Role | Density |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for index, slide in enumerate(slides, start=1):
         lines.append(
-            "| {index} | {section} | {title} | {takeaway} | {evidence} | {archetype} | {role} | {density} |".format(
+            "| {index} | {section} | {title} | {takeaway} | {evidence} | {archetype} | {render_mode} | {role} | {density} |".format(
                 index=index,
                 section=str(slide.get("section", "")).replace("|", "/"),
                 title=str(slide.get("title", "")).replace("|", "/"),
                 takeaway=str(slide.get("takeaway", "")).replace("|", "/"),
                 evidence=format_slide_evidence(slide).replace("|", "/"),
                 archetype=str(slide.get("archetype", "")).replace("|", "/"),
+                render_mode=str(slide.get("render_mode", "script")).replace("|", "/"),
                 role=str(slide.get("rhetorical_role", "")).replace("|", "/"),
                 density=str(slide.get("content_density", "")).replace("|", "/"),
             )
         )
     if not slides:
-        lines.append("| 1 |  |  |  |  |  |  |  |")
+        lines.append("| 1 |  |  |  |  |  |  |  |  |")
     lines.append("")
 
     qa_lines = []
@@ -560,6 +601,95 @@ def render_slide_map_md(slides_doc: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_archetypes_reference_md(spec_doc: dict[str, Any]) -> str:
+    lines = [
+        "<!-- Derived from archetypes.json. Edit the JSON spec, then regenerate this file. -->",
+        "",
+        "# Slide Archetypes",
+        "",
+        "Use a small set of reusable compositions. The goal is predictable, readable pages rather than one-off layouts.",
+        "",
+        "## Selection Rules",
+        "",
+    ]
+
+    for rule in spec_doc.get("selection_rules", []):
+        lines.append(f"- {rule}")
+    lines.append("")
+
+    archetypes = spec_doc.get("archetypes", {})
+    for name, spec in archetypes.items():
+        lines.extend([f"## {name}", ""])
+
+        use_when = spec.get("use_when") or []
+        if use_when:
+            lines.extend(["Use when:", ""])
+            for item in use_when:
+                lines.append(f"- {item}")
+            lines.append("")
+
+        avoid_when = spec.get("avoid_when") or []
+        if avoid_when:
+            lines.extend(["Avoid when:", ""])
+            for item in avoid_when:
+                lines.append(f"- {item}")
+            lines.append("")
+
+        lines.extend(["Contract:", ""])
+        lines.append(f"- Renderer: `{spec.get('renderer', 'generic')}`")
+        render_modes = ", ".join(spec.get("allowed_render_modes", ["script"]))
+        lines.append(f"- Allowed render modes: `{render_modes}`")
+
+        required_fields = spec.get("required_fields") or {}
+        if required_fields:
+            lines.append("- Required fields:")
+            for field_name, field_spec in required_fields.items():
+                if not isinstance(field_spec, dict):
+                    lines.append(f"  - `{field_name}`")
+                    continue
+                details = []
+                if field_spec.get("required"):
+                    details.append("required")
+                if field_spec.get("min_items") is not None:
+                    details.append(f"min_items={field_spec['min_items']}")
+                if field_spec.get("max_items") is not None:
+                    details.append(f"max_items={field_spec['max_items']}")
+                if field_spec.get("asset_id_range"):
+                    details.append(f"asset_id_range={field_spec['asset_id_range']}")
+                if field_spec.get("allowed_card_counts"):
+                    details.append(f"allowed_card_counts={field_spec['allowed_card_counts']}")
+                if field_spec.get("asset_id_min_items") is not None:
+                    details.append(f"asset_id_min_items={field_spec['asset_id_min_items']}")
+                suffix = f": {', '.join(details)}" if details else ""
+                lines.append(f"  - `{field_name}`{suffix}")
+
+        limits = spec.get("limits") or {}
+        if limits:
+            lines.append("- Limits:")
+            for key, value in limits.items():
+                lines.append(f"  - `{key}`: `{value}`")
+
+        qa_rules = spec.get("qa_rules") or []
+        if qa_rules:
+            lines.append("- QA rules:")
+            for rule in qa_rules:
+                lines.append(f"  - {rule}")
+
+        fallbacks = spec.get("fallbacks") or []
+        if fallbacks:
+            lines.append(f"- Fallbacks: {', '.join(f'`{item}`' for item in fallbacks)}")
+
+        notes = spec.get("notes") or []
+        if notes:
+            lines.extend(["", "Notes:", ""])
+            for note in notes:
+                lines.append(f"- {note}")
+
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def typst_escape(text: Any) -> str:
     value = str(text or "")
     return (
@@ -570,16 +700,964 @@ def typst_escape(text: Any) -> str:
     )
 
 
+def typst_string(text: Any) -> str:
+    return str(text or "").replace("\\", "\\\\").replace('"', '\\"')
+
+
+def typst_value(value: Any, default_unit: str | None = None) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)) and default_unit:
+        return f"{value}{default_unit}"
+    return str(value)
+
+
+def typst_tuple(values: list[Any], default_unit: str | None = None) -> str:
+    return ", ".join(typst_value(value, default_unit=default_unit) for value in values)
+
+
+def indent_lines(lines: list[str], prefix: str = "    ") -> list[str]:
+    return [f"{prefix}{line}" if line else prefix for line in lines]
+
+
+def plain_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "; ".join(part for part in (plain_text(item) for item in value) if part)
+    if isinstance(value, dict):
+        for key in ("text", "body", "content", "detail", "statement", "title", "label", "value", "name"):
+            if value.get(key):
+                return plain_text(value.get(key))
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+def get_archetype_spec(archetype: str) -> dict[str, Any] | None:
+    spec = ARCHETYPE_SPECS.get(archetype)
+    return spec if isinstance(spec, dict) else None
+
+
+def normalize_render_mode(value: Any) -> str:
+    mode = str(value or "script").strip().lower()
+    return mode if mode in ALLOWED_RENDER_MODES else mode
+
+
+def escape_hint_issue(hint: str) -> str | None:
+    if not hint:
+        return "missing escape_hint"
+    if len(hint) > ESCAPE_HINT_MAX_CHARS:
+        return f"escape_hint exceeds {ESCAPE_HINT_MAX_CHARS} characters"
+    if len(hint.split()) > ESCAPE_HINT_MAX_WORDS:
+        return f"escape_hint exceeds {ESCAPE_HINT_MAX_WORDS} words"
+    return None
+
+
+def collect_escape_config_issues(slide: dict[str, Any], spec: dict[str, Any] | None) -> list[str]:
+    issues: list[str] = []
+    if normalize_render_mode(slide.get("render_mode")) != "escape":
+        return issues
+    hint_issue = escape_hint_issue(plain_text(slide.get("escape_hint")).strip())
+    if hint_issue:
+        issues.append(hint_issue)
+    if spec is None:
+        issues.append("unknown archetype for escape render mode")
+    else:
+        allowed_modes = spec.get("allowed_render_modes") or ["script"]
+        if "escape" not in allowed_modes:
+            issues.append(f"{slide.get('archetype') or 'slide'} does not allow escape render mode")
+    return issues
+
+
+def summarize_escape_assets(asset_entries: list[dict[str, Any]]) -> list[dict[str, str]]:
+    summary = []
+    for entry in asset_entries:
+        if not entry.get("expr"):
+            continue
+        summary.append(
+            {
+                "asset_id": entry["asset_id"],
+                "expr": entry["expr"],
+                "caption": plain_text(entry.get("caption")),
+                "label": plain_text(entry.get("label")),
+            }
+        )
+    return summary
+
+
+def escape_fragment_stem(slide_id: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "-", str(slide_id)).strip("-") or "slide"
+
+
+def escape_fragment_path(slide: dict[str, Any], workspace: Path) -> Path:
+    slide_id = slide.get("slide_id") or plain_text(slide.get("title")) or "slide"
+    explicit = slide.get("escape_fragment")
+    if explicit:
+        return resolve_repo_relative(str(explicit), workspace)
+    return (workspace / "fragments" / f"{escape_fragment_stem(str(slide_id))}.typ").resolve()
+
+
+def clean_escape_fragment(fragment: str) -> str:
+    text = fragment.strip()
+    if "```" in text:
+        matches = re.findall(r"```(?:typst)?\s*([\s\S]*?)```", text, flags=re.IGNORECASE)
+        if matches:
+            text = "\n".join(match.strip() for match in matches if match.strip()).strip()
+        else:
+            text = re.sub(r"^```(?:typst)?\s*", "", text, flags=re.IGNORECASE)
+            text = re.sub(r"\s*```$", "", text)
+    return text.strip()
+
+
+def escape_fragment_issue(fragment: str) -> str | None:
+    if not fragment:
+        return "escape fragment is empty"
+    if len(fragment) > ESCAPE_FRAGMENT_MAX_CHARS:
+        return f"escape fragment exceeds {ESCAPE_FRAGMENT_MAX_CHARS} characters"
+    forbidden_patterns = {
+        r"(?m)^\s*#import\b": "fragment must not import modules",
+        r"(?m)^\s*#show\b": "fragment must not change show rules",
+        r"(?m)^\s*#set\b": "fragment must not change global settings",
+        r"(?m)^\s*#title-slide\b": "fragment must not emit a title slide",
+        r"(?m)^\s*=+\s": "fragment must not emit section headings",
+    }
+    for pattern, message in forbidden_patterns.items():
+        if re.search(pattern, fragment):
+            return message
+    return None
+
+
+def build_escape_fragment_payload(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+    deck_sections: list[str],
+) -> dict[str, Any]:
+    return {
+        "slide_id": slide.get("slide_id"),
+        "title": slide.get("title"),
+        "section": slide.get("section"),
+        "archetype": slide.get("archetype"),
+        "escape_hint": plain_text(slide.get("escape_hint")).strip(),
+        "takeaway": slide.get("takeaway"),
+        "rhetorical_role": slide.get("rhetorical_role"),
+        "deck_sections": deck_sections,
+        "boxes": boxes,
+        "bullets": bullets,
+        "table": slide.get("table"),
+        "cards": slide.get("cards"),
+        "roadmap": slide.get("roadmap"),
+        "equations": equations,
+        "assets": summarize_escape_assets(asset_entries),
+        "qa_expectations": slide.get("qa_expectations", []),
+        "spec_limits": (spec or {}).get("limits", {}),
+        "spec_notes": (spec or {}).get("notes", []),
+        "allowed_primitives": [
+            "#grid",
+            "#imgs",
+            "#ibox",
+            "#hbox",
+            "#nbox",
+            "#sbox",
+            "#ebox",
+            "#pbox",
+            "#cbox",
+            "#mbox",
+            "#table",
+            "#v",
+            "#align",
+        ],
+        "forbidden_constructs": [
+            "#import",
+            "#show",
+            "#set",
+            "#title-slide",
+            "section headings",
+        ],
+    }
+
+
+def load_escape_fragment(
+    slide: dict[str, Any],
+    workspace: Path,
+) -> tuple[str | None, Path, str | None]:
+    fragment_path = escape_fragment_path(slide, workspace)
+    if not fragment_path.exists():
+        return None, fragment_path, "fragment file is missing"
+    try:
+        raw_text = fragment_path.read_text(encoding="utf-8")
+    except Exception as exc:
+        return None, fragment_path, f"fragment could not be read: {exc}"
+    fragment = clean_escape_fragment(raw_text)
+    issue = escape_fragment_issue(fragment)
+    if issue:
+        return None, fragment_path, issue
+    return fragment, fragment_path, None
+
+
+def maybe_render_escape_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+    deck_sections: list[str],
+    workspace: Path,
+    *,
+    disable_escape: bool,
+) -> dict[str, Any]:
+    report = {
+        "used": False,
+        "fragment_path": None,
+        "body_lines": [],
+        "warnings": [],
+        "fallback_reason": None,
+    }
+    if normalize_render_mode(slide.get("render_mode")) != "escape":
+        return report
+
+    slide_id = slide.get("slide_id") or plain_text(slide.get("title")) or "slide"
+    if disable_escape:
+        report["warnings"].append(f"slide {slide_id}: escape render mode disabled; falling back to scripted layout")
+        report["fallback_reason"] = "disabled"
+        return report
+
+    issues = collect_escape_config_issues(slide, spec)
+    if issues:
+        report["warnings"].append(
+            f"slide {slide_id}: invalid escape configuration ({'; '.join(issues)}); falling back to scripted layout"
+        )
+        report["fallback_reason"] = "invalid-config"
+        return report
+
+    fragment, fragment_path, fragment_issue = load_escape_fragment(slide, workspace)
+    if fragment_issue:
+        report["warnings"].append(
+            f"slide {slide_id}: escape fragment unavailable ({fragment_issue}: {rel_or_abs(fragment_path)}); falling back to scripted layout"
+        )
+        report["fallback_reason"] = "missing-fragment" if not fragment_path.exists() else "invalid-fragment"
+        return report
+
+    report["used"] = True
+    report["fragment_path"] = str(fragment_path)
+    report["body_lines"] = (fragment or "").splitlines()
+    report["warnings"].append(f"slide {slide_id}: escape-hatch triggered")
+    return report
+
+
 def asset_image_expr(asset: dict[str, Any], deck_path: Path, workspace: Path) -> str | None:
     primary_output = asset.get("primary_output")
     if not primary_output:
         return None
     asset_path = resolve_repo_relative(primary_output, workspace)
     suffix = asset_path.suffix.lower()
-    if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".svg"}:
+    if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".svg", ".pdf"}:
         return None
     relative = os.path.relpath(asset_path, deck_path.parent)
-    return f'image("{relative}")'
+    return f'image("{typst_string(relative)}")'
+
+
+def resolve_slide_assets(
+    slide: dict[str, Any],
+    assets_by_id: dict[str, dict[str, Any]],
+    deck_path: Path,
+    workspace: Path,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    resolved: list[dict[str, Any]] = []
+    unresolved: list[str] = []
+    caption_overrides = slide.get("asset_captions") or {}
+
+    for index, asset_id in enumerate(slide.get("asset_ids", [])):
+        asset = assets_by_id.get(asset_id)
+        if not asset:
+            unresolved.append(asset_id)
+            continue
+        caption_override = None
+        if isinstance(caption_overrides, dict):
+            caption_override = caption_overrides.get(asset_id)
+        elif isinstance(caption_overrides, list) and index < len(caption_overrides):
+            caption_override = caption_overrides[index]
+
+        expr = asset_image_expr(asset, deck_path, workspace)
+        if expr is None:
+            unresolved.append(asset_id)
+        resolved.append(
+            {
+                "asset_id": asset_id,
+                "expr": expr,
+                "label": plain_text(asset.get("label") or asset_id),
+                "caption": plain_text(
+                    caption_override
+                    or asset.get("normalized_caption")
+                    or asset.get("label")
+                    or asset_id
+                ),
+                "aspect_ratio": (asset.get("dimensions") or {}).get("aspect_ratio"),
+                "notes": plain_text(asset.get("notes")),
+            }
+        )
+    return resolved, unresolved
+
+
+STYLE_TO_MACRO = {
+    "takeaway": "ibox",
+    "info": "ibox",
+    "claim": "ibox",
+    "highlight": "hbox",
+    "emphasis": "hbox",
+    "neutral": "nbox",
+    "note": "nbox",
+    "success": "sbox",
+    "result": "sbox",
+    "error": "ebox",
+    "warning": "ebox",
+    "purple": "pbox",
+}
+
+
+def normalize_box(raw: Any, index: int) -> dict[str, Any]:
+    style_cycle = ["highlight", "neutral", "success", "purple"]
+    if isinstance(raw, dict):
+        body = raw.get("body")
+        if body is None and raw.get("content") is not None:
+            body = raw.get("content")
+        if body is None and raw.get("text") is not None:
+            body = raw.get("text")
+        return {
+            "style": raw.get("style") or raw.get("kind") or style_cycle[index % len(style_cycle)],
+            "label": plain_text(raw.get("label") or raw.get("title")),
+            "body": body if body is not None else "",
+        }
+    return {
+        "style": style_cycle[index % len(style_cycle)],
+        "label": "",
+        "body": raw,
+    }
+
+
+def resolve_slide_boxes(slide: dict[str, Any]) -> list[dict[str, Any]]:
+    boxes: list[dict[str, Any]] = []
+    takeaway = slide.get("takeaway")
+    if takeaway:
+        boxes.append(
+            {
+                "style": slide.get("takeaway_style", "info"),
+                "label": slide.get("takeaway_label", "Takeaway"),
+                "body": takeaway,
+            }
+        )
+    for index, raw in enumerate(slide.get("boxes", []), start=len(boxes)):
+        boxes.append(normalize_box(raw, index))
+    if not boxes and slide.get("bullets"):
+        boxes.append(
+            {
+                "style": "neutral",
+                "label": slide.get("bullets_label", "Points"),
+                "body": slide.get("bullets"),
+            }
+        )
+    return boxes
+
+
+def render_box_body_lines(label: str, body: Any) -> list[str]:
+    if isinstance(body, list):
+        lines = []
+        if label:
+            lines.append(f"*{typst_escape(label)}:*")
+        for item in body:
+            lines.append(f"- {typst_escape(plain_text(item))}")
+        return lines or [""]
+
+    text = typst_escape(plain_text(body))
+    if label and text:
+        return [f"*{typst_escape(label)}:* {text}"]
+    if label:
+        return [f"*{typst_escape(label)}:*"]
+    return [text]
+
+
+def render_box_block(box: dict[str, Any]) -> list[str]:
+    macro = STYLE_TO_MACRO.get(str(box.get("style", "neutral")).lower(), "nbox")
+    lines = [f"#{macro}["]
+    lines.extend(f"  {line}" if line else "  " for line in render_box_body_lines(plain_text(box.get("label")), box.get("body")))
+    lines.append("]")
+    lines.append("")
+    return lines
+
+
+def render_box_stack(boxes: list[dict[str, Any]], *, limit: int | None = None) -> list[str]:
+    if limit is not None:
+        boxes = boxes[:limit]
+    lines: list[str] = []
+    for box in boxes:
+        lines.extend(render_box_block(box))
+    return lines
+
+
+def render_bullet_list(items: list[Any]) -> list[str]:
+    if not items:
+        return []
+    lines = [f"- {typst_escape(plain_text(item))}" for item in items]
+    lines.append("")
+    return lines
+
+
+def render_text_box(style: str, label: str, body: Any) -> list[str]:
+    return render_box_block({"style": style, "label": label, "body": body})
+
+
+def render_imgs_block(
+    asset_entries: list[dict[str, Any]],
+    *,
+    width: str = "100%",
+    widths: list[Any] | None = None,
+    gap: str = "0.8em",
+) -> list[str]:
+    visible = [entry for entry in asset_entries if entry.get("expr")]
+    if not visible:
+        return []
+    lines = ["#imgs("]
+    for entry in visible:
+        caption = typst_escape(entry.get("caption") or "")
+        if caption:
+            lines.append(f"  ({entry['expr']}, [{caption}]),")
+        else:
+            lines.append(f"  {entry['expr']},")
+    lines.append(f"  width: {width},")
+    if len(visible) > 1:
+        lines.append(f"  gap: {gap},")
+    if widths and len(visible) > 1:
+        lines.append(f"  widths: ({typst_tuple(widths, default_unit='fr')}),")
+    lines.append(")")
+    lines.append("")
+    return lines
+
+
+def render_stacked_images(asset_entries: list[dict[str, Any]]) -> list[str]:
+    visible = [entry for entry in asset_entries if entry.get("expr")]
+    lines: list[str] = []
+    for index, entry in enumerate(visible):
+        lines.extend(render_imgs_block([entry], width="100%"))
+        if index < len(visible) - 1:
+            lines.append("#v(0.6em)")
+            lines.append("")
+    return lines
+
+
+def render_grid(columns: list[Any], panels: list[list[str]], gutter: str = "0.8em") -> list[str]:
+    lines = [
+        "#grid(",
+        f"  columns: ({typst_tuple(columns, default_unit='fr')}),",
+        f"  gutter: {gutter},",
+    ]
+    for panel in panels:
+        lines.append("  [")
+        lines.extend(indent_lines(panel))
+        lines.append("  ],")
+    lines.append(")")
+    lines.append("")
+    return lines
+
+
+def render_table_block(table: dict[str, Any] | None) -> list[str]:
+    if not isinstance(table, dict):
+        return []
+    headers = table.get("headers") or []
+    rows = table.get("rows") or []
+    if not headers or not rows:
+        return []
+    width_count = max(len(headers), max((len(row) for row in rows), default=0))
+    columns = table.get("widths") or table.get("columns") or [1] * width_count
+    align = table.get("align") or ["left"] * width_count
+    lines = [
+        "#table(",
+        f"  columns: ({typst_tuple(columns, default_unit='fr')}),",
+        "  inset: 8pt,",
+        f"  align: ({typst_tuple(align)}),",
+    ]
+    for header in headers:
+        lines.append(f"  [*{typst_escape(plain_text(header))}*],")
+    for row in rows:
+        for cell in row:
+            lines.append(f"  [{typst_escape(plain_text(cell))}],")
+    lines.append(")")
+    lines.append("")
+    return lines
+
+
+def resolve_cards(slide: dict[str, Any], asset_entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    cards = slide.get("cards")
+    if isinstance(cards, list) and cards:
+        asset_map = {entry["asset_id"]: entry for entry in asset_entries}
+        resolved = []
+        for index, raw in enumerate(cards):
+            card = raw if isinstance(raw, dict) else {"body": raw}
+            asset_id = card.get("asset_id")
+            resolved.append(
+                {
+                    "title": plain_text(card.get("title") or card.get("label") or f"Card {index + 1}"),
+                    "body": card.get("body") or card.get("points") or card.get("text") or "",
+                    "asset": asset_map.get(asset_id) if asset_id else None,
+                }
+            )
+        return resolved
+    if 2 <= len(asset_entries) <= 3:
+        return [
+            {
+                "title": entry.get("label") or entry["asset_id"],
+                "body": entry.get("caption") or "",
+                "asset": entry,
+            }
+            for entry in asset_entries[:3]
+        ]
+    return []
+
+
+def render_card_body(card: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    body = card.get("body")
+    if isinstance(body, list):
+        for item in body:
+            lines.append(f"- {typst_escape(plain_text(item))}")
+    elif plain_text(body):
+        lines.append(typst_escape(plain_text(body)))
+    asset = card.get("asset")
+    if asset and asset.get("expr"):
+        if lines:
+            lines.append("#v(0.5em)")
+        card_asset = dict(asset)
+        card_asset["caption"] = ""
+        lines.extend(render_imgs_block([card_asset], width="100%"))
+    return lines or ["- Add card content."]
+
+
+def render_cards_grid(cards: list[dict[str, Any]]) -> list[str]:
+    if not cards:
+        return []
+    panels: list[list[str]] = []
+    for card in cards:
+        panel = [f"#mbox(title: [{typst_escape(card.get('title') or 'Card')}], body-size: 18pt)["]
+        panel.extend(f"  {line}" if line else "  " for line in render_card_body(card))
+        panel.append("]")
+        panels.append(panel)
+    return render_grid([1] * len(cards), panels)
+
+
+def resolve_equations(slide: dict[str, Any], assets_by_id: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    equations: list[dict[str, Any]] = []
+    local_equation = slide.get("equation")
+    if isinstance(local_equation, dict):
+        equations.append(local_equation)
+    elif local_equation:
+        equations.append({"text": local_equation})
+
+    for equation_id in slide.get("equation_ids", []):
+        asset = assets_by_id.get(equation_id)
+        if not asset:
+            continue
+        equation = asset.get("equation") or {}
+        equations.append(
+            {
+                "title": asset.get("label") or equation_id,
+                "text": equation.get("text") or "",
+                "context": equation.get("context") or "",
+                "notation_hints": equation.get("notation_hints") or [],
+            }
+        )
+    return equations
+
+
+def render_equation_block(equation: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    title = plain_text(equation.get("title"))
+    math_expr = equation.get("typst")
+    text = plain_text(equation.get("text"))
+    if title:
+        lines.extend(render_text_box("highlight", title, ""))
+    if math_expr:
+        lines.append(f"#align(center)[$ {math_expr} $]")
+        lines.append("")
+    elif text:
+        lines.append("#cbox[")
+        lines.append(f"  {typst_escape(text)}")
+        lines.append("]")
+        lines.append("")
+    context = plain_text(equation.get("context"))
+    if context:
+        lines.extend(render_text_box("neutral", "Context", context))
+    hints = equation.get("notation_hints") or []
+    if hints:
+        lines.extend(render_text_box("success", "Notation", hints))
+    return lines
+
+
+def render_support_metadata(
+    slide: dict[str, Any],
+    unresolved_assets: list[str],
+    *,
+    render_mode: str | None = None,
+    escape_report: dict[str, Any] | None = None,
+) -> list[str]:
+    items = []
+    if render_mode:
+        items.append(f"Render mode: {render_mode}")
+    if escape_report and escape_report.get("fallback_reason"):
+        items.append(f"Escape fallback: {escape_report['fallback_reason']}")
+    if slide.get("claim_ids"):
+        items.append(f"Claim ids: {', '.join(slide.get('claim_ids', []))}")
+    evidence = format_slide_evidence(slide)
+    if evidence:
+        items.append(f"Evidence: {evidence}")
+    if slide.get("qa_expectations"):
+        items.append(f"QA: {', '.join(str(item) for item in slide.get('qa_expectations', []))}")
+    if unresolved_assets:
+        items.append(f"Asset ids needing manual placement: {', '.join(unresolved_assets)}")
+    if not items:
+        return []
+    return [f"// {item}" for item in items] + [""]
+
+
+def render_generic_slide(
+    slide: dict[str, Any],
+    boxes: list[dict[str, Any]],
+    asset_entries: list[dict[str, Any]],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    lines: list[str] = []
+    warnings: list[str] = []
+    lines.extend(render_box_stack(boxes, limit=3))
+    table_lines = render_table_block(slide.get("table"))
+    if slide.get("table") and not table_lines:
+        warnings.append(f"slide {slide.get('slide_id') or slide.get('title')}: table data is incomplete")
+    lines.extend(table_lines)
+    if asset_entries:
+        lines.extend(render_imgs_block(asset_entries[:2], width="94%"))
+    if equations:
+        lines.extend(render_equation_block(equations[0]))
+    if slide.get("bullets"):
+        lines.extend(render_bullet_list(slide.get("bullets", [])))
+    if not lines:
+        warnings.append(f"slide {slide.get('slide_id') or slide.get('title')}: no renderable content")
+    return lines, warnings
+
+
+def limit_from_spec(spec: dict[str, Any] | None, key: str, default: int | None) -> int | None:
+    if spec is None:
+        return default
+    limits = spec.get("limits") or {}
+    value = limits.get(key)
+    return int(value) if isinstance(value, int) else default
+
+
+def render_title_slide_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    return [], []
+
+
+def render_figure_led_vertical_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+    *,
+    width: str,
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    if not asset_entries:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: {slide.get('archetype')} selected without assets"
+        )
+    lines: list[str] = []
+    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 2)))
+    lines.extend(render_imgs_block(asset_entries[:2], width=width))
+    bullet_limit = limit_from_spec(spec, "bullets_max", 3)
+    lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+    return lines, warnings
+
+
+def render_method_side_by_side_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    if not asset_entries:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: Method Overview Side-by-Side selected without assets"
+        )
+    box_limit = limit_from_spec(spec, "boxes_max", 3)
+    if box_limit is not None and len(boxes) > box_limit:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: truncated side-by-side method boxes to {box_limit} to avoid overflow"
+        )
+    first_ratio = None
+    for entry in asset_entries:
+        if entry.get("aspect_ratio") is not None:
+            first_ratio = float(entry["aspect_ratio"])
+            break
+    columns = [0.82, 1.18] if first_ratio and first_ratio < 1.0 else [0.92, 1.08]
+    bullet_limit = limit_from_spec(spec, "bullets_max", 2)
+    left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
+        bullets[:bullet_limit] if bullet_limit is not None else bullets
+    )
+    right_panel = render_imgs_block(asset_entries[:1], width="100%") or render_text_box(
+        "neutral",
+        "Missing evidence",
+        "Add one overview asset or choose another archetype.",
+    )
+    return render_grid(columns, [left_panel, right_panel]), warnings
+
+
+def render_method_stacked_evidence_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    if len(asset_entries) < 2:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: stacked-evidence archetype works best with 2 assets"
+        )
+    box_limit = limit_from_spec(spec, "boxes_max", 3)
+    if box_limit is not None and len(boxes) > box_limit:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: truncated stacked-evidence method boxes to {box_limit} to avoid overflow"
+        )
+    bullet_limit = limit_from_spec(spec, "bullets_max", 2)
+    left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
+        bullets[:bullet_limit] if bullet_limit is not None else bullets
+    )
+    right_panel = render_stacked_images(asset_entries[:2]) or render_text_box(
+        "neutral",
+        "Missing evidence",
+        "Add two related assets or use a different method archetype.",
+    )
+    return render_grid([1, 1], [left_panel, right_panel]), warnings
+
+
+def render_method_cards_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    cards = resolve_cards(slide, asset_entries)
+    allowed_counts = ((spec or {}).get("limits") or {}).get("cards_allowed") or [2, 3]
+    if len(cards) not in allowed_counts:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: Method Cards archetype expects {allowed_counts}"
+        )
+    lines: list[str] = []
+    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 1)))
+    lines.extend(
+        render_cards_grid(cards[:3])
+        or render_text_box(
+            "neutral",
+            "Cards missing",
+            "Provide `cards` entries or 2-3 asset-backed cards.",
+        )
+    )
+    return lines, warnings
+
+
+def render_comparison_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    if len(asset_entries) < 2 and not slide.get("table"):
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: comparison archetype usually needs 2 assets or a comparison table"
+        )
+    lines: list[str] = []
+    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 2)))
+    if len(asset_entries) >= 2:
+        lines.extend(render_imgs_block(asset_entries[:2], width="100%"))
+    elif slide.get("table"):
+        lines.extend(render_table_block(slide.get("table")))
+    elif asset_entries:
+        lines.extend(render_imgs_block(asset_entries[:1], width="92%"))
+    bullet_limit = limit_from_spec(spec, "bullets_max", 2)
+    lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+    return lines, warnings
+
+
+def render_table_structured_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    table_lines = render_table_block(slide.get("table"))
+    lines: list[str] = []
+    box_limit = limit_from_spec(spec, "boxes_max", 3)
+    if boxes:
+        first_box = boxes[:1]
+        rest_boxes = boxes[1:] if box_limit is None else boxes[1:box_limit]
+        lines.extend(render_box_stack(first_box))
+        lines.extend(render_box_stack(rest_boxes))
+    if not table_lines:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: {slide.get('archetype')} selected without complete table data"
+        )
+        lines.extend(render_text_box("neutral", "Missing table", "Provide `table.headers` and `table.rows`."))
+    else:
+        lines.extend(table_lines)
+    return lines, warnings
+
+
+def render_equation_led_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    if not equations:
+        warnings.append(
+            f"slide {slide.get('slide_id') or slide.get('title')}: equation archetype selected without equation data"
+        )
+    left_panel = render_equation_block(equations[0]) if equations else render_text_box(
+        "neutral",
+        "Missing equation",
+        "Provide `equation` or `equation_ids` for this archetype.",
+    )
+    right_panel = render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 3)) + render_bullet_list(
+        bullets[: limit_from_spec(spec, "bullets_max", 3)]
+        if limit_from_spec(spec, "bullets_max", 3) is not None
+        else bullets
+    )
+    return render_grid([0.95, 1.05], [left_panel, right_panel]), warnings
+
+
+def render_motivation_background_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    lines: list[str] = []
+    box_limit = limit_from_spec(spec, "boxes_max", 3)
+    bullet_limit = limit_from_spec(spec, "bullets_max", 4)
+    table_lines = render_table_block(slide.get("table"))
+    if table_lines:
+        left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
+            bullets[:bullet_limit] if bullet_limit is not None else bullets
+        )
+        lines.extend(render_grid([0.95, 1.05], [left_panel, table_lines]))
+    elif asset_entries:
+        left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
+            bullets[:bullet_limit] if bullet_limit is not None else bullets
+        )
+        right_panel = render_imgs_block(asset_entries[:1], width="100%")
+        lines.extend(render_grid([0.95, 1.05], [left_panel, right_panel]))
+    else:
+        lines.extend(render_box_stack(boxes, limit=box_limit))
+        lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+    return lines, []
+
+
+def render_conclusion_takeaways_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+) -> tuple[list[str], list[str]]:
+    lines: list[str] = []
+    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 4)))
+    bullet_limit = limit_from_spec(spec, "bullets_max", 4)
+    lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+    if asset_entries:
+        lines.extend(render_imgs_block(asset_entries[:1], width="88%"))
+    return lines, []
+
+
+def render_outline_roadmap_body(
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    asset_entries: list[dict[str, Any]],
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    equations: list[dict[str, Any]],
+    deck_sections: list[str],
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    roadmap = slide.get("roadmap") or bullets or deck_sections
+    lines: list[str] = []
+    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 1)))
+    if roadmap:
+        lines.extend(render_text_box("neutral", slide.get("roadmap_label", "Roadmap"), [plain_text(item) for item in roadmap]))
+    else:
+        warnings.append(f"slide {slide.get('slide_id') or slide.get('title')}: roadmap slide has no roadmap items")
+    return lines, warnings
+
+
+RENDERER_HANDLERS: dict[str, Callable[..., tuple[list[str], list[str]]]] = {
+    "title_slide": render_title_slide_body,
+    "outline_roadmap": render_outline_roadmap_body,
+    "motivation_background": render_motivation_background_body,
+    "figure_led_vertical": lambda slide, spec, asset_entries, boxes, bullets, equations, deck_sections=None: render_figure_led_vertical_body(
+        slide,
+        spec,
+        asset_entries,
+        boxes,
+        bullets,
+        equations,
+        width="94%",
+    ),
+    "wide_evidence": lambda slide, spec, asset_entries, boxes, bullets, equations, deck_sections=None: render_figure_led_vertical_body(
+        slide,
+        spec,
+        asset_entries,
+        boxes,
+        bullets,
+        equations,
+        width="98%",
+    ),
+    "method_side_by_side": render_method_side_by_side_body,
+    "method_stacked_evidence": render_method_stacked_evidence_body,
+    "method_cards": render_method_cards_body,
+    "comparison": render_comparison_body,
+    "table_structured": render_table_structured_body,
+    "equation_led": render_equation_led_body,
+    "conclusion_takeaways": render_conclusion_takeaways_body,
+}
 
 
 def render_slide_typst(
@@ -587,76 +1665,75 @@ def render_slide_typst(
     assets_by_id: dict[str, dict[str, Any]],
     deck_path: Path,
     workspace: Path,
-) -> list[str]:
-    lines: list[str] = []
+    deck_sections: list[str],
+    *,
+    disable_escape: bool = False,
+) -> tuple[list[str], list[str], dict[str, Any]]:
     title = typst_escape(slide.get("title", "Untitled Slide"))
-    takeaway = typst_escape(slide.get("takeaway", ""))
-    slide_id = typst_escape(slide.get("slide_id", ""))
-    claim_ids = ", ".join(slide.get("claim_ids", []))
-    qa_expectations = ", ".join(str(item) for item in slide.get("qa_expectations", []))
+    archetype = str(slide.get("archetype", "") or "")
+    spec = get_archetype_spec(archetype)
+    asset_entries, unresolved_assets = resolve_slide_assets(slide, assets_by_id, deck_path, workspace)
+    boxes = resolve_slide_boxes(slide)
+    equations = resolve_equations(slide, assets_by_id)
+    bullets = slide.get("bullets") or []
+    warnings: list[str] = []
+    slide_id = slide.get("slide_id") or slide.get("title") or "slide"
+    escape_report = maybe_render_escape_body(
+        slide,
+        spec,
+        asset_entries,
+        boxes,
+        bullets,
+        equations,
+        deck_sections,
+        workspace,
+        disable_escape=disable_escape,
+    )
 
-    lines.append(f"== {title}")
-    lines.append("")
-
-    if takeaway:
-        lines.extend(
+    body_lines: list[str] = []
+    if escape_report["used"]:
+        fragment_path = Path(str(escape_report["fragment_path"]))
+        body_lines.extend(
             [
-                "#ibox[",
-                f"  *Takeaway:* {takeaway}",
-                "]",
+                f"// WARNING: escape-hatch triggered for slide {slide_id}",
+                f"// Escape fragment: {rel_or_abs(fragment_path)}",
+                f"// Escape hint: {plain_text(slide.get('escape_hint')).strip()}",
                 "",
             ]
         )
+        body_lines.extend(escape_report["body_lines"])
+        if body_lines and body_lines[-1] != "":
+            body_lines.append("")
+        warnings.extend(escape_report["warnings"])
+    else:
+        if escape_report["warnings"]:
+            warnings.extend(escape_report["warnings"])
+        renderer_name = spec.get("renderer", "generic") if spec else "generic"
+        handler = RENDERER_HANDLERS.get(renderer_name)
+        if handler is None:
+            generic_lines, generic_warnings = render_generic_slide(slide, boxes, asset_entries, equations)
+            body_lines.extend(generic_lines)
+            warnings.extend(generic_warnings)
+        elif renderer_name == "outline_roadmap":
+            rendered_lines, rendered_warnings = handler(slide, spec, asset_entries, boxes, bullets, equations, deck_sections)
+            body_lines.extend(rendered_lines)
+            warnings.extend(rendered_warnings)
+        else:
+            rendered_lines, rendered_warnings = handler(slide, spec, asset_entries, boxes, bullets, equations)
+            body_lines.extend(rendered_lines)
+            warnings.extend(rendered_warnings)
 
-    image_entries = []
-    for asset_id in slide.get("asset_ids", []):
-        asset = assets_by_id.get(asset_id)
-        if not asset:
-            continue
-        image_expr = asset_image_expr(asset, deck_path, workspace)
-        if not image_expr:
-            continue
-        caption = typst_escape(asset.get("normalized_caption") or asset.get("label") or asset_id)
-        image_entries.append((image_expr, caption))
-        if len(image_entries) >= 2:
-            break
-
-    if image_entries:
-        lines.append("#imgs(")
-        for image_expr, caption in image_entries:
-            lines.append(f"  ({image_expr}, [{caption}]),")
-        lines.append("  width: 92%,")
-        lines.append(")")
-        lines.append("")
-
-    lines.append("#v(0.6em)")
-    lines.append("")
-    lines.append(f"- Slide id: `{slide_id}`" if slide_id else "- Slide id: `slide`")
-    if claim_ids:
-        lines.append(f"- Claim ids: `{claim_ids}`")
-    if slide.get("rhetorical_role"):
-        lines.append(f"- Role: {typst_escape(slide.get('rhetorical_role'))}")
-    if slide.get("archetype"):
-        lines.append(f"- Archetype: {typst_escape(slide.get('archetype'))}")
-    if slide.get("content_density"):
-        lines.append(f"- Density target: {typst_escape(slide.get('content_density'))}")
-
-    evidence = format_slide_evidence(slide)
-    if evidence:
-        lines.append(f"- Evidence: {typst_escape(evidence)}")
-    if qa_expectations:
-        lines.append(f"- QA: {typst_escape(qa_expectations)}")
-
-    unresolved_assets = []
-    for asset_id in slide.get("asset_ids", []):
-        asset = assets_by_id.get(asset_id)
-        if asset and asset_image_expr(asset, deck_path, workspace) is None:
-            unresolved_assets.append(asset_id)
-    if unresolved_assets:
-        lines.append(f"- Asset ids needing manual placement: `{', '.join(unresolved_assets)}`")
-
-    lines.append("")
-    return lines
+    lines = [f"== {title}", ""]
+    lines.extend(body_lines)
+    lines.extend(
+        render_support_metadata(
+            slide,
+            unresolved_assets,
+            render_mode=normalize_render_mode(slide.get("render_mode")),
+            escape_report=escape_report,
+        )
+    )
+    return lines, warnings, escape_report
 
 
 def cmd_emit_deck(args: argparse.Namespace) -> None:
@@ -686,6 +1763,8 @@ def cmd_emit_deck(args: argparse.Namespace) -> None:
     authors = typst_escape(", ".join(paper.get("authors", [])))
     venue = typst_escape(paper.get("venue") or deck.get("scenario") or "")
     institution = typst_escape(paper.get("institution") or "")
+    short_title = typst_escape(deck.get("short_title") or paper.get("short_title") or title)
+    date = typst_escape(paper.get("date") or deck.get("date") or "")
     lang = "zh" if str(deck.get("language", "")).lower().startswith("zh") else "en"
 
     lines = [
@@ -696,12 +1775,15 @@ def cmd_emit_deck(args: argparse.Namespace) -> None:
         "#show: lemonade-theme.with(",
         '  aspect-ratio: "16-9",',
         '  title-align: "left",',
+        "  box-compact: true,",
         '  footer: "bar",',
         "  config-info(",
         f"    title: [{title}],",
         f"    venue: [{venue}],",
         f"    author: [{authors}],",
         f"    institution: [{institution}],",
+        f"    short-title: [{short_title}],",
+        f"    date: [{date}],",
         "  ),",
         ")",
         "",
@@ -709,8 +1791,31 @@ def cmd_emit_deck(args: argparse.Namespace) -> None:
         "",
     ]
 
-    current_section = None
     slides = slides_doc.get("slides", [])
+    escape_candidates = [
+        slide.get("slide_id") or f"slide-{index:02d}"
+        for index, slide in enumerate(slides, start=1)
+        if isinstance(slide, dict) and normalize_render_mode(slide.get("render_mode")) == "escape"
+    ]
+    if args.disable_escape and escape_candidates:
+        lines.extend(
+            [
+                f"// WARNING: escape render mode disabled for this emission ({', '.join(escape_candidates)})",
+                "",
+            ]
+        )
+    deck_sections: list[str] = []
+    for slide in slides:
+        if not isinstance(slide, dict):
+            continue
+        section = plain_text(slide.get("section"))
+        if section and section not in deck_sections:
+            deck_sections.append(section)
+
+    warnings: list[str] = []
+    escape_fragments: list[str] = []
+    escape_fallback_slides: list[str] = []
+    current_section = None
     for index, slide in enumerate(slides, start=1):
         if not isinstance(slide, dict):
             continue
@@ -722,10 +1827,36 @@ def cmd_emit_deck(args: argparse.Namespace) -> None:
             lines.append(f"= {typst_escape(section)}")
             lines.append("")
             current_section = section
-        lines.extend(render_slide_typst(slide, assets_by_id, deck_path, workspace))
+        slide_lines, slide_warnings, escape_report = render_slide_typst(
+            slide,
+            assets_by_id,
+            deck_path,
+            workspace,
+            deck_sections,
+            disable_escape=args.disable_escape,
+        )
+        lines.extend(slide_lines)
+        warnings.extend(slide_warnings)
+        if escape_report.get("used") and escape_report.get("fragment_path"):
+            escape_fragments.append(str(escape_report["fragment_path"]))
+        if normalize_render_mode(slide.get("render_mode")) == "escape" and escape_report.get("fallback_reason"):
+            escape_fallback_slides.append(slide.get("slide_id") or f"slide-{index:02d}")
 
     write_text(deck_path, "\n".join(lines).rstrip() + "\n")
-    print(json.dumps({"deck_typ": str(deck_path), "slide_count": len(slides)}, indent=2))
+    print(
+        json.dumps(
+            {
+                "deck_typ": str(deck_path),
+                "slide_count": len(slides),
+                "disable_escape": args.disable_escape,
+                "escape_candidates": escape_candidates,
+                "escape_fragments": escape_fragments,
+                "escape_fallback_slides": escape_fallback_slides,
+                "warnings": warnings,
+            },
+            indent=2,
+        )
+    )
 
 
 def cmd_init_workspace(args: argparse.Namespace) -> None:
@@ -864,6 +1995,71 @@ def cmd_render_notes(args: argparse.Namespace) -> None:
     print(json.dumps(rendered, indent=2))
 
 
+def cmd_render_archetypes_reference(args: argparse.Namespace) -> None:
+    spec_doc = load_archetype_spec_doc()
+    out_path = Path(args.out).expanduser().resolve() if args.out else REFERENCE_ARCHETYPES_PATH
+    if not out_path.is_absolute():
+        out_path = (Path.cwd() / out_path).resolve()
+    write_text(out_path, render_archetypes_reference_md(spec_doc))
+    print(json.dumps({"archetypes_md": str(out_path), "source_json": str(ARCHETYPE_SPECS_PATH)}, indent=2))
+
+
+def cmd_collect_escape_context(args: argparse.Namespace) -> None:
+    workspace = Path(args.workspace).expanduser().resolve()
+    paths = notes_paths(workspace)
+    if not paths["slides_json"].exists():
+        raise SystemExit("slides.json does not exist; run init-workspace first")
+
+    slides_doc = load_json(paths["slides_json"])
+    assets_doc = load_json(paths["assets_json"]) if paths["assets_json"].exists() else {}
+    assets_by_id = {
+        asset.get("asset_id"): asset
+        for asset in assets_doc.get("assets", [])
+        if isinstance(asset, dict) and asset.get("asset_id")
+    }
+    deck_path = workspace / f"{workspace.name}.typ"
+    deck_sections: list[str] = []
+    for slide in slides_doc.get("slides", []):
+        if not isinstance(slide, dict):
+            continue
+        section = plain_text(slide.get("section"))
+        if section and section not in deck_sections:
+            deck_sections.append(section)
+
+    requested_ids = set(args.slide_id or [])
+    contexts = []
+    for index, slide in enumerate(slides_doc.get("slides", []), start=1):
+        if not isinstance(slide, dict):
+            continue
+        slide_id = slide.get("slide_id") or f"slide-{index:02d}"
+        if normalize_render_mode(slide.get("render_mode")) != "escape":
+            continue
+        if requested_ids and slide_id not in requested_ids:
+            continue
+        spec = get_archetype_spec(str(slide.get("archetype") or ""))
+        asset_entries, unresolved_assets = resolve_slide_assets(slide, assets_by_id, deck_path, workspace)
+        boxes = resolve_slide_boxes(slide)
+        equations = resolve_equations(slide, assets_by_id)
+        context = {
+            "slide_id": slide_id,
+            "fragment_path": str(escape_fragment_path(slide, workspace)),
+            "config_issues": collect_escape_config_issues(slide, spec),
+            "unresolved_assets": unresolved_assets,
+            "payload": build_escape_fragment_payload(
+                slide,
+                spec,
+                asset_entries,
+                boxes,
+                slide.get("bullets") or [],
+                equations,
+                deck_sections,
+            ),
+        }
+        contexts.append(context)
+
+    print(json.dumps({"workspace": str(workspace), "escape_slides": contexts}, indent=2, ensure_ascii=False))
+
+
 def resolve_repo_relative(path_value: str, workspace: Path) -> Path:
     path = Path(path_value).expanduser()
     if path.is_absolute():
@@ -875,6 +2071,85 @@ def resolve_repo_relative(path_value: str, workspace: Path) -> Path:
     if workspace_candidate.exists():
         return workspace_candidate
     return cwd_candidate
+
+
+def validate_archetype_required_fields(
+    slide_id: str,
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    warnings: list[str],
+) -> None:
+    if spec is None:
+        return
+
+    required_fields = spec.get("required_fields") or {}
+    for field_name, field_spec in required_fields.items():
+        if not isinstance(field_spec, dict):
+            field_spec = {}
+        if field_name == "asset_ids":
+            asset_ids = slide.get("asset_ids", [])
+            min_items = field_spec.get("min_items")
+            max_items = field_spec.get("max_items")
+            if min_items is not None and len(asset_ids) < min_items:
+                warnings.append(f"slide {slide_id} uses {slide.get('archetype')} but needs at least {min_items} asset_ids")
+            if max_items is not None and len(asset_ids) > max_items:
+                warnings.append(f"slide {slide_id} uses {slide.get('archetype')} but should not exceed {max_items} asset_ids")
+        elif field_name == "table":
+            table = slide.get("table")
+            headers = (table or {}).get("headers") if isinstance(table, dict) else []
+            rows = (table or {}).get("rows") if isinstance(table, dict) else []
+            if not headers or not rows:
+                warnings.append(f"slide {slide_id} uses {slide.get('archetype')} but table.headers/table.rows are incomplete")
+        elif field_name == "equation_or_equation_ids":
+            if not (slide.get("equation") or slide.get("equation_ids")):
+                warnings.append(f"slide {slide_id} uses {slide.get('archetype')} but needs `equation` or `equation_ids`")
+        elif field_name == "roadmap_or_bullets":
+            if not (slide.get("roadmap") or slide.get("bullets")):
+                warnings.append(f"slide {slide_id} roadmap slide has no roadmap items or bullets")
+        elif field_name == "cards_or_asset_ids":
+            cards = slide.get("cards") if isinstance(slide.get("cards"), list) else []
+            asset_ids = slide.get("asset_ids", [])
+            allowed_card_counts = field_spec.get("allowed_card_counts") or [2, 3]
+            asset_id_range = field_spec.get("asset_id_range") or [2, 3]
+            if cards:
+                if len(cards) not in allowed_card_counts:
+                    warnings.append(f"slide {slide_id} Method Cards archetype expects {allowed_card_counts}; saw {len(cards)}")
+            elif not (asset_id_range[0] <= len(asset_ids) <= asset_id_range[-1]):
+                warnings.append(
+                    f"slide {slide_id} Method Cards archetype needs `cards` or {asset_id_range[0]}-{asset_id_range[-1]} asset_ids"
+                )
+        elif field_name == "comparison_assets_or_table":
+            asset_ids = slide.get("asset_ids", [])
+            table = slide.get("table")
+            min_items = field_spec.get("asset_id_min_items", 2)
+            if len(asset_ids) < min_items and not table:
+                warnings.append(
+                    f"slide {slide_id} uses {slide.get('archetype')} but needs {min_items}+ asset_ids or a table"
+                )
+
+
+def validate_archetype_limits(
+    slide_id: str,
+    slide: dict[str, Any],
+    spec: dict[str, Any] | None,
+    warnings: list[str],
+) -> None:
+    if spec is None:
+        return
+
+    limits = spec.get("limits") or {}
+    boxes_max = limits.get("boxes_max")
+    bullets_max = limits.get("bullets_max")
+    cards_allowed = limits.get("cards_allowed")
+
+    if isinstance(boxes_max, int) and len(slide.get("boxes", [])) > boxes_max:
+        warnings.append(f"slide {slide_id} uses {slide.get('archetype')} but defines {len(slide.get('boxes', []))} boxes (max {boxes_max})")
+    if isinstance(bullets_max, int) and len(slide.get("bullets", []) if isinstance(slide.get("bullets"), list) else []) > bullets_max:
+        warnings.append(
+            f"slide {slide_id} uses {slide.get('archetype')} but defines {len(slide.get('bullets', []))} bullets (max {bullets_max})"
+        )
+    if cards_allowed and isinstance(slide.get("cards"), list) and len(slide.get("cards")) not in cards_allowed:
+        warnings.append(f"slide {slide_id} uses {slide.get('archetype')} but cards count {len(slide.get('cards'))} is not in {cards_allowed}")
 
 
 def cmd_validate_artifacts(args: argparse.Namespace) -> None:
@@ -971,8 +2246,23 @@ def cmd_validate_artifacts(args: argparse.Namespace) -> None:
         slide_ids.add(slide_id)
 
         archetype = slide.get("archetype")
-        if archetype and archetype not in KNOWN_ARCHETYPES:
+        spec = get_archetype_spec(str(archetype)) if archetype else None
+        if archetype and spec is None:
             warnings.append(f"slide {slide_id} uses unknown archetype: {archetype}")
+        render_mode = normalize_render_mode(slide.get("render_mode"))
+        if render_mode not in ALLOWED_RENDER_MODES:
+            warnings.append(f"slide {slide_id} uses unknown render_mode: {render_mode}")
+        elif spec and render_mode not in (spec.get("allowed_render_modes") or ["script"]):
+            warnings.append(f"slide {slide_id} uses render_mode `{render_mode}` but {archetype} allows {spec.get('allowed_render_modes')}")
+        for issue in collect_escape_config_issues(slide, spec):
+            warnings.append(f"slide {slide_id} escape config: {issue}")
+        if render_mode == "escape":
+            fragment_path = escape_fragment_path(slide, workspace)
+            fragment, _, fragment_issue = load_escape_fragment(slide, workspace)
+            if fragment_issue:
+                warnings.append(f"slide {slide_id} escape fragment issue: {fragment_issue} ({rel_or_abs(fragment_path)})")
+            elif fragment is not None and not fragment.strip():
+                warnings.append(f"slide {slide_id} escape fragment is empty after cleanup ({rel_or_abs(fragment_path)})")
         if not slide.get("title"):
             warnings.append(f"slide {slide_id} is missing title")
         if not slide.get("takeaway"):
@@ -996,6 +2286,31 @@ def cmd_validate_artifacts(args: argparse.Namespace) -> None:
             warnings.append(f"slide {slide_id} uses unknown content_density: {density}")
         if not slide.get("qa_expectations"):
             warnings.append(f"slide {slide_id} is missing qa_expectations")
+        table = slide.get("table")
+        if table is not None:
+            if not isinstance(table, dict):
+                warnings.append(f"slide {slide_id} table should be an object")
+            else:
+                headers = table.get("headers") or []
+                rows = table.get("rows") or []
+                if headers and rows:
+                    expected_width = len(headers)
+                    for row_index, row in enumerate(rows, start=1):
+                        if len(row) != expected_width:
+                            warnings.append(
+                                f"slide {slide_id} table row {row_index} has {len(row)} cells but headers has {expected_width}"
+                            )
+                elif archetype in {"Table-Led Structured Slide", "Progress or Status Matrix"}:
+                    warnings.append(f"slide {slide_id} uses {archetype} but table.headers/table.rows are incomplete")
+        cards = slide.get("cards")
+        if cards is not None:
+            if not isinstance(cards, list):
+                warnings.append(f"slide {slide_id} cards should be a list")
+        bullets = slide.get("bullets")
+        if bullets is not None and not isinstance(bullets, list):
+            warnings.append(f"slide {slide_id} bullets should be a list")
+        validate_archetype_required_fields(slide_id, slide, spec, warnings)
+        validate_archetype_limits(slide_id, slide, spec, warnings)
         for item in slide.get("evidence", []):
             if isinstance(item, dict) and item.get("kind") == "asset" and item.get("ref") not in asset_ids:
                 errors.append(f"slide {slide_id} evidence references missing asset: {item.get('ref')}")
@@ -1089,6 +2404,21 @@ def build_parser() -> argparse.ArgumentParser:
     render_parser.add_argument("--workspace", required=True)
     render_parser.set_defaults(func=cmd_render_notes)
 
+    render_archetypes_parser = subparsers.add_parser(
+        "render-archetypes-ref",
+        help="Render the derived Markdown archetype reference from archetypes.json",
+    )
+    render_archetypes_parser.add_argument("--out")
+    render_archetypes_parser.set_defaults(func=cmd_render_archetypes_reference)
+
+    escape_context_parser = subparsers.add_parser(
+        "collect-escape-context",
+        help="Emit payloads and target fragment paths for slides using render_mode=escape",
+    )
+    escape_context_parser.add_argument("--workspace", required=True)
+    escape_context_parser.add_argument("--slide-id", action="append")
+    escape_context_parser.set_defaults(func=cmd_collect_escape_context)
+
     validate_parser = subparsers.add_parser(
         "validate-artifacts",
         help="Validate JSON artifact cross-references and basic schema assumptions",
@@ -1102,6 +2432,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     emit_parser.add_argument("--workspace", required=True)
     emit_parser.add_argument("--out")
+    emit_parser.add_argument("--disable-escape", action="store_true")
     emit_parser.set_defaults(func=cmd_emit_deck)
 
     return parser
