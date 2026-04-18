@@ -5,7 +5,7 @@ Typst slide theme plus Codex skills for turning papers into presentation decks.
 This repo is set up to be driven from Codex, not only edited by hand. The main user path is:
 
 1. Ask Codex to use `$academic-paper-to-slides` on a paper PDF.
-2. Let it build a paper brief, slide map, figures, and deck under `out/<paper>/`.
+2. Let it build source notes, asset registry, brief, slide plan, figures, and deck under `out/<paper>/`.
 3. Revise the generated deck or the shared theme in place.
 4. Validate with the local compile script before you stop.
 
@@ -61,11 +61,48 @@ The paper-to-slides skill keeps each paper self-contained:
 
 - `out/<paper>/<paper>.typ`
 - `out/<paper>/notes/source.txt`
+- `out/<paper>/notes/assets.json`
+- `out/<paper>/notes/brief.json`
+- `out/<paper>/notes/slides.json`
+- `out/<paper>/notes/review.json`
+- `out/<paper>/notes/asset-manifest.md`
 - `out/<paper>/notes/brief.md`
 - `out/<paper>/notes/slide-map.md`
 - `out/<paper>/assets/...`
 
+The JSON files are canonical. The Markdown notes are derived inspection artifacts rendered from that JSON so the planning state stays machine-checkable.
+
 This keeps crops, extracted figures, and deck notes out of shared top-level folders.
+
+## Artifact Helpers
+
+Initialize a paper workspace and JSON artifacts:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  init-workspace paper.pdf --workspace out/<paper>
+```
+
+Extract source text into `notes/source.txt`:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  extract-source paper.pdf --workspace out/<paper>
+```
+
+Re-render the human-readable notes after editing `assets.json`, `brief.json`, or `slides.json`:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  render-notes --workspace out/<paper>
+```
+
+Emit a deterministic Typst scaffold from `notes/slides.json`:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  emit-deck --workspace out/<paper>
+```
 
 ## Validate A Deck
 
@@ -82,7 +119,7 @@ bash .codex/skills/academic-paper-to-slides/scripts/validate_deck.sh \
   out/<paper>/<paper>.typ
 ```
 
-The validation helper writes the PDF under `/tmp/academic-paper-to-slides/` by default.
+The validation helper writes the PDF under `/tmp/academic-paper-to-slides/` by default, validates JSON artifacts when a paper workspace exists, renders page previews, and writes review findings to `notes/review.json` or `review/review.json`.
 
 ## Theme Conventions Codex Follows
 
