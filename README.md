@@ -104,6 +104,38 @@ python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
   emit-deck --workspace out/<paper>
 ```
 
+Disable escape fragments and force scripted layouts for all slides:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  emit-deck --workspace out/<paper> --disable-escape
+```
+
+The emitter is archetype-aware rather than fully generic. The canonical archetype contract now lives in [`.codex/skills/academic-paper-to-slides/references/archetypes.json`](./.codex/skills/academic-paper-to-slides/references/archetypes.json). The human-facing [`archetypes.md`](./.codex/skills/academic-paper-to-slides/references/archetypes.md) is derived from that JSON spec.
+
+Slides can carry:
+
+- `archetype`, `asset_ids`, and `equation_ids`
+- richer layout fields such as `boxes`, `bullets`, `table`, `cards`, and `equation`
+- `render_mode: "script" | "escape"`
+- short `escape_hint` instructions when `render_mode` is `escape`
+
+For escape slides, collect the exact payload the main Codex context should render into a fragment:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  collect-escape-context --workspace out/<paper>
+```
+
+Write the fragment to `out/<paper>/fragments/<slide_id>.typ`, then run `emit-deck`. The script only consumes fragment artifacts; it does not make its own model call.
+
+Regenerate the derived archetype reference:
+
+```bash
+python3 .codex/skills/academic-paper-to-slides/scripts/paper_artifacts.py \
+  render-archetypes-ref
+```
+
 ## Validate A Deck
 
 Compile a deck directly:
@@ -120,6 +152,10 @@ bash .codex/skills/academic-paper-to-slides/scripts/validate_deck.sh \
 ```
 
 The validation helper writes the PDF under `/tmp/academic-paper-to-slides/` by default, validates JSON artifacts when a paper workspace exists, renders page previews, and writes review findings to `notes/review.json` or `review/review.json`.
+
+When `slides.json` is present, the rendered-page review accounts for Lemonade outline pages inserted by `=` section headings. Expected rendered page count can therefore be larger than planned slide count.
+
+If a deck compile fails and the workspace contains escape-mode slides, the validation helper retries once by re-emitting the deck with `--disable-escape`. The rendered review records that fallback in `review.json`.
 
 ## Theme Conventions Codex Follows
 

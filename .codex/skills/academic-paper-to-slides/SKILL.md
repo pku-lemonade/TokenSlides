@@ -94,12 +94,22 @@ Rules:
      - Inventory which mechanisms and results are best supported by recovered assets versus exact textual evidence.
      - Add an evidence map that links claim ids to asset ids and text anchors before you start drafting.
    - Slide map:
-     - Write the canonical slide plan in `notes/slides.json`, then render `notes/slide-map.md` for inspection.
-     - Store for each slide: `slide_id`, section, title, `rhetorical_role`, `archetype`, one-slide-one-claim takeaway, `claim_ids`, evidence, `asset_ids`, optional `equation_ids`, `content_density`, and `qa_expectations`.
+   - Write the canonical slide plan in `notes/slides.json`, then render `notes/slide-map.md` for inspection.
+   - Store for each slide: `slide_id`, section, title, `rhetorical_role`, `archetype`, one-slide-one-claim takeaway, `claim_ids`, evidence, `asset_ids`, optional `equation_ids`, `content_density`, and `qa_expectations`.
+   - Add richer layout fields only when the archetype needs them:
+     - `boxes`: ordered short box content for method, result, and conclusion slides
+     - `bullets`: short follow-on list items
+     - `table`: `headers`, `rows`, and optional `columns` / `align`
+     - `cards`: 2 or 3 card specs for `Method Cards`
+     - `equation`: local equation content when `equation_ids` alone are not enough
      - Let each slide defend one claim.
      - Assign evidence from the asset registry or from exact numbers in the paper before writing the slide.
      - Spread method and results across more pages instead of compressing text.
-     - Choose a stable slide archetype for each page from `references/archetypes.md`.
+     - Choose a stable slide archetype for each page from `references/archetypes.json`. Treat `references/archetypes.md` as the derived human reference.
+     - Use `render_mode: "escape"` only for exceptional slides that need layout freedom beyond the scripted emitter.
+     - Keep `escape_hint` short and concrete. Treat it as a terse body-layout instruction, not a prose brief.
+     - When a slide uses `render_mode: "escape"`, collect its payload with `scripts/paper_artifacts.py collect-escape-context --workspace out/<paper>` and generate the fragment in the main Codex context instead of from inside the script.
+     - Write escape fragments to `out/<paper>/fragments/<slide_id>.typ` before deck emission unless the slide explicitly overrides the fragment path.
      - Prefer titles that will stay on one line once drafted. If a slide-map title is already long, shorten it before layout work.
      - Vary neighboring figure-heavy slides instead of repeating the same side-by-side layout by default.
      - For systems papers, give the thesis, overview, major mechanisms, and main evidence room to breathe across separate slides when needed.
@@ -112,6 +122,11 @@ Rules:
    - Reuse the local `lemonade.typ` macros, layouts, and deck conventions instead of inventing a parallel system.
    - Keep Typst generation thin and deterministic. Make content decisions in `notes/slides.json`, not ad hoc during emission.
    - Use `scripts/paper_artifacts.py emit-deck --workspace out/<paper>` when you want a deterministic Typst scaffold generated directly from `notes/slides.json`.
+   - The emitter now maps archetypes such as `Figure-Led Vertical`, `Method Overview Side-by-Side`, `Method Overview With Stacked Evidence`, `Method Cards (2 or 3 Only)`, `Two-Up Comparison`, `Table-Led Structured Slide`, and `Equation-Led Explanation` onto dedicated Lemonade layouts.
+   - Keep `notes/slides.json` canonical for content. Use scripted rendering by default and reserve `render_mode: "escape"` for unusual layouts that still stay source-grounded.
+   - Escape mode consumes a slide body fragment generated in the main Codex context. The deck shell, title handling, sectioning, and global Typst config remain script-owned.
+   - Use `scripts/paper_artifacts.py collect-escape-context --workspace out/<paper>` to get the exact payload and target fragment path for each escape slide.
+   - Use `scripts/paper_artifacts.py emit-deck --workspace out/<paper> --disable-escape` when you want a forced scripted fallback deck.
    - For repo decks compiled with `typst compile --root .`, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`.
    - Use `#imgs(...)` from `theme/images.typ` as the default for single figures, comparison rows, and captioned figure blocks.
    - For method slides with a short side figure, first look for already recovered companion assets from the same paper or figure. If they exist, prefer a vertically stacked evidence column built from one or two `#imgs(...)` blocks. Only fall back to new crop prep when the existing asset inventory still cannot support the slide.
@@ -122,6 +137,8 @@ Rules:
    - Prepare cropped figures with `scripts/prepare_figure.py <image>` when a selected registry asset carries paper chrome or inconsistent margins and the current asset inventory still lacks the needed shape.
    - Run `scripts/validate_deck.sh <deck.typ>` to compile the deck to a validation PDF.
    - Treat `notes/review.json` as the rendered-slide QA artifact when the deck lives under `out/<paper>/`.
+   - When `slides.json` exists, rendered-page counts may exceed planned slide count because Lemonade inserts outline pages for `=` section headings. The review helper accounts for that render plan.
+   - Rendered review now also records whether escape mode was used on any slide and whether validation had to retry with escape disabled after a compile failure.
    - Use `references/visual-qa.md` as a pass/fail rubric.
    - Fix failures in this order: revise the slide plan or archetype, reuse another recovered asset, recover or split a better source asset, crop cleanup, split slide, then consider local overrides.
    - On figure-led slides, default to one or two short takeaway boxes. Each box should preferably fit on one line and should rarely exceed two.
