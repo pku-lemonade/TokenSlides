@@ -178,6 +178,7 @@ Contract:
 Notes:
 
 - Prefer already recovered companion assets or extraction-stage sub-assets over ad hoc late crops.
+- Render stacked evidence columns with `#imgs(..., dir: ttb)` so the right-column visuals share the available height instead of each figure block filling it independently.
 
 ## Method Cards (2 or 3 Only)
 

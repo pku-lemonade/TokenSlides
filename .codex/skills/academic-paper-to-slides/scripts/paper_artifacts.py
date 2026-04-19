@@ -1295,12 +1295,20 @@ def render_imgs_block(
 
 def render_stacked_images(asset_entries: list[dict[str, Any]]) -> list[str]:
     visible = [entry for entry in asset_entries if entry.get("expr")]
-    lines: list[str] = []
-    for index, entry in enumerate(visible):
-        lines.extend(render_imgs_block([entry], width="100%"))
-        if index < len(visible) - 1:
-            lines.append("#v(0.6em)")
-            lines.append("")
+    if not visible:
+        return []
+    lines = ["#imgs("]
+    for entry in visible:
+        caption = typst_escape(entry.get("caption") or "")
+        if caption:
+            lines.append(f"  ({entry['expr']}, [{caption}]),")
+        else:
+            lines.append(f"  {entry['expr']},")
+    lines.append("  dir: ttb,")
+    lines.append("  width: 100%,")
+    lines.append("  gap: 0.6em,")
+    lines.append(")")
+    lines.append("")
     return lines
 
 

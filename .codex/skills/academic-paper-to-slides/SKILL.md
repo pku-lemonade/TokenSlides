@@ -140,8 +140,10 @@ Rules:
    - Use `scripts/paper_artifacts.py collect-escape-context --workspace out/<paper>` to get the exact payload and target fragment path for each escape slide.
    - Use `scripts/paper_artifacts.py emit-deck --workspace out/<paper> --disable-escape` when you want a forced scripted fallback deck.
    - For repo decks compiled with `typst compile --root .`, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`.
-   - Use `#imgs(...)` from `theme/images.typ` as the default for single figures, comparison rows, and captioned figure blocks.
-   - For method slides with a short side figure, first look for already recovered companion assets from the same paper or figure. If they exist, prefer a vertically stacked evidence column built from one or two `#imgs(...)` blocks. Only fall back to new crop prep when the existing asset inventory still cannot support the slide.
+   - Use `#imgs(...)` from `theme/images.typ` as the default for single figures, comparison rows, captioned figure blocks, and vertical evidence columns.
+   - In Lemonade's fill-height mode, keep the theme default caption placement. Do not add local spacer hacks to drag captions upward; `#imgs(...)` should keep captions visually attached to the image row.
+   - Use `#imgs(..., dir: ttb)` for vertical evidence columns. It shares the available panel height across stacked figures and captions, which is the correct default when Lemonade runs with `fill-height: true`.
+   - For method slides with a short side figure, first look for already recovered companion assets from the same paper or figure. If they exist, prefer a vertically stacked evidence column built from `#imgs(..., dir: ttb)`. Only fall back to new crop prep when the existing asset inventory still cannot support the slide.
    - Introduce deck-local wrappers such as `figcell` only after confirming that `theme/images.typ` cannot express the needed layout.
    - If the same layout or helper problem appears across multiple slides, inspect the owning theme file first and fix the root cause there when appropriate.
 5. Validate as a deck.
