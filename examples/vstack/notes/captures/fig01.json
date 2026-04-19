@@ -1,0 +1,81 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 2,
+  "candidate_id": "vector-1",
+  "candidate_region": "auto",
+  "bbox": [
+    317.955,
+    83.686,
+    558.155,
+    164.277
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig01-workflow.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-1",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.332
+    },
+    {
+      "id": "image-1",
+      "kind": "composite",
+      "source": "image",
+      "score": 1.0,
+      "confidence": 0.25
+    },
+    {
+      "id": "image-2",
+      "kind": "composite",
+      "source": "image",
+      "score": 1.0,
+      "confidence": 0.25
+    },
+    {
+      "id": "image-3",
+      "kind": "composite",
+      "source": "image",
+      "score": 1.0,
+      "confidence": 0.25
+    },
+    {
+      "id": "image-4",
+      "kind": "composite",
+      "source": "image",
+      "score": 1.0,
+      "confidence": 0.25
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-1",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 2,
+    "xref": null,
+    "page_coverage": 0.0399,
+    "confidence": 0.332,
+    "suggested_mode": "vector",
+    "drawing_rects": 22,
+    "nearby_text_blocks": 61,
+    "nearby_text_preview": [
+      "LLM",
+      "Decoder 1",
+      "Decoder 2"
+    ],
+    "reason": "vector cluster from 22 drawing rect(s) with 61 nearby text block(s)",
+    "bbox": [
+      317.955,
+      83.686,
+      558.155,
+      164.277
+    ],
+    "source_bbox": [
+      317.955,
+      83.686,
+      558.155,
+      164.277
+    ]
+  }
+}

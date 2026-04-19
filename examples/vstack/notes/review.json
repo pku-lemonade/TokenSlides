@@ -1,0 +1,429 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/vstack",
+  "deck_pdf": "/private/tmp/vstack-validate/vstack.pdf",
+  "generated_at": "2026-04-19T11:43:18+00:00",
+  "summary": {
+    "status": "warning",
+    "error_count": 0,
+    "warning_count": 12,
+    "page_count": 19,
+    "expected_slide_count": 15,
+    "expected_rendered_page_count": 19,
+    "output_dir": "/private/tmp/vstack-validate/review",
+    "escape_fallback_used": false
+  },
+  "pages": [
+    {
+      "page_number": 1,
+      "slide_id": "title",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-01.png",
+      "word_count": 12,
+      "image_count": 0,
+      "occupancy_ratio": 0.1763,
+      "image_area_ratio": 0.0,
+      "min_font_size": 32.0,
+      "small_text_spans": 0,
+      "page_kind": "title"
+    },
+    {
+      "page_number": 2,
+      "slide_id": "outline:动机",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-02.png",
+      "word_count": 11,
+      "image_count": 0,
+      "occupancy_ratio": 0.1105,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "outline",
+      "section": "动机"
+    },
+    {
+      "page_number": 3,
+      "slide_id": "motivation-kv-pressure",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-03.png",
+      "word_count": 5,
+      "image_count": 10,
+      "occupancy_ratio": 0.4113,
+      "image_area_ratio": 0.006,
+      "min_font_size": 4.189,
+      "small_text_spans": 6,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 4,
+      "slide_id": "motivation-baseline-mismatch",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-04.png",
+      "word_count": 5,
+      "image_count": 0,
+      "occupancy_ratio": 0.4248,
+      "image_area_ratio": 0.0,
+      "min_font_size": 4.755,
+      "small_text_spans": 6,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 5,
+      "slide_id": "thesis",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-05.png",
+      "word_count": 46,
+      "image_count": 0,
+      "occupancy_ratio": 0.3634,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 6,
+      "slide_id": "outline:设计",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-06.png",
+      "word_count": 11,
+      "image_count": 0,
+      "occupancy_ratio": 0.1105,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "outline",
+      "section": "设计"
+    },
+    {
+      "page_number": 7,
+      "slide_id": "design-overview",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-07.png",
+      "word_count": 2,
+      "image_count": 0,
+      "occupancy_ratio": 0.3411,
+      "image_area_ratio": 0.0,
+      "min_font_size": 4.087,
+      "small_text_spans": 19,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 8,
+      "slide_id": "design-base-die",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-08.png",
+      "word_count": 58,
+      "image_count": 0,
+      "occupancy_ratio": 0.4252,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 9,
+      "slide_id": "design-kv-layout",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-09.png",
+      "word_count": 2,
+      "image_count": 0,
+      "occupancy_ratio": 0.3352,
+      "image_area_ratio": 0.0,
+      "min_font_size": 5.61,
+      "small_text_spans": 4,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 10,
+      "slide_id": "design-kv-lifecycle",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-10.png",
+      "word_count": 4,
+      "image_count": 0,
+      "occupancy_ratio": 0.421,
+      "image_area_ratio": 0.0,
+      "min_font_size": 6.805,
+      "small_text_spans": 33,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 11,
+      "slide_id": "design-runtime",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-11.png",
+      "word_count": 55,
+      "image_count": 0,
+      "occupancy_ratio": 0.4094,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 12,
+      "slide_id": "outline:评估",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-12.png",
+      "word_count": 11,
+      "image_count": 0,
+      "occupancy_ratio": 0.1105,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "outline",
+      "section": "评估"
+    },
+    {
+      "page_number": 13,
+      "slide_id": "eval-setup",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-13.png",
+      "word_count": 3,
+      "image_count": 0,
+      "occupancy_ratio": 0.435,
+      "image_area_ratio": 0.0,
+      "min_font_size": 6.928,
+      "small_text_spans": 13,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 14,
+      "slide_id": "eval-throughput",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-14.png",
+      "word_count": 3,
+      "image_count": 0,
+      "occupancy_ratio": 0.3754,
+      "image_area_ratio": 0.0,
+      "min_font_size": 5.173,
+      "small_text_spans": 20,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 15,
+      "slide_id": "eval-latency",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-15.png",
+      "word_count": 2,
+      "image_count": 0,
+      "occupancy_ratio": 0.2789,
+      "image_area_ratio": 0.0,
+      "min_font_size": 2.979,
+      "small_text_spans": 28,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 16,
+      "slide_id": "eval-energy-ablation",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-16.png",
+      "word_count": 4,
+      "image_count": 0,
+      "occupancy_ratio": 0.35,
+      "image_area_ratio": 0.0,
+      "min_font_size": 6.817,
+      "small_text_spans": 13,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 17,
+      "slide_id": "discussion-limits",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-17.png",
+      "word_count": 56,
+      "image_count": 0,
+      "occupancy_ratio": 0.4888,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "slide"
+    },
+    {
+      "page_number": 18,
+      "slide_id": "outline:总结",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-18.png",
+      "word_count": 11,
+      "image_count": 0,
+      "occupancy_ratio": 0.1105,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "outline",
+      "section": "总结"
+    },
+    {
+      "page_number": 19,
+      "slide_id": "conclusion",
+      "preview_path": "/private/tmp/vstack-validate/review/pages/page-19.png",
+      "word_count": 32,
+      "image_count": 0,
+      "occupancy_ratio": 0.3272,
+      "image_area_ratio": 0.0,
+      "min_font_size": 16.0,
+      "small_text_spans": 0,
+      "page_kind": "slide"
+    }
+  ],
+  "issues": [
+    {
+      "issue_id": "small-text-risk-001",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 3,
+      "slide_ids": [
+        "motivation-kv-pressure"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 6,
+        "min_font_size": 4.189
+      }
+    },
+    {
+      "issue_id": "small-text-risk-002",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 4,
+      "slide_ids": [
+        "motivation-baseline-mismatch"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 6,
+        "min_font_size": 4.755
+      }
+    },
+    {
+      "issue_id": "small-text-risk-003",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 7,
+      "slide_ids": [
+        "design-overview"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 19,
+        "min_font_size": 4.087
+      }
+    },
+    {
+      "issue_id": "small-text-risk-004",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 9,
+      "slide_ids": [
+        "design-kv-layout"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 4,
+        "min_font_size": 5.61
+      }
+    },
+    {
+      "issue_id": "small-text-risk-005",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 10,
+      "slide_ids": [
+        "design-kv-lifecycle"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 33,
+        "min_font_size": 6.805
+      }
+    },
+    {
+      "issue_id": "small-text-risk-006",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 13,
+      "slide_ids": [
+        "eval-setup"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 13,
+        "min_font_size": 6.928
+      }
+    },
+    {
+      "issue_id": "footer-band-overlap-007",
+      "issue_type": "footer-band-overlap",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 13,
+      "slide_ids": [
+        "eval-setup"
+      ],
+      "summary": "Content extends into the footer band and may collide with footer metadata.",
+      "details": {
+        "count": 1
+      }
+    },
+    {
+      "issue_id": "small-text-risk-008",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 14,
+      "slide_ids": [
+        "eval-throughput"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 20,
+        "min_font_size": 5.173
+      }
+    },
+    {
+      "issue_id": "edge-crowding-009",
+      "issue_type": "edge-crowding",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 14,
+      "slide_ids": [
+        "eval-throughput"
+      ],
+      "summary": "Some content sits very close to the slide edge.",
+      "details": {
+        "count": 6
+      }
+    },
+    {
+      "issue_id": "small-text-risk-010",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 15,
+      "slide_ids": [
+        "eval-latency"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 28,
+        "min_font_size": 2.979
+      }
+    },
+    {
+      "issue_id": "small-text-risk-011",
+      "issue_type": "small-text-risk",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 16,
+      "slide_ids": [
+        "eval-energy-ablation"
+      ],
+      "summary": "Several text spans render unusually small.",
+      "details": {
+        "small_text_spans": 13,
+        "min_font_size": 6.817
+      }
+    },
+    {
+      "issue_id": "edge-crowding-012",
+      "issue_type": "edge-crowding",
+      "severity": "warning",
+      "detected_stage": "rendered-slide-qa",
+      "page_number": 16,
+      "slide_ids": [
+        "eval-energy-ablation"
+      ],
+      "summary": "Some content sits very close to the slide edge.",
+      "details": {
+        "count": 2
+      }
+    }
+  ]
+}

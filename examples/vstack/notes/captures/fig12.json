@@ -1,0 +1,53 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 11,
+  "candidate_id": "vector-2",
+  "candidate_region": "auto",
+  "bbox": [
+    42.864,
+    216.378,
+    294.042,
+    333.106
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig12-ablation.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-2",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.348
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-2",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 11,
+    "xref": null,
+    "page_coverage": 0.0605,
+    "confidence": 0.348,
+    "suggested_mode": "vector",
+    "drawing_rects": 14,
+    "nearby_text_blocks": 21,
+    "nearby_text_preview": [
+      "Hardware-only",
+      "(+layout)",
+      "(+Request Scheduling)"
+    ],
+    "reason": "vector cluster from 14 drawing rect(s) with 21 nearby text block(s)",
+    "bbox": [
+      42.864,
+      216.378,
+      294.042,
+      333.106
+    ],
+    "source_bbox": [
+      42.864,
+      216.378,
+      294.042,
+      333.106
+    ]
+  }
+}

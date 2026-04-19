@@ -1,0 +1,53 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 7,
+  "candidate_id": "vector-1",
+  "candidate_region": "auto",
+  "bbox": [
+    53.798,
+    83.685,
+    294.003,
+    195.48
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig06-lifecycle.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-1",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.344
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-1",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 7,
+    "xref": null,
+    "page_coverage": 0.0554,
+    "confidence": 0.344,
+    "suggested_mode": "vector",
+    "drawing_rects": 51,
+    "nearby_text_blocks": 52,
+    "nearby_text_preview": [
+      "PU Bank 0 PU",
+      "Rows 0,4,8 \u2026",
+      "PU PU"
+    ],
+    "reason": "vector cluster from 51 drawing rect(s) with 52 nearby text block(s)",
+    "bbox": [
+      53.798,
+      83.685,
+      294.003,
+      195.48
+    ],
+    "source_bbox": [
+      53.798,
+      83.685,
+      294.003,
+      195.48
+    ]
+  }
+}

@@ -1,0 +1,786 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/vstack",
+  "deck": {
+    "title": "vStack：面向高效 LLM 推理的异构 HBM-PIM 架构与运行时",
+    "short_title": "vStack",
+    "scenario": "paper-reading",
+    "language": "zh",
+    "theme": "lemonade",
+    "source_pdf": "vstack.pdf",
+    "created_at": "2026-04-19T03:38:20+00:00",
+    "updated_at": "2026-04-19T03:55:00+00:00"
+  },
+  "archetype_policy": {
+    "mode": "fixed-theme",
+    "reference": ".codex/skills/academic-paper-to-slides/references/archetypes.json",
+    "derived_doc": ".codex/skills/academic-paper-to-slides/references/archetypes.md"
+  },
+  "slides": [
+    {
+      "slide_id": "title",
+      "section": "",
+      "title": "标题页",
+      "rhetorical_role": "title",
+      "archetype": "Title slide",
+      "takeaway": "交代论文题目、场景与核心主张。",
+      "claim_ids": [
+        "c3"
+      ],
+      "evidence": [
+        {
+          "kind": "claim",
+          "ref": "c3",
+          "detail": "deck thesis"
+        }
+      ],
+      "content_density": "low",
+      "qa_expectations": [
+        "标题页不出现续页",
+        "标题、venue 与页脚信息在单页内可读"
+      ]
+    },
+    {
+      "slide_id": "motivation-kv-pressure",
+      "section": "动机",
+      "title": "Decode 时的 KV 压力",
+      "rhetorical_role": "motivation",
+      "archetype": "Motivation / Background",
+      "takeaway": "decode attention 已从算力问题转成 KV 带宽与容量共同受限的问题。",
+      "claim_ids": [
+        "c1"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig01-workflow",
+          "detail": "prefill 与 decode 的资源形态差异"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:196-230",
+          "detail": "模型规模、上下文长度、并发请求同时放大 live KV footprint"
+        }
+      ],
+      "asset_ids": [
+        "fig01-workflow"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "info",
+          "label": "核心判断",
+          "body": "decode 每步只追加 1 个 token，却要重读整段历史 KV，因此注意力路径接近 O(1) 算术强度。"
+        },
+        {
+          "style": "success",
+          "label": "复用结构",
+          "body": "约 10% 的 KV blocks 贡献 77% 的 reuse，且短 API、代码编辑、长推理的 reuse 形态完全不同。"
+        }
+      ],
+      "bullets": [
+        "prefill 中 projection / FFN 更重，attention 的内存访问会被 O(L^2) 计算摊薄。",
+        "decode 中 KV footprint 会被模型规模、上下文长度与并发请求同时放大。"
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 1 仍保持可辨识的 prefill/decode 对比",
+        "左侧文字不变成长段落"
+      ]
+    },
+    {
+      "slide_id": "motivation-baseline-mismatch",
+      "section": "动机",
+      "title": "现有 HBM-PIM 的结构失配",
+      "rhetorical_role": "problem",
+      "archetype": "Figure-Led Vertical",
+      "takeaway": "Uniform 损容量，Dedicated-PIM 损 GPU-visible 带宽；问题出在 stack 内部分工缺失。",
+      "claim_ids": [
+        "c2"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig02-baselines",
+          "detail": "uniform 与 dedicated-PIM 的代价对比"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:275-307",
+          "detail": "区分粒度仍停在 die，而不是 layer"
+        }
+      ],
+      "asset_ids": [
+        "fig02-baselines"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Uniform",
+          "body": "所有 layer 都带 PIM，冷 KV、权重、激活也占 compute-enabled area。"
+        },
+        {
+          "style": "neutral",
+          "label": "Dedicated-PIM",
+          "body": "非 PIM 数据不再浪费面积，但 prefill、FFN 与 callback 共用的 HBM 带宽被固定切走。"
+        }
+      ],
+      "bullets": [
+        "真正缺失的是同一 stack 内的 layer specialization，而不是更多 software tiering。"
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 2 两种 baseline 都能清楚辨认",
+        "takeaway 不重复图下注释"
+      ]
+    },
+    {
+      "slide_id": "thesis",
+      "section": "动机",
+      "title": "论文主张",
+      "rhetorical_role": "thesis",
+      "archetype": "Table-Led Structured Slide",
+      "takeaway": "同一 stack 内必须同时提供 dense capacity、PIM compute 与 stack-local control。",
+      "claim_ids": [
+        "c3"
+      ],
+      "evidence": [
+        {
+          "kind": "text",
+          "ref": "source.txt:112-173",
+          "detail": "四点贡献与总体结果"
+        }
+      ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "核心主张",
+          "body": "把 hot KV、cold KV、weights、activations 放到不同物理层，而不是让所有字节为 PIM 逻辑付费。"
+        },
+        {
+          "style": "success",
+          "label": "关键数字",
+          "body": "相对 AttAcc，吞吐 1.62x，SLO 容量 1.70x，每 token 能耗下降 30%-47%。"
+        }
+      ],
+      "table": {
+        "headers": [
+          "贡献",
+          "要点"
+        ],
+        "rows": [
+          [
+            "硬件组织",
+            "vertical heterogeneous stack + logic base die"
+          ],
+          [
+            "数据放置",
+            "K/V 非对称布局贴合 attention dataflow"
+          ],
+          [
+            "运行时",
+            "placement、eviction、replication 按 trace 特征做取舍"
+          ]
+        ],
+        "columns": [
+          0.9,
+          1.4
+        ],
+        "align": [
+          "left",
+          "left"
+        ]
+      },
+      "content_density": "medium",
+      "qa_expectations": [
+        "贡献表不溢出为续页",
+        "关键数字保持单行可读"
+      ]
+    },
+    {
+      "slide_id": "design-overview",
+      "section": "设计",
+      "title": "vStack 整体结构",
+      "rhetorical_role": "overview",
+      "archetype": "Method Overview Side-by-Side",
+      "takeaway": "compute layers 只保留 hot KV，capacity layers 承担 dense storage，base die 负责跨层协同。",
+      "claim_ids": [
+        "c3"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig03-architecture",
+          "detail": "系统级结构"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:398-405",
+          "detail": "capacity / compute / base-die 的三段分工"
+        }
+      ],
+      "asset_ids": [
+        "fig03-architecture"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "info",
+          "label": "Capacity",
+          "body": "weights、activations、metadata 与 cold KV 走高密度路径。"
+        },
+        {
+          "style": "highlight",
+          "label": "Compute",
+          "body": "只有最热的 KV 留在 PIM-enabled layers，让 attention 就地执行。"
+        },
+        {
+          "style": "success",
+          "label": "Base Die",
+          "body": "跨层 DMA、地址转换与 attention-side communication 都在 stack 内协调。"
+        }
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 3 在右列保持清晰，不被压成缩略图",
+        "左侧三条职责描述都不换成段落"
+      ]
+    },
+    {
+      "slide_id": "design-base-die",
+      "section": "设计",
+      "title": "Base Die 控制点",
+      "rhetorical_role": "mechanism",
+      "archetype": "Table-Led Structured Slide",
+      "takeaway": "promotion、demotion、地址转换与 attention 协调都在 stack 内完成，compute-layer miss 不必退化为 host round-trip。",
+      "claim_ids": [
+        "c3"
+      ],
+      "evidence": [
+        {
+          "kind": "text",
+          "ref": "source.txt:456-483",
+          "detail": "三类 base-die 模块与 stack-local DMA"
+        }
+      ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "结论",
+          "body": "这篇论文真正新颖的地方不是再加一个 PIM 算子，而是把 memory controller 与跨层数据路径下沉到 base die。"
+        }
+      ],
+      "table": {
+        "headers": [
+          "模块",
+          "职责",
+          "为什么必须本地"
+        ],
+        "rows": [
+          [
+            "Disaggregated MC",
+            "layered address translation、队列仲裁、stack-local DMA",
+            "promotion / demotion 对 host 透明，不走 GPU round-trip"
+          ],
+          [
+            "Attention coordinator",
+            "gather、broadcast、partial reduce",
+            "让分布式 attention 在 stack 内完成协调"
+          ],
+          [
+            "Quantization unit",
+            "在线 K8V4 量化 / 反量化",
+            "迁移时顺手完成压缩，不额外插入 GPU kernel"
+          ]
+        ],
+        "columns": [
+          0.9,
+          1.1,
+          1.35
+        ],
+        "align": [
+          "left",
+          "left",
+          "left"
+        ]
+      },
+      "content_density": "medium",
+      "qa_expectations": [
+        "三列表格仍保持单页可读",
+        "标题与表格之间不出现空白浪费"
+      ]
+    },
+    {
+      "slide_id": "design-kv-layout",
+      "section": "设计",
+      "title": "K/V 非对称布局",
+      "rhetorical_role": "mechanism",
+      "archetype": "Figure-Led Vertical",
+      "takeaway": "K 用 token-major，V 用 dim-head，本质目标是让两个 attention 阶段都避免 cross-bank reduction。",
+      "claim_ids": [
+        "c4"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig05-kv-layout",
+          "detail": "score gather 与 context gather 都只需 concat"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:612-614",
+          "detail": "默认 TM/DH 的 T_agg = L + d"
+        }
+      ],
+      "asset_ids": [
+        "fig05-kv-layout"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "K",
+          "body": "bank b_K(n)=n mod B 保存整行，score gather 之后只需 concat。"
+        },
+        {
+          "style": "success",
+          "label": "V",
+          "body": "bank b_V(j)=j mod B 保存整列，output 组装同样避免 cross-bank reduction。"
+        }
+      ],
+      "bullets": [
+        "只有让数据布局贴合 attention dataflow，PIM bank 的本地带宽才真正被利用。"
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 5 中 K / V 两部分都能辨识",
+        "box 不挤压图到缩略图大小"
+      ]
+    },
+    {
+      "slide_id": "design-kv-lifecycle",
+      "section": "设计",
+      "title": "KV 生命周期",
+      "rhetorical_role": "mechanism",
+      "archetype": "Figure-Led Vertical",
+      "takeaway": "vStack 把 eviction 变成 demotion：热数据离开 compute 层后仍能以压缩形式留在 capacity 层。",
+      "claim_ids": [
+        "c4"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig06-lifecycle",
+          "detail": "promotion / demotion 路径"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:721-724",
+          "detail": "promotion 代价约 1-2 us"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:774-781",
+          "detail": "K8V4 容量扩展 2.667x"
+        }
+      ],
+      "asset_ids": [
+        "fig06-lifecycle"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Demotion",
+          "body": "compute -> capacity 时在线做 FP16→K8V4，只把最热的 KV 留在 compute 层。"
+        },
+        {
+          "style": "success",
+          "label": "容量效果",
+          "body": "capacity-side KV 有效扩展 2.667x，promotion 只需容量层读加解压，而不是重新 prefill。"
+        }
+      ],
+      "bullets": [
+        "前台只搬回真正 latency-visible 的 miss，避免把所有冷数据都重新热起来。"
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 6 数据路径仍可辨认",
+        "三条 box 保持单页且不挤压证据"
+      ]
+    },
+    {
+      "slide_id": "design-runtime",
+      "section": "设计",
+      "title": "Runtime 策略",
+      "rhetorical_role": "mechanism",
+      "archetype": "Table-Led Structured Slide",
+      "takeaway": "异构 stack 只是前提，真正决定收益的是哪些 KV 值得占 compute-layer 空间。",
+      "claim_ids": [
+        "c4"
+      ],
+      "evidence": [
+        {
+          "kind": "text",
+          "ref": "source.txt:721-790",
+          "detail": "topology-aware placement、category-aware eviction、bounded replication"
+        }
+      ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "设计依据",
+          "body": "10% blocks 贡献 77% reuse，但不同 trace 的 reuse window 差异很大，所以不能靠单一 LRU。"
+        }
+      ],
+      "table": {
+        "headers": [
+          "策略",
+          "作用"
+        ],
+        "rows": [
+          [
+            "Topology-aware placement",
+            "新请求优先落在已有 prefix 所在的 stack / card，减少初始迁移与 callback"
+          ],
+          [
+            "Category-aware eviction",
+            "结合类别、上次访问时间、offset 与 remote-hit 估计短期复用概率"
+          ],
+          [
+            "Bounded replication",
+            "只为高 fan-out、高 callback 成本的 prefix 建副本"
+          ],
+          [
+            "Continuous batching",
+            "在动态到达下持续暴露 prefix sharing 机会"
+          ]
+        ],
+        "columns": [
+          0.95,
+          1.35
+        ],
+        "align": [
+          "left",
+          "left"
+        ]
+      },
+      "content_density": "medium",
+      "qa_expectations": [
+        "策略表不出现换页",
+        "表格文字仍明显短于论文原文"
+      ]
+    },
+    {
+      "slide_id": "eval-setup",
+      "section": "评估",
+      "title": "实验设置",
+      "rhetorical_role": "evaluation-setup",
+      "archetype": "Motivation / Background",
+      "takeaway": "评估覆盖 4 个模型与 4 类 production-derived traces，故意跨越高复用到低复用两端。",
+      "claim_ids": [
+        "c5"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig07-workloads",
+          "detail": "四类 trace 的输入输出长度分布"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:813-928",
+          "detail": "平台、对比对象、模型与 traces"
+        }
+      ],
+      "asset_ids": [
+        "fig07-workloads"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "info",
+          "label": "平台 / 对比",
+          "body": "DGX-A100，8 GPUs，bank-level PIM；Full-GPU / Uniform / AttAcc / vStack 共用同一 scheduler。"
+        },
+        {
+          "style": "success",
+          "label": "覆盖范围",
+          "body": "模型从 4B 到 175B；trace 从高复用短 API 到低复用长推理，正好覆盖 vStack 最可能受益与失效的两端。"
+        }
+      ],
+      "bullets": [
+        "带宽：UCIe 512 GB/s × 5 stacks，TSV DMA 896 GB/s / stack，NVLink3 600 GB/s。",
+        "模型：Qwen3-4B、Qwen3-32B、Devstral-123B、GPT-175B。"
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 7 仍能看清四类 trace 的差异",
+        "左侧设置说明不挤压成三段长文"
+      ]
+    },
+    {
+      "slide_id": "eval-throughput",
+      "section": "评估",
+      "title": "吞吐与容量收益",
+      "rhetorical_role": "result",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "vStack 在 16 个 model-trace 组合上全部优于 AttAcc，且模型越大、overflow 越严重，增益越强。",
+      "claim_ids": [
+        "c6"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig08-throughput",
+          "detail": "所有组合均优于 AttAcc，GPT-175B 上 Uniform OOM"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:975-986",
+          "detail": "几何平均 1.62x，按模型 1.20x / 1.38x / 1.94x / 2.15x"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:1057-1064",
+          "detail": "2x latency SLO 下容量几何平均 1.70x"
+        }
+      ],
+      "asset_ids": [
+        "fig08-throughput"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "info",
+          "label": "关键数字",
+          "body": "相对 AttAcc，token throughput 几何平均提升 1.62x；按模型分别为 1.20x / 1.38x / 1.94x / 2.15x。"
+        },
+        {
+          "style": "success",
+          "label": "容量含义",
+          "body": "2x latency SLO 下，SLO-compliant serving capacity 再提升 1.70x；收益在大模型和高 overflow 负载上最明显。"
+        }
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 8 的各子图标签仍可读",
+        "两条结论 box 不遮挡宽图空间"
+      ]
+    },
+    {
+      "slide_id": "eval-latency",
+      "section": "评估",
+      "title": "时延优势",
+      "rhetorical_role": "result",
+      "archetype": "Method Overview With Stacked Evidence",
+      "takeaway": "更短的 attention step 会更早释放 decode slots，因此 queueing 不会像 AttAcc 那样在高负载下发散。",
+      "claim_ids": [
+        "c6"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig09-latency",
+          "detail": "end-to-end latency vs. QPS"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig11-ttft-tbt",
+          "detail": "TTFT / TBT 分解"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:1038-1044",
+          "detail": "queue delay 在 QPS=0.2 / 1.0 分别下降 86% / 95%"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:1075-1078",
+          "detail": "TTFT 几何平均 127x"
+        }
+      ],
+      "asset_ids": [
+        "fig09-latency",
+        "fig11-ttft-tbt"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "info",
+          "label": "Queueing",
+          "body": "Devstral-123B / traceA 上，平均 queue delay 在 QPS=0.2 下降 86%，在 QPS=1.0 下降 95%。"
+        },
+        {
+          "style": "success",
+          "label": "TTFT",
+          "body": "AttAcc 相对 vStack 的 p50 TTFT 几何平均高 127x，峰值超过 4500x，说明优势首先来自更早释放 decode slots。"
+        }
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 9 与 Figure 11 在右列都保持可读",
+        "左侧两条结论不挤占 stacked evidence 的高度"
+      ]
+    },
+    {
+      "slide_id": "eval-energy-ablation",
+      "section": "评估",
+      "title": "收益来源与能耗",
+      "rhetorical_role": "result",
+      "archetype": "Two-Up Comparison",
+      "takeaway": "最大单项收益先来自 KV-aware layout，且这些吞吐改进不是靠更高能耗换来的。",
+      "claim_ids": [
+        "c6"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig12-ablation",
+          "detail": "layout +57.9% 为最大单项收益"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig10-energy",
+          "detail": "每 token 能耗下降 30%-47%"
+        }
+      ],
+      "asset_ids": [
+        "fig12-ablation",
+        "fig10-energy"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
+        {
+          "style": "info",
+          "label": "主因",
+          "body": "layout 单项带来 +57.9%，说明物理布局先决定上限，调度与压缩是在这个基础上的增益放大器。"
+        },
+        {
+          "style": "success",
+          "label": "代价",
+          "body": "每 token 能耗再降 30%-47%，节省主要来自 attention 的 off-chip memory access，而不是牺牲效率换吞吐。"
+        }
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 12 与 Figure 10 均不缩成缩略图",
+        "比较页标题保持单行"
+      ]
+    },
+    {
+      "slide_id": "discussion-limits",
+      "section": "评估",
+      "title": "论文边界",
+      "rhetorical_role": "discussion",
+      "archetype": "Table-Led Structured Slide",
+      "takeaway": "当 hot/cold 分层不明显或工作集本就能放进 flat PIM tier 时，vStack 的价值会明显收缩。",
+      "claim_ids": [
+        "c7"
+      ],
+      "evidence": [
+        {
+          "kind": "text",
+          "ref": "source.txt:981-986",
+          "detail": "Qwen3-4B / thinking 只有 1.03x"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:1187-1200",
+          "detail": "命中率悖论与 weighted service time"
+        }
+      ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "结论",
+          "body": "vStack 并不是无条件优于 AttAcc，它依赖明显的 hot/cold 结构与足够强的 KV overflow。"
+        }
+      ],
+      "table": {
+        "headers": [
+          "边界现象",
+          "含义"
+        ],
+        "rows": [
+          [
+            "小模型 / 低复用",
+            "Qwen3-4B / thinking 只有 1.03x，说明 flat PIM 已足以容纳其工作集。"
+          ],
+          [
+            "命中率悖论",
+            "Qwen3-32B / traceA 上，vStack compute-hit 只有 0.56，但吞吐仍高 1.43x。"
+          ],
+          [
+            "真正指标",
+            "不能只看 compute-hit，要看 miss 之后落到哪里，capacity-layer miss 远便宜于 cross-die forwarding。"
+          ],
+          [
+            "工程现实",
+            "结果来自 cycle-accurate simulation，HBM4 实机落地仍需后续验证。"
+          ]
+        ],
+        "columns": [
+          0.95,
+          1.45
+        ],
+        "align": [
+          "left",
+          "left"
+        ]
+      },
+      "content_density": "medium",
+      "qa_expectations": [
+        "边界页不出现续页",
+        "四条边界仍保留判断而非复述摘要"
+      ]
+    },
+    {
+      "slide_id": "conclusion",
+      "section": "总结",
+      "title": "结论",
+      "rhetorical_role": "conclusion",
+      "archetype": "Conclusion / Takeaways",
+      "takeaway": "这篇论文把 HBM-PIM 从 attention 加速器推进成面向 KV serving 的异构 memory substrate。",
+      "claim_ids": [
+        "c3"
+      ],
+      "evidence": [
+        {
+          "kind": "claim",
+          "ref": "c3",
+          "detail": "stack thesis"
+        },
+        {
+          "kind": "claim",
+          "ref": "c6",
+          "detail": "measured benefit"
+        }
+      ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "第一点",
+          "body": "真正需要异构的是 stack 内物理层，而不是只在系统外层做 software tiering。"
+        },
+        {
+          "style": "highlight",
+          "label": "第二点",
+          "body": "base die control 让 promotion、demotion、量化与 attention coordination 都变成 stack-local 操作。"
+        },
+        {
+          "style": "success",
+          "label": "第三点",
+          "body": "最大收益出现在大模型、高 overflow、可预测 prefix reuse 的场景；这也是最值得部署的地方。"
+        }
+      ],
+      "content_density": "low",
+      "qa_expectations": [
+        "总结页不沦为摘要复读",
+        "三条 takeaways 在单页内均可读"
+      ]
+    }
+  ],
+  "notes": "采用中文 systems paper reading 结构：动机、设计、评估、总结。优先使用脚本支持的 archetype，不使用 escape 模式。"
+}
