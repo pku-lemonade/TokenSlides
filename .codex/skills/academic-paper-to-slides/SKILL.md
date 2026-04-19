@@ -102,6 +102,9 @@ Rules:
      - `table`: `headers`, `rows`, and optional `columns` / `align`
      - `cards`: 2 or 3 card specs for `Method Cards`
      - `equation`: local equation content when `equation_ids` alone are not enough
+     - `takeaway_mode`: `auto`, `box`, or `none`
+     - `asset_caption_mode`: `short`, `full`, or `none`
+     - `asset_captions`: per-asset caption overrides; use an empty string to suppress one caption explicitly
      - Let each slide defend one claim.
      - Assign evidence from the asset registry or from exact numbers in the paper before writing the slide.
      - Spread method and results across more pages instead of compressing text.
@@ -114,7 +117,16 @@ Rules:
      - Vary neighboring figure-heavy slides instead of repeating the same side-by-side layout by default.
      - For systems papers, give the thesis, overview, major mechanisms, and main evidence room to breathe across separate slides when needed.
      - Do not force the default method side-by-side layout when the figure is short or wide. First check whether the registry already contains another compatible asset or sub-asset. Then prefer a stacked evidence column or a wide-evidence page before reaching for late crop work.
+     - Keep `takeaway` canonical in JSON even when the rendered slide does not use a dedicated takeaway box.
+     - Use `takeaway_mode: auto` by default. The emitter will add a dedicated takeaway box only on box-light figure-led slides.
+     - Use `takeaway_mode: box` when the slide needs an explicit top takeaway box.
+     - Use `takeaway_mode: none` when another visible box or short body statement already carries the main judgment.
+     - Captions default to a short form. Use `asset_caption_mode: full` only when the longer caption earns the space.
+     - For Chinese decks with paper-derived figures, default to `asset_caption_mode: short` on figure-bearing slides. Do not systematically suppress captions just because the slide title is already in Chinese.
+     - Use `asset_caption_mode: none` or an empty `asset_captions` override only when the figure is unmistakable without a caption and the page budget is genuinely tight.
      - Plan boxed takeaways and captions as short lines. Prefer one-line boxes and one-line captions unless the evidence truly needs more text.
+     - If a slide already uses body boxes, do not mix in loose bullets as a third text style. Fold the support points into a compact box or merge one short sentence into the last visible box.
+     - If a figure-led or comparison slide also needs short follow-on bullets, keep them inside the box system. Do not leave free bullets around `#imgs(...)`, because Lemonade's fill-height image helper can cause them to collide with the figure and the mixed styling looks off in this theme.
      - Use the subset of registered assets that sharpens the argument.
 4. Draft with the local presentation system.
    - Read workspace instructions first if the repo contains `AGENTS.md`.
@@ -141,8 +153,8 @@ Rules:
    - Rendered review now also records whether escape mode was used on any slide and whether validation had to retry with escape disabled after a compile failure.
    - Use `references/visual-qa.md` as a pass/fail rubric.
    - Fix failures in this order: revise the slide plan or archetype, reuse another recovered asset, recover or split a better source asset, crop cleanup, split slide, then consider local overrides.
-   - On figure-led slides, default to one or two short takeaway boxes. Each box should preferably fit on one line and should rarely exceed two.
-   - Prefer one-line captions. If a caption wraps, first shorten it; if needed, slightly widen the figure block when that does not materially hurt figure readability.
+   - On figure-led slides, use one or two short takeaway boxes only when the judgment is not already carried by another short body box.
+   - Prefer one-line captions. The scripted emitter now defaults to short captions; if a caption still wraps, shorten or suppress it before widening the figure block.
    - Remove low-value wording before changing layout: obvious labels, weak transitions, and phrases such as `Figure X shows ...` or `the figure above shows ...`.
    - Do not accept accidental continuation pages, especially title-only pages or orphaned body fragments created by overflow.
    - Accept the deck only when pagination, outlines, footers, and evidence readability all pass.
@@ -150,7 +162,9 @@ Rules:
 ## Non-Negotiables
 
 - Rebuild the paper as a presentation argument rather than a section-by-section retelling.
-- Give every slide a visible takeaway; keep captions as supporting text.
+- Keep a slide-level takeaway in JSON for every planned slide.
+- Do not force a dedicated takeaway box onto every rendered slide; use one only when it improves the page.
+- Keep captions as supporting text.
 - Run the initial asset pass before drafting and keep figure recovery delegated to `figure_extractor`.
 - Keep `notes/*.json` canonical and re-render the Markdown notes instead of treating the `.md` files as the source of truth.
 - Do not leave title-only continuation pages, title-plus-image-only pages, or body-only overflow pages.

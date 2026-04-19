@@ -291,6 +291,7 @@ def analyze_page(
 
     all_top = bool(occupied_rects) and all(item.y1 <= top_cutoff for item in occupied_rects)
     all_bottom = bool(occupied_rects) and all(item.y0 >= bottom_cutoff for item in occupied_rects)
+    has_substantial_occupancy = occupancy_ratio >= 0.25
 
     min_font_size = None
     small_text_spans = 0
@@ -324,7 +325,7 @@ def analyze_page(
             footer_overlap_blocks.append(block["bbox"])
 
     issues: list[dict[str, Any]] = []
-    if page_number != 1 and word_count < 5 and not image_blocks:
+    if page_number != 1 and word_count < 5 and not image_blocks and not has_substantial_occupancy:
         append_issue(
             issues,
             page_number,
@@ -334,7 +335,7 @@ def analyze_page(
             "Page is almost empty after render.",
             {"word_count": word_count, "image_count": len(image_blocks)},
         )
-    elif page_number != 1 and not image_blocks and word_count <= 28 and all_top:
+    elif page_number != 1 and not image_blocks and word_count <= 28 and all_top and not has_substantial_occupancy:
         append_issue(
             issues,
             page_number,
@@ -344,7 +345,7 @@ def analyze_page(
             "Page looks like a title-only continuation page.",
             {"word_count": word_count, "occupancy_ratio": occupancy_ratio},
         )
-    elif page_number != 1 and not image_blocks and word_count <= 50 and all_bottom:
+    elif page_number != 1 and not image_blocks and word_count <= 50 and all_bottom and not has_substantial_occupancy:
         append_issue(
             issues,
             page_number,

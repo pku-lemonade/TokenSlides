@@ -33,9 +33,11 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 
 - Put exact numbers and the corresponding conclusion in the same sentence when possible.
 - On figure slides, body text explains why the figure matters; the caption identifies what the figure is.
-- On figure-heavy slides, default to one or two short takeaway boxes; each box should preferably fit on one line and rarely exceed two.
+- 中文图页默认保留简短 caption，用来标识图的对象或子结论；不要把整套 deck 的 `asset_caption_mode` 习惯性设成 `none`。
+- 对图主导的页面，只有在需要显式强调结论时才放 1 到 2 个简短 takeaway box；如果别的短 box 已经清楚表达主判断，就不要再强行加 dedicated takeaway box。
+- 如果页面已经用了 box，就不要再混入裸 bullet 作为第三种正文样式；把补充点折进一个短 box，或并入已有 box。
 - 优先让 box 保持单行；如果换行，先重写句子，再考虑改版式。
-- 优先让 caption 保持单行；如果 caption 换行，先缩短文字，必要时再略微放宽图块宽度，但不要牺牲证据可读性。
+- 优先让 caption 保持单行；默认使用更短的 caption。若 caption 仍然换行，先缩短或直接去掉，再考虑略微放宽图块宽度，但不要牺牲证据可读性。
 - If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
 - 如果标题过长，已经把正文挤到续页，说明这页的标题本身就该先缩短。
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
