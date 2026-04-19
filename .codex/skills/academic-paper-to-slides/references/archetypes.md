@@ -116,7 +116,7 @@ Contract:
 
 Notes:
 
-- The caption identifies the figure. The box carries the judgment.
+- The caption identifies the figure. A dedicated takeaway box is optional if another short body box already carries the judgment.
 
 ## Method Overview Side-by-Side
 

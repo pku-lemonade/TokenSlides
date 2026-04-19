@@ -13,6 +13,7 @@ Use this rubric after the deck compiles. A slide that technically compiles can s
 
 - Each slide makes one main point.
 - Every evidence-led slide has an explicit takeaway in the body, not only in the caption.
+- The takeaway does not need to be a dedicated `Takeaway` box if another short visible box or body line already states the judgment.
 - The deck argues by claims, not by replaying the paper section order.
 
 ## Figure Pass
@@ -26,7 +27,8 @@ Use this rubric after the deck compiles. A slide that technically compiles can s
 ## Layout Pass
 
 - Figure-led slides do not mix one takeaway box with a loose paragraph.
-- On figure-led slides, each takeaway box should preferably fit on one line and should rarely exceed two.
+- Not every slide needs a dedicated takeaway box.
+- When a figure-led slide does use takeaway boxes, each one should preferably fit on one line and should rarely exceed two.
 - Captions should preferably fit on one line. If a caption wraps, shorten it or slightly widen the figure block only if figure readability is preserved.
 - One-figure slides do not stack so much text above the figure that the evidence collapses.
 - Count title, boxes, and caption together. If they leave the evidence as a thumbnail or narrow strip, the slide fails even if each box is individually short.

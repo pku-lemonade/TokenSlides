@@ -20,6 +20,13 @@ ALLOWED_ASSET_TYPES = ("figure", "table", "equation")
 ALLOWED_DENSITY_TARGETS = ("low", "medium", "high")
 ALLOWED_REVIEW_STATUSES = ("pending", "pass", "warning", "fail")
 ALLOWED_RENDER_MODES = ("script", "escape")
+FIGURE_FORWARD_ARCHETYPES = {
+    "Figure-Led Vertical",
+    "Wide or Fat Evidence",
+    "Two-Up Comparison",
+    "Results Comparison",
+    "Motivation / Background",
+}
 SCRIPT_DIR = Path(__file__).resolve().parent
 ARCHETYPE_SPECS_PATH = SCRIPT_DIR.parent / "references" / "archetypes.json"
 REFERENCE_ARCHETYPES_PATH = SCRIPT_DIR.parent / "references" / "archetypes.md"
@@ -963,6 +970,62 @@ def asset_image_expr(asset: dict[str, Any], deck_path: Path, workspace: Path) ->
     return f'image("{typst_string(relative)}")'
 
 
+def normalize_caption_mode(value: Any) -> str:
+    mode = str(value or "short").strip().lower()
+    aliases = {
+        "auto": "short",
+        "short": "short",
+        "brief": "short",
+        "label": "short",
+        "full": "full",
+        "long": "full",
+        "none": "none",
+        "hide": "none",
+        "hidden": "none",
+        "omit": "none",
+    }
+    return aliases.get(mode, "short")
+
+
+def strip_asset_prefix(label: str) -> str:
+    stripped = re.sub(r"^(Figure|Table)\s+[0-9A-Za-z().-]+\s*:\s*", "", label).strip()
+    return stripped or label.strip()
+
+
+def lookup_caption_override(caption_overrides: Any, asset_id: str, index: int) -> tuple[bool, Any]:
+    if isinstance(caption_overrides, dict) and asset_id in caption_overrides:
+        return True, caption_overrides[asset_id]
+    if isinstance(caption_overrides, list) and index < len(caption_overrides):
+        return True, caption_overrides[index]
+    return False, None
+
+
+def resolve_asset_caption(
+    asset: dict[str, Any],
+    asset_id: str,
+    *,
+    caption_override_present: bool,
+    caption_override: Any,
+    caption_mode: str,
+) -> str:
+    if caption_override_present:
+        return plain_text(caption_override)
+    if caption_mode == "none":
+        return ""
+    if caption_mode == "full":
+        return plain_text(asset.get("normalized_caption") or asset.get("label") or asset_id)
+
+    title = plain_text(asset.get("title")).strip()
+    if title:
+        return title
+
+    label = plain_text(asset.get("label")).strip()
+    if label:
+        return strip_asset_prefix(label)
+
+    return plain_text(asset.get("normalized_caption") or asset_id)
+
+
 def resolve_slide_assets(
     slide: dict[str, Any],
     assets_by_id: dict[str, dict[str, Any]],
@@ -971,18 +1034,15 @@ def resolve_slide_assets(
 ) -> tuple[list[dict[str, Any]], list[str]]:
     resolved: list[dict[str, Any]] = []
     unresolved: list[str] = []
-    caption_overrides = slide.get("asset_captions") or {}
+    caption_overrides = slide.get("asset_captions")
+    caption_mode = normalize_caption_mode(slide.get("asset_caption_mode"))
 
     for index, asset_id in enumerate(slide.get("asset_ids", [])):
         asset = assets_by_id.get(asset_id)
         if not asset:
             unresolved.append(asset_id)
             continue
-        caption_override = None
-        if isinstance(caption_overrides, dict):
-            caption_override = caption_overrides.get(asset_id)
-        elif isinstance(caption_overrides, list) and index < len(caption_overrides):
-            caption_override = caption_overrides[index]
+        caption_override_present, caption_override = lookup_caption_override(caption_overrides, asset_id, index)
 
         expr = asset_image_expr(asset, deck_path, workspace)
         if expr is None:
@@ -992,11 +1052,12 @@ def resolve_slide_assets(
                 "asset_id": asset_id,
                 "expr": expr,
                 "label": plain_text(asset.get("label") or asset_id),
-                "caption": plain_text(
-                    caption_override
-                    or asset.get("normalized_caption")
-                    or asset.get("label")
-                    or asset_id
+                "caption": resolve_asset_caption(
+                    asset,
+                    asset_id,
+                    caption_override_present=caption_override_present,
+                    caption_override=caption_override,
+                    caption_mode=caption_mode,
                 ),
                 "aspect_ratio": (asset.get("dimensions") or {}).get("aspect_ratio"),
                 "notes": plain_text(asset.get("notes")),
@@ -1041,10 +1102,35 @@ def normalize_box(raw: Any, index: int) -> dict[str, Any]:
     }
 
 
+def normalize_takeaway_mode(value: Any) -> str:
+    mode = str(value or "auto").strip().lower()
+    aliases = {
+        "auto": "auto",
+        "box": "box",
+        "show": "box",
+        "none": "none",
+        "hide": "none",
+        "hidden": "none",
+        "omit": "none",
+    }
+    return aliases.get(mode, "auto")
+
+
+def should_render_takeaway_box(slide: dict[str, Any]) -> bool:
+    takeaway_mode = normalize_takeaway_mode(slide.get("takeaway_mode"))
+    if takeaway_mode == "box":
+        return True
+    if takeaway_mode == "none":
+        return False
+    if slide.get("boxes"):
+        return False
+    return str(slide.get("archetype") or "") in FIGURE_FORWARD_ARCHETYPES
+
+
 def resolve_slide_boxes(slide: dict[str, Any]) -> list[dict[str, Any]]:
     boxes: list[dict[str, Any]] = []
     takeaway = slide.get("takeaway")
-    if takeaway:
+    if takeaway and should_render_takeaway_box(slide):
         boxes.append(
             {
                 "style": slide.get("takeaway_style", "info"),
@@ -1054,14 +1140,6 @@ def resolve_slide_boxes(slide: dict[str, Any]) -> list[dict[str, Any]]:
         )
     for index, raw in enumerate(slide.get("boxes", []), start=len(boxes)):
         boxes.append(normalize_box(raw, index))
-    if not boxes and slide.get("bullets"):
-        boxes.append(
-            {
-                "style": "neutral",
-                "label": slide.get("bullets_label", "Points"),
-                "body": slide.get("bullets"),
-            }
-        )
     return boxes
 
 
@@ -1084,7 +1162,8 @@ def render_box_body_lines(label: str, body: Any) -> list[str]:
 
 def render_box_block(box: dict[str, Any]) -> list[str]:
     macro = STYLE_TO_MACRO.get(str(box.get("style", "neutral")).lower(), "nbox")
-    lines = [f"#{macro}["]
+    compact = bool(box.get("compact"))
+    lines = [f"#{macro}(compact: true)["] if compact else [f"#{macro}["]
     lines.extend(f"  {line}" if line else "  " for line in render_box_body_lines(plain_text(box.get("label")), box.get("body")))
     lines.append("]")
     lines.append("")
@@ -1110,6 +1189,81 @@ def render_bullet_list(items: list[Any]) -> list[str]:
 
 def render_text_box(style: str, label: str, body: Any) -> list[str]:
     return render_box_block({"style": style, "label": label, "body": body})
+
+
+def contains_cjk(text: str) -> bool:
+    return bool(re.search(r"[\u3400-\u9fff]", text))
+
+
+def merge_box_body(existing: Any, additions: list[Any]) -> Any:
+    addition_texts = [plain_text(item).strip() for item in additions if plain_text(item).strip()]
+    if not addition_texts:
+        return existing
+    if isinstance(existing, list):
+        return [*existing, *addition_texts]
+
+    base_text = plain_text(existing).strip()
+    if not base_text:
+        merged = addition_texts[0]
+        for addition in addition_texts[1:]:
+            if merged.endswith(("。", "！", "？", ".", "!", "?", "；", ";", "：", ":")):
+                merged = f"{merged} {addition}"
+            else:
+                separator = "；" if contains_cjk(f"{merged}{addition}") else ";"
+                merged = f"{merged}{separator} {addition}"
+        return merged
+
+    merged = base_text
+    for addition in addition_texts:
+        if not addition:
+            continue
+        if merged.endswith(("。", "！", "？", ".", "!", "?", "；", ";", "：", ":")):
+            merged = f"{merged} {addition}"
+        else:
+            separator = "；" if contains_cjk(f"{merged}{addition}") else ";"
+            merged = f"{merged}{separator} {addition}"
+    return merged
+
+
+def fold_support_points_into_boxes(
+    boxes: list[dict[str, Any]],
+    bullets: list[Any],
+    *,
+    box_limit: int | None,
+    support_style: str = "neutral",
+) -> list[dict[str, Any]]:
+    support_items = [plain_text(item).strip() for item in bullets if plain_text(item).strip()]
+    if not support_items:
+        return list(boxes)
+
+    visible_boxes = list(boxes[:box_limit] if box_limit is not None else boxes)
+    support_body: Any = merge_box_body("", support_items)
+
+    if box_limit is None or len(visible_boxes) < box_limit:
+        visible_boxes.append(
+            {
+                "style": support_style,
+                "label": "",
+                "body": support_body,
+                "compact": True,
+            }
+        )
+        return visible_boxes
+
+    if visible_boxes:
+        merged_box = dict(visible_boxes[-1])
+        merged_box["body"] = merge_box_body(merged_box.get("body"), support_items)
+        visible_boxes[-1] = merged_box
+        return visible_boxes
+
+    return [
+        {
+            "style": support_style,
+            "label": "",
+            "body": support_body,
+            "compact": True,
+        }
+    ]
 
 
 def render_imgs_block(
@@ -1331,7 +1485,8 @@ def render_generic_slide(
 ) -> tuple[list[str], list[str]]:
     lines: list[str] = []
     warnings: list[str] = []
-    lines.extend(render_box_stack(boxes, limit=3))
+    body_boxes = fold_support_points_into_boxes(boxes, slide.get("bullets", []), box_limit=3)
+    lines.extend(render_box_stack(body_boxes))
     table_lines = render_table_block(slide.get("table"))
     if slide.get("table") and not table_lines:
         warnings.append(f"slide {slide.get('slide_id') or slide.get('title')}: table data is incomplete")
@@ -1340,8 +1495,6 @@ def render_generic_slide(
         lines.extend(render_imgs_block(asset_entries[:2], width="94%"))
     if equations:
         lines.extend(render_equation_block(equations[0]))
-    if slide.get("bullets"):
-        lines.extend(render_bullet_list(slide.get("bullets", [])))
     if not lines:
         warnings.append(f"slide {slide.get('slide_id') or slide.get('title')}: no renderable content")
     return lines, warnings
@@ -1382,10 +1535,14 @@ def render_figure_led_vertical_body(
             f"slide {slide.get('slide_id') or slide.get('title')}: {slide.get('archetype')} selected without assets"
         )
     lines: list[str] = []
-    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 2)))
-    lines.extend(render_imgs_block(asset_entries[:2], width=width))
+    box_limit = limit_from_spec(spec, "boxes_max", 2)
     bullet_limit = limit_from_spec(spec, "bullets_max", 3)
-    lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
+    # Figure-led pages in Lemonade look best when every supporting point stays inside
+    # the box system. When the text budget is already full, merge the extra sentence
+    # into the last visible box instead of leaving a free bullet above the figure.
+    lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
+    lines.extend(render_imgs_block(asset_entries[:2], width=width))
     return lines, warnings
 
 
@@ -1414,9 +1571,8 @@ def render_method_side_by_side_body(
             break
     columns = [0.82, 1.18] if first_ratio and first_ratio < 1.0 else [0.92, 1.08]
     bullet_limit = limit_from_spec(spec, "bullets_max", 2)
-    left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
-        bullets[:bullet_limit] if bullet_limit is not None else bullets
-    )
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
+    left_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
     right_panel = render_imgs_block(asset_entries[:1], width="100%") or render_text_box(
         "neutral",
         "Missing evidence",
@@ -1444,9 +1600,8 @@ def render_method_stacked_evidence_body(
             f"slide {slide.get('slide_id') or slide.get('title')}: truncated stacked-evidence method boxes to {box_limit} to avoid overflow"
         )
     bullet_limit = limit_from_spec(spec, "bullets_max", 2)
-    left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
-        bullets[:bullet_limit] if bullet_limit is not None else bullets
-    )
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
+    left_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
     right_panel = render_stacked_images(asset_entries[:2]) or render_text_box(
         "neutral",
         "Missing evidence",
@@ -1497,15 +1652,16 @@ def render_comparison_body(
             f"slide {slide.get('slide_id') or slide.get('title')}: comparison archetype usually needs 2 assets or a comparison table"
         )
     lines: list[str] = []
-    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 2)))
+    box_limit = limit_from_spec(spec, "boxes_max", 2)
+    bullet_limit = limit_from_spec(spec, "bullets_max", 2)
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
+    lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
     if len(asset_entries) >= 2:
         lines.extend(render_imgs_block(asset_entries[:2], width="100%"))
     elif slide.get("table"):
         lines.extend(render_table_block(slide.get("table")))
     elif asset_entries:
         lines.extend(render_imgs_block(asset_entries[:1], width="92%"))
-    bullet_limit = limit_from_spec(spec, "bullets_max", 2)
-    lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
     return lines, warnings
 
 
@@ -1554,11 +1710,10 @@ def render_equation_led_body(
         "Missing equation",
         "Provide `equation` or `equation_ids` for this archetype.",
     )
-    right_panel = render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 3)) + render_bullet_list(
-        bullets[: limit_from_spec(spec, "bullets_max", 3)]
-        if limit_from_spec(spec, "bullets_max", 3) is not None
-        else bullets
-    )
+    box_limit = limit_from_spec(spec, "boxes_max", 3)
+    bullet_limit = limit_from_spec(spec, "bullets_max", 3)
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
+    right_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
     return render_grid([0.95, 1.05], [left_panel, right_panel]), warnings
 
 
@@ -1573,21 +1728,20 @@ def render_motivation_background_body(
     lines: list[str] = []
     box_limit = limit_from_spec(spec, "boxes_max", 3)
     bullet_limit = limit_from_spec(spec, "bullets_max", 4)
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
     table_lines = render_table_block(slide.get("table"))
     if table_lines:
-        left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
-            bullets[:bullet_limit] if bullet_limit is not None else bullets
-        )
+        left_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
         lines.extend(render_grid([0.95, 1.05], [left_panel, table_lines]))
     elif asset_entries:
-        left_panel = render_box_stack(boxes, limit=box_limit) + render_bullet_list(
-            bullets[:bullet_limit] if bullet_limit is not None else bullets
-        )
+        left_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
         right_panel = render_imgs_block(asset_entries[:1], width="100%")
         lines.extend(render_grid([0.95, 1.05], [left_panel, right_panel]))
     else:
-        lines.extend(render_box_stack(boxes, limit=box_limit))
-        lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+        if boxes:
+            lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
+        else:
+            lines.extend(render_bullet_list(bullet_items))
     return lines, []
 
 
@@ -1600,9 +1754,13 @@ def render_conclusion_takeaways_body(
     equations: list[dict[str, Any]],
 ) -> tuple[list[str], list[str]]:
     lines: list[str] = []
-    lines.extend(render_box_stack(boxes, limit=limit_from_spec(spec, "boxes_max", 4)))
+    box_limit = limit_from_spec(spec, "boxes_max", 4)
     bullet_limit = limit_from_spec(spec, "bullets_max", 4)
-    lines.extend(render_bullet_list(bullets[:bullet_limit] if bullet_limit is not None else bullets))
+    bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
+    if boxes:
+        lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
+    else:
+        lines.extend(render_bullet_list(bullet_items))
     if asset_entries:
         lines.extend(render_imgs_block(asset_entries[:1], width="88%"))
     return lines, []

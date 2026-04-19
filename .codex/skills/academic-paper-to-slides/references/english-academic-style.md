@@ -32,9 +32,9 @@ For deck arc, section order, and scenario-specific structure, use `deck-structur
 
 - Put the exact number and its implication in the same line when possible.
 - On figure slides, body text explains why the figure matters; the caption identifies what the figure is.
-- On figure-heavy slides, default to one or two short takeaway boxes; each box should preferably fit on one line and rarely exceed two.
+- On figure-heavy slides, use one or two short takeaway boxes when the slide needs an explicit judgment callout; if another short body box already says the point, skip the dedicated takeaway box.
 - Prefer one-line boxes when possible. If a box wraps, rewrite it before accepting the layout.
-- Prefer one-line captions. If a caption wraps, shorten it first; only then widen the figure block if figure readability is not harmed.
+- Prefer one-line captions. Default to short captions; if a caption wraps, shorten or suppress it before widening the figure block.
 - If the title plus two boxes would crowd the evidence, shorten the title, drop one box, or split the slide.
 - If a long title causes the body to spill onto a continuation page, the title is already too long for that slide.
 - When text feels dense, compact the sentence before changing the layout: drop obvious subjects, shorten helper verbs, and remove low-information transitions.
