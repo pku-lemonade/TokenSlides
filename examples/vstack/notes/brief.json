@@ -1,0 +1,357 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/vstack",
+  "paper": {
+    "title": "vStack: A Heterogeneous HBM-PIM Architecture and Runtime for Efficient LLM Inference",
+    "authors": [
+      "匿名作者"
+    ],
+    "venue": "MICRO 2026 投稿",
+    "date": "2026",
+    "short_title": "vStack",
+    "institution": "中文文献解读",
+    "scenario": "paper-reading",
+    "language": "zh",
+    "source_pdf": "vstack.pdf"
+  },
+  "presentation_thesis": "vStack 的核心不是把更多算子塞进 PIM，而是把同一 HBM stack 内的不同 layer 明确分工，并让 base die 在 stack 内部完成跨层迁移、地址转换与注意力协调。",
+  "problem_framing": [
+    {
+      "label": "瓶颈转移",
+      "value": "decode attention 的算术强度接近 O(1)，因此服务瓶颈已从算力转向 KV 带宽与容量。"
+    },
+    {
+      "label": "压力耦合",
+      "value": "模型规模、上下文长度与并发请求会同时放大 live KV footprint，并挤占 attention 可用带宽。"
+    },
+    {
+      "label": "复用异构",
+      "value": "约 10% 的 KV blocks 贡献 77% 的 reuse，且短 API、代码编辑、长推理的 reuse 形态完全不同。"
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "c1",
+      "statement": "KV-centric LLM serving 的核心压力来自 decode 阶段对历史 KV 的反复重读，因此瓶颈同时体现在带宽与容量上。",
+      "evidence": [
+        "Figure 1",
+        "source.txt:41-47, 196-230"
+      ]
+    },
+    {
+      "claim_id": "c2",
+      "statement": "现有 uniform 与 dedicated-PIM 组织都失败在 stack 内角色划分：前者让所有字节为 PIM 逻辑付费，后者牺牲 GPU-visible HBM 带宽。",
+      "evidence": [
+        "Figure 2",
+        "source.txt:83-110, 275-307"
+      ]
+    },
+    {
+      "claim_id": "c3",
+      "statement": "vStack 的论文主张是纵向异构 stack 加 base-die control：compute layers 保留 hot KV，capacity layers 保留 dense storage，base die 负责 stack-local control。",
+      "evidence": [
+        "Figure 3",
+        "Figure 4",
+        "source.txt:112-173, 398-483"
+      ]
+    },
+    {
+      "claim_id": "c4",
+      "statement": "异构硬件只有和 K/V 非对称布局、K8V4 生命周期以及 trace-aware runtime 配合时，才会把高价值 KV 稳定留在 compute-visible domain。",
+      "evidence": [
+        "Figure 5",
+        "Figure 6",
+        "source.txt:592-664, 721-790"
+      ]
+    },
+    {
+      "claim_id": "c5",
+      "statement": "评估刻意覆盖 4 个模型与 4 类 production-derived traces，从高复用短请求到低复用长推理都包含在内，因此能看清 vertical heterogeneity 的适用边界。",
+      "evidence": [
+        "Figure 7",
+        "Table 3",
+        "source.txt:813-928"
+      ]
+    },
+    {
+      "claim_id": "c6",
+      "statement": "在大模型和高 overflow 负载上，vStack 能同时提升吞吐、SLO 容量、时延与能耗，且最大收益先来自数据布局与物理分层的一致性。",
+      "evidence": [
+        "Figure 8",
+        "Figure 9",
+        "Figure 10",
+        "Figure 11",
+        "Figure 12",
+        "source.txt:975-1230"
+      ]
+    },
+    {
+      "claim_id": "c7",
+      "statement": "vStack 不是无条件优于 AttAcc：当工作集已能放进 flat PIM tier，或 workload 缺少可预测的 hot/cold 结构时，收益会明显收缩。",
+      "evidence": [
+        "source.txt:981-986, 1187-1200"
+      ]
+    }
+  ],
+  "mechanisms": [
+    {
+      "label": "纵向异构 stack",
+      "value": "compute layers 保存 hot KV，capacity layers 保存 cold KV、weights、activations 与 metadata。"
+    },
+    {
+      "label": "Base-die control substrate",
+      "value": "base die 上集成 disaggregated MC、attention coordinator 与 quantization unit，把迁移、地址转换和 attention 协调留在 stack 内完成。"
+    },
+    {
+      "label": "K/V 非对称布局",
+      "value": "K 用 token-major，V 用 dim-head，让 score 与 context 两阶段都只需 concat，不做 cross-bank reduction。"
+    },
+    {
+      "label": "K8V4 生命周期",
+      "value": "demotion 时做 FP16→K8V4 在线压缩，promotion 时再解压，使 capacity-side KV 有效扩展 2.667x。"
+    },
+    {
+      "label": "Trace-aware runtime",
+      "value": "topology-aware placement、category-aware eviction、bounded replication 与 continuous batching 一起决定哪些 KV 值得占 compute-layer 空间。"
+    }
+  ],
+  "evaluation_setup": [
+    {
+      "label": "平台",
+      "value": "DGX-A100，8 GPUs，bank-level PIM；UCIe 512 GB/s × 5 stacks，TSV DMA 896 GB/s / stack，NVLink3 600 GB/s。"
+    },
+    {
+      "label": "对比对象",
+      "value": "Full-GPU、Uniform、AttAcc、vStack，四者共享同一 continuous batching scheduler。"
+    },
+    {
+      "label": "工作负载",
+      "value": "traceB、traceA、coder、thinking，覆盖高复用短 API 到低复用长推理。"
+    },
+    {
+      "label": "模型",
+      "value": "Qwen3-4B、Qwen3-32B、Devstral-123B、GPT-175B。"
+    }
+  ],
+  "quantitative_anchors": [
+    {
+      "label": "复用集中度",
+      "value": "约 10% 的 KV blocks 贡献 77% 的 reuse。"
+    },
+    {
+      "label": "吞吐提升",
+      "value": "相对 AttAcc 的 token throughput 几何平均提升 1.62x，区间 1.03x 到 2.32x。"
+    },
+    {
+      "label": "SLO 容量",
+      "value": "在 2x latency SLO 下，SLO-compliant serving capacity 几何平均提升 1.70x。"
+    },
+    {
+      "label": "按模型吞吐增益",
+      "value": "Qwen3-4B / 32B / Devstral-123B / GPT-175B 分别为 1.20x / 1.38x / 1.94x / 2.15x。"
+    },
+    {
+      "label": "时延",
+      "value": "Devstral-123B / traceA 上平均 queue delay 在 QPS=0.2 下降 86%，在 QPS=1.0 下降 95%。"
+    },
+    {
+      "label": "TTFT",
+      "value": "AttAcc 相对 vStack 的 p50 TTFT 几何平均高 127x，峰值超过 4500x。"
+    },
+    {
+      "label": "能耗",
+      "value": "每 token 能耗下降 30%-47%，节省主要来自 attention 的 off-chip memory access。"
+    },
+    {
+      "label": "消融",
+      "value": "layout +57.9%，request scheduling +9.9%，K8V4 +8.2%，category-aware eviction +6.1%，selective replication +2.1%。"
+    }
+  ],
+  "evidence_map": [
+    {
+      "claim_id": "c1",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig01-workflow"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:41-47"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:196-230"
+        }
+      ]
+    },
+    {
+      "claim_id": "c2",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig02-baselines"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:275-307"
+        }
+      ]
+    },
+    {
+      "claim_id": "c3",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig03-architecture"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig04-stack-design"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:112-173"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:398-483"
+        }
+      ]
+    },
+    {
+      "claim_id": "c4",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig05-kv-layout"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig06-lifecycle"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:612-664"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:721-790"
+        }
+      ]
+    },
+    {
+      "claim_id": "c5",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig07-workloads"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:813-928"
+        }
+      ]
+    },
+    {
+      "claim_id": "c6",
+      "support": [
+        {
+          "kind": "asset",
+          "ref": "fig08-throughput"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig09-latency"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig10-energy"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig11-ttft-tbt"
+        },
+        {
+          "kind": "asset",
+          "ref": "fig12-ablation"
+        }
+      ]
+    },
+    {
+      "claim_id": "c7",
+      "support": [
+        {
+          "kind": "text",
+          "ref": "source.txt:981-986"
+        },
+        {
+          "kind": "text",
+          "ref": "source.txt:1187-1200"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    {
+      "label": "小模型 / 低复用",
+      "value": "Qwen3-4B / thinking 只有 1.03x，说明 flat PIM 已足以容纳其工作集时，vertical heterogeneity 价值有限。"
+    },
+    {
+      "label": "命中率悖论",
+      "value": "Qwen3-32B / traceA 上，vStack 的 compute-hit 只有 0.56，低于 AttAcc 的 0.97，但吞吐仍高 1.43x，因为 miss 落到 capacity layer 仍远便宜于 cross-die forwarding。"
+    },
+    {
+      "label": "工作负载依赖",
+      "value": "收益依赖 hot/cold 结构与可预测 reuse window；长链推理这类低共享负载会削弱优势。"
+    },
+    {
+      "label": "工程现实",
+      "value": "结果来自 cycle-accurate simulation，而非真实 HBM4 系统，落地复杂度与真实性能仍需实机验证。"
+    }
+  ],
+  "best_asset_matches": [
+    {
+      "topic": "decode 阶段为什么变成 KV 问题",
+      "asset_ids": [
+        "fig01-workflow"
+      ]
+    },
+    {
+      "topic": "为什么现有 HBM-PIM 组织不够好",
+      "asset_ids": [
+        "fig02-baselines"
+      ]
+    },
+    {
+      "topic": "vStack 的总体结构与 stack 分工",
+      "asset_ids": [
+        "fig03-architecture",
+        "fig04-stack-design"
+      ]
+    },
+    {
+      "topic": "KV-aware layout 与生命周期",
+      "asset_ids": [
+        "fig05-kv-layout",
+        "fig06-lifecycle"
+      ]
+    },
+    {
+      "topic": "主结果：吞吐与时延",
+      "asset_ids": [
+        "fig08-throughput",
+        "fig09-latency",
+        "fig11-ttft-tbt"
+      ]
+    },
+    {
+      "topic": "收益来源与成本",
+      "asset_ids": [
+        "fig10-energy",
+        "fig12-ablation"
+      ]
+    }
+  ],
+  "notes": "按 systems paper reading 的中文文献解读弧线组织，标题尽量控制为单行，证据优先落在图和精确数字上。"
+}

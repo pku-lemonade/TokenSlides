@@ -1,0 +1,53 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 9,
+  "candidate_id": "vector-2",
+  "candidate_region": "auto",
+  "bbox": [
+    53.798,
+    238.921,
+    558.442,
+    358.815
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig09-latency.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-2",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.4
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-2",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 9,
+    "xref": null,
+    "page_coverage": 0.1248,
+    "confidence": 0.4,
+    "suggested_mode": "vector",
+    "drawing_rects": 75,
+    "nearby_text_blocks": 100,
+    "nearby_text_preview": [
+      "0.0 0.2 0.4 0.6 0.8 0.0x",
+      "5.0x",
+      "10.0x"
+    ],
+    "reason": "vector cluster from 75 drawing rect(s) with 100 nearby text block(s)",
+    "bbox": [
+      53.798,
+      238.921,
+      558.442,
+      358.815
+    ],
+    "source_bbox": [
+      53.798,
+      238.921,
+      558.442,
+      358.815
+    ]
+  }
+}

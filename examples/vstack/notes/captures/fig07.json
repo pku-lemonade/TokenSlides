@@ -1,0 +1,53 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 8,
+  "candidate_id": "vector-1",
+  "candidate_region": "auto",
+  "bbox": [
+    53.336,
+    558.981,
+    294.045,
+    682.441
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig07-workloads.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-1",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.349
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-1",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 8,
+    "xref": null,
+    "page_coverage": 0.0613,
+    "confidence": 0.349,
+    "suggested_mode": "vector",
+    "drawing_rects": 5,
+    "nearby_text_blocks": 39,
+    "nearby_text_preview": [
+      "0 1000 2000 3000 4000 5000 6000 # Tokens",
+      "0.0",
+      "0.5"
+    ],
+    "reason": "vector cluster from 5 drawing rect(s) with 39 nearby text block(s)",
+    "bbox": [
+      53.336,
+      558.981,
+      294.045,
+      682.441
+    ],
+    "source_bbox": [
+      53.798,
+      558.981,
+      294.045,
+      682.441
+    ]
+  }
+}

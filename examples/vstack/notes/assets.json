@@ -1,0 +1,836 @@
+{
+  "schema_version": "academic-paper-to-slides/v1",
+  "workspace": "out/vstack",
+  "source_pdf": "vstack.pdf",
+  "metadata": {
+    "paper_title": "vStack: A Heterogeneous HBM-PIM Architecture and Runtime for Efficient LLM Inference",
+    "scenario": "paper-reading",
+    "language": "zh",
+    "theme": "lemonade",
+    "created_at": "2026-04-19T03:38:20+00:00",
+    "updated_at": "2026-04-19T03:44:29+00:00"
+  },
+  "source_text": {
+    "path": "out/vstack/notes/source.txt",
+    "extractor": "pdftotext-layout",
+    "generated_at": "2026-04-19T03:38:20+00:00",
+    "page_count": 13,
+    "notes": ""
+  },
+  "extraction": {
+    "status": "assets-registered",
+    "priority_order": [
+      "figure",
+      "table",
+      "equation"
+    ],
+    "notes": ""
+  },
+  "assets": [
+    {
+      "asset_id": "fig01-workflow",
+      "asset_type": "figure",
+      "label": "Figure 1",
+      "title": "Prefill 与 decode 的资源形态差异",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 2,
+      "bbox": [
+        317.955,
+        83.686,
+        558.155,
+        164.277
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig01-workflow.pdf",
+      "normalized_caption": "Figure 1: LLM inference workflow. Prefill processes the full prompt through compute-heavy projection and feed-forward layers. Decode generates one token per step, rereading the accumulated KV cache; as the context grows, attention shifts from compute-bound to memory-bound.",
+      "raw_caption": "Figure 1: LLM inference workflow. Prefill processes the full prompt through compute-heavy projection and feed-forward layers. Decode generates one token per step, rereading the accumulated KV cache; as the context grows, attention shifts from compute-bound to memory-bound.",
+      "dimensions": {
+        "width": 240.2,
+        "height": 80.591,
+        "aspect_ratio": 2.9805
+      },
+      "source_section": "Background and Motivation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "workflow",
+        "background"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 2,
+          "xref": null,
+          "page_coverage": 0.0399,
+          "confidence": 0.332,
+          "suggested_mode": "vector",
+          "drawing_rects": 22,
+          "nearby_text_blocks": 61,
+          "nearby_text_preview": [
+            "LLM",
+            "Decoder 1",
+            "Decoder 2"
+          ],
+          "reason": "vector cluster from 22 drawing rect(s) with 61 nearby text block(s)",
+          "bbox": [
+            317.955,
+            83.686,
+            558.155,
+            164.277
+          ],
+          "source_bbox": [
+            317.955,
+            83.686,
+            558.155,
+            164.277
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig02-baselines",
+      "asset_type": "figure",
+      "label": "Figure 2",
+      "title": "Uniform 与 Dedicated-PIM 的结构失配",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 3,
+      "bbox": [
+        56.201,
+        83.687,
+        291.615,
+        213.314
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig02-baselines.pdf",
+      "normalized_caption": "Figure 2: Baseline HBM-PIM organizations. Uniform equips every layer with PIM and halves effective density; dedicated-PIM preserves density elsewhere but reduces GPU-visible HBM bandwidth.",
+      "raw_caption": "Figure 2: Baseline HBM-PIM organizations. Uniform equips every layer with PIM and halves effective density; dedicated-PIM preserves density elsewhere but reduces GPU-visible HBM bandwidth.",
+      "dimensions": {
+        "width": 235.414,
+        "height": 129.627,
+        "aspect_ratio": 1.8161
+      },
+      "source_section": "Background and Motivation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "motivation",
+        "baseline",
+        "comparison"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 3,
+          "xref": null,
+          "page_coverage": 0.063,
+          "confidence": 0.35,
+          "suggested_mode": "vector",
+          "drawing_rects": 44,
+          "nearby_text_blocks": 65,
+          "nearby_text_preview": [
+            "(a)",
+            "GPU",
+            "HBM-PIM"
+          ],
+          "reason": "vector cluster from 44 drawing rect(s) with 65 nearby text block(s)",
+          "bbox": [
+            56.201,
+            83.687,
+            291.615,
+            213.314
+          ],
+          "source_bbox": [
+            56.201,
+            83.687,
+            291.615,
+            213.314
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig03-architecture",
+      "asset_type": "figure",
+      "label": "Figure 3",
+      "title": "vStack 系统架构",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 4,
+      "bbox": [
+        79.02,
+        83.687,
+        532.958,
+        337.91
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig03-architecture.pdf",
+      "normalized_caption": "Figure 3: vStack system architecture. Each stack combines dense capacity layers, PIM-enabled compute layers, and a logic base die that coordinates stack-local movement and attention-side communication.",
+      "raw_caption": "Figure 3: vStack system architecture. Each stack combines dense capacity layers, PIM-enabled compute layers, and a logic base die that coordinates stack-local movement and attention-side communication.",
+      "dimensions": {
+        "width": 453.938,
+        "height": 254.223,
+        "aspect_ratio": 1.7856
+      },
+      "source_section": "Overview of vStack",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "overview",
+        "architecture",
+        "method"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 4,
+          "xref": null,
+          "page_coverage": 0.2381,
+          "confidence": 0.49,
+          "suggested_mode": "vector",
+          "drawing_rects": 179,
+          "nearby_text_blocks": 70,
+          "nearby_text_preview": [
+            "TSVs & Periphery",
+            "Bank 0 Bank 1 Bank 2 Bank 3",
+            "Bank Group I/O"
+          ],
+          "reason": "vector cluster from 179 drawing rect(s) with 70 nearby text block(s)",
+          "bbox": [
+            79.02,
+            83.687,
+            532.958,
+            337.91
+          ],
+          "source_bbox": [
+            79.02,
+            83.687,
+            532.958,
+            337.91
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig04-stack-design",
+      "asset_type": "figure",
+      "label": "Figure 4",
+      "title": "同一 stack 内的纵向异构设计",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 4,
+      "bbox": [
+        65.811,
+        377.832,
+        281.985,
+        509.9
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig04-stack-design.pdf",
+      "normalized_caption": "Figure 4: vStack design. Each stack combines dense capacity layers, PIM-enabled compute layers, and a logic base die that manages stack-local movement and attention coordination.",
+      "raw_caption": "Figure 4: vStack design. Each stack combines dense capacity layers, PIM-enabled compute layers, and a logic base die that manages stack-local movement and attention coordination.",
+      "dimensions": {
+        "width": 216.174,
+        "height": 132.069,
+        "aspect_ratio": 1.6368
+      },
+      "source_section": "vStack Hardware Design",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "overview",
+        "stack-organization",
+        "method"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-2",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 4,
+          "xref": null,
+          "page_coverage": 0.0589,
+          "confidence": 0.347,
+          "suggested_mode": "vector",
+          "drawing_rects": 27,
+          "nearby_text_blocks": 17,
+          "nearby_text_preview": [
+            "Interposer",
+            "GPU Die",
+            "PU PU PU"
+          ],
+          "reason": "vector cluster from 27 drawing rect(s) with 17 nearby text block(s)",
+          "bbox": [
+            65.811,
+            377.832,
+            281.985,
+            509.9
+          ],
+          "source_bbox": [
+            65.811,
+            377.832,
+            281.985,
+            509.9
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig05-kv-layout",
+      "asset_type": "figure",
+      "label": "Figure 5",
+      "title": "K/V 非对称布局",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 6,
+      "bbox": [
+        317.955,
+        83.686,
+        558.165,
+        207.228
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig05-kv-layout.pdf",
+      "normalized_caption": "Figure 5: Key/Value placement in compute-layer PIM banks. Token-major Keys and dim-head Values eliminate cross-bank reduction in both attention phases.",
+      "raw_caption": "Figure 5: Key/Value placement in compute-layer PIM banks. Token-major Keys and dim-head Values eliminate cross-bank reduction in both attention phases.",
+      "dimensions": {
+        "width": 240.21,
+        "height": 123.542,
+        "aspect_ratio": 1.9444
+      },
+      "source_section": "KV-Aware Data Placement",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "mechanism",
+        "layout",
+        "method"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 6,
+          "xref": null,
+          "page_coverage": 0.0612,
+          "confidence": 0.349,
+          "suggested_mode": "vector",
+          "drawing_rects": 31,
+          "nearby_text_blocks": 39,
+          "nearby_text_preview": [
+            "(a) Score Computation – Token-Major Key",
+            "0",
+            "1"
+          ],
+          "reason": "vector cluster from 31 drawing rect(s) with 39 nearby text block(s)",
+          "bbox": [
+            317.955,
+            83.686,
+            558.165,
+            207.228
+          ],
+          "source_bbox": [
+            317.955,
+            83.686,
+            558.165,
+            207.228
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig06-lifecycle",
+      "asset_type": "figure",
+      "label": "Figure 6",
+      "title": "KV 生命周期与 K8V4 路径",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 7,
+      "bbox": [
+        53.798,
+        83.685,
+        294.003,
+        195.48
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig06-lifecycle.pdf",
+      "normalized_caption": "Figure 6: KV block lifecycle. Active blocks reside in compute layers; demotion quantizes FP16 to K8V4 and scatters pages to capacity layers; promotion reverses the path.",
+      "raw_caption": "Figure 6: KV block lifecycle. Active blocks reside in compute layers; demotion quantizes FP16 to K8V4 and scatters pages to capacity layers; promotion reverses the path.",
+      "dimensions": {
+        "width": 240.205,
+        "height": 111.796,
+        "aspect_ratio": 2.1486
+      },
+      "source_section": "Runtime Optimizations",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "mechanism",
+        "lifecycle",
+        "runtime"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 7,
+          "xref": null,
+          "page_coverage": 0.0554,
+          "confidence": 0.344,
+          "suggested_mode": "vector",
+          "drawing_rects": 51,
+          "nearby_text_blocks": 52,
+          "nearby_text_preview": [
+            "PU Bank 0 PU",
+            "Rows 0,4,8 …",
+            "PU PU"
+          ],
+          "reason": "vector cluster from 51 drawing rect(s) with 52 nearby text block(s)",
+          "bbox": [
+            53.798,
+            83.685,
+            294.003,
+            195.48
+          ],
+          "source_bbox": [
+            53.798,
+            83.685,
+            294.003,
+            195.48
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig07-workloads",
+      "asset_type": "figure",
+      "label": "Figure 7",
+      "title": "四类 trace 的输入输出长度分布",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 8,
+      "bbox": [
+        53.336,
+        558.981,
+        294.045,
+        682.441
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig07-workloads.pdf",
+      "normalized_caption": "Figure 7: Prompt and generation length distributions across four traces.",
+      "raw_caption": "Figure 7: Prompt and generation length distributions across four traces.",
+      "dimensions": {
+        "width": 240.709,
+        "height": 123.46,
+        "aspect_ratio": 1.9497
+      },
+      "source_section": "Experimental Methodology",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "evaluation-setup",
+        "workload",
+        "trace"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 8,
+          "xref": null,
+          "page_coverage": 0.0613,
+          "confidence": 0.349,
+          "suggested_mode": "vector",
+          "drawing_rects": 5,
+          "nearby_text_blocks": 39,
+          "nearby_text_preview": [
+            "0 1000 2000 3000 4000 5000 6000 # Tokens",
+            "0.0",
+            "0.5"
+          ],
+          "reason": "vector cluster from 5 drawing rect(s) with 39 nearby text block(s)",
+          "bbox": [
+            53.336,
+            558.981,
+            294.045,
+            682.441
+          ],
+          "source_bbox": [
+            53.798,
+            558.981,
+            294.045,
+            682.441
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig08-throughput",
+      "asset_type": "figure",
+      "label": "Figure 8",
+      "title": "吞吐收益随 overflow 压力增强",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 9,
+      "bbox": [
+        53.798,
+        83.686,
+        558.204,
+        202.309
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig08-throughput.pdf",
+      "normalized_caption": "Figure 8: Token throughput normalized to AttAcc. vStack outperforms AttAcc on every pair while preserving large-model capacity. Uniform is unavailable for GPT-175B due to OOM.",
+      "raw_caption": "Figure 8: Token throughput normalized to AttAcc. vStack outperforms AttAcc on every pair while preserving large-model capacity. Uniform is unavailable for GPT-175B due to OOM.",
+      "dimensions": {
+        "width": 504.406,
+        "height": 118.623,
+        "aspect_ratio": 4.2522
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "result",
+        "throughput",
+        "main-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 9,
+          "xref": null,
+          "page_coverage": 0.1234,
+          "confidence": 0.399,
+          "suggested_mode": "vector",
+          "drawing_rects": 198,
+          "nearby_text_blocks": 190,
+          "nearby_text_preview": [
+            "full-gpu",
+            "attacc",
+            "uniform*"
+          ],
+          "reason": "vector cluster from 198 drawing rect(s) with 190 nearby text block(s)",
+          "bbox": [
+            53.798,
+            83.686,
+            558.204,
+            202.309
+          ],
+          "source_bbox": [
+            53.798,
+            83.686,
+            558.204,
+            202.309
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig09-latency",
+      "asset_type": "figure",
+      "label": "Figure 9",
+      "title": "高负载下延迟不会像 AttAcc 一样发散",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 9,
+      "bbox": [
+        53.798,
+        238.921,
+        558.442,
+        358.815
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig09-latency.pdf",
+      "normalized_caption": "Figure 9: Normalized p50 end-to-end latency vs. QPS. vStack stays flat while AttAcc diverges under load. Uniform is unavailable for GPT-175B due to OOM.",
+      "raw_caption": "Figure 9: Normalized p50 end-to-end latency vs. QPS. vStack stays flat while AttAcc diverges under load. Uniform is unavailable for GPT-175B due to OOM.",
+      "dimensions": {
+        "width": 504.644,
+        "height": 119.894,
+        "aspect_ratio": 4.2091
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "result",
+        "latency",
+        "main-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-2",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 9,
+          "xref": null,
+          "page_coverage": 0.1248,
+          "confidence": 0.4,
+          "suggested_mode": "vector",
+          "drawing_rects": 75,
+          "nearby_text_blocks": 100,
+          "nearby_text_preview": [
+            "0.0 0.2 0.4 0.6 0.8 0.0x",
+            "5.0x",
+            "10.0x"
+          ],
+          "reason": "vector cluster from 75 drawing rect(s) with 100 nearby text block(s)",
+          "bbox": [
+            53.798,
+            238.921,
+            558.442,
+            358.815
+          ],
+          "source_bbox": [
+            53.798,
+            238.921,
+            558.442,
+            358.815
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig10-energy",
+      "asset_type": "figure",
+      "label": "Figure 10",
+      "title": "每 token 能耗同步下降",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 10,
+      "bbox": [
+        53.798,
+        83.686,
+        294.04,
+        157.956
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig10-energy.pdf",
+      "normalized_caption": "Figure 10: Normalized energy breakdown per token for Mistral-Devstral2-123B at QPS = 32 on traceA and traceB.",
+      "raw_caption": "Figure 10: Normalized energy breakdown per token for Mistral-Devstral2-123B at QPS = 32 on traceA and traceB.",
+      "dimensions": {
+        "width": 240.242,
+        "height": 74.27,
+        "aspect_ratio": 3.2347
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "result",
+        "energy",
+        "efficiency"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 10,
+          "xref": null,
+          "page_coverage": 0.0368,
+          "confidence": 0.329,
+          "suggested_mode": "vector",
+          "drawing_rects": 96,
+          "nearby_text_blocks": 25,
+          "nearby_text_preview": [
+            "GPU-only",
+            "Uniform",
+            "AttAcc"
+          ],
+          "reason": "vector cluster from 96 drawing rect(s) with 25 nearby text block(s)",
+          "bbox": [
+            53.798,
+            83.686,
+            294.04,
+            157.956
+          ],
+          "source_bbox": [
+            53.798,
+            83.686,
+            294.04,
+            157.956
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig11-ttft-tbt",
+      "asset_type": "figure",
+      "label": "Figure 11",
+      "title": "TTFT 主导总体时延差距",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 11,
+      "bbox": [
+        53.798,
+        83.435,
+        558.43,
+        203.411
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig11-ttft-tbt.pdf",
+      "normalized_caption": "Figure 11: Normalized p50 TTFT and TBT vs. QPS for Devstral-123B and Qwen3-32B. TTFT dominates the latency gap.",
+      "raw_caption": "Figure 11: Normalized p50 TTFT and TBT vs. QPS for Devstral-123B and Qwen3-32B. TTFT dominates the latency gap.",
+      "dimensions": {
+        "width": 504.632,
+        "height": 119.976,
+        "aspect_ratio": 4.2061
+      },
+      "source_section": "Evaluation",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "result",
+        "latency-breakdown",
+        "main-evidence"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-1",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 11,
+          "xref": null,
+          "page_coverage": 0.1249,
+          "confidence": 0.4,
+          "suggested_mode": "vector",
+          "drawing_rects": 75,
+          "nearby_text_blocks": 91,
+          "nearby_text_preview": [
+            "0.0 0.2 0.4 0.6 0.8 0.0x",
+            "1.0x",
+            "2.0x"
+          ],
+          "reason": "vector cluster from 75 drawing rect(s) with 91 nearby text block(s)",
+          "bbox": [
+            53.798,
+            83.435,
+            558.43,
+            203.411
+          ],
+          "source_bbox": [
+            53.798,
+            83.435,
+            558.43,
+            203.411
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    },
+    {
+      "asset_id": "fig12-ablation",
+      "asset_type": "figure",
+      "label": "Figure 12",
+      "title": "布局贡献最大，其次是调度与压缩",
+      "source_file": "/Users/youwei/Downloads/slides/vstack.pdf",
+      "page": 11,
+      "bbox": [
+        42.864,
+        216.378,
+        294.042,
+        333.106
+      ],
+      "capture_kind": "cropped-vector-pdf",
+      "primary_output": "out/vstack/assets/vstack-fig12-ablation.pdf",
+      "normalized_caption": "Figure 12: Cumulative throughput contribution of each vStack component for Devstral-123B at QPS = 32 on traceA. The largest gain comes from KV-aware layout.",
+      "raw_caption": "Figure 12: Cumulative throughput contribution of each vStack component for Devstral-123B at QPS = 32 on traceA. The largest gain comes from KV-aware layout.",
+      "dimensions": {
+        "width": 251.178,
+        "height": 116.728,
+        "aspect_ratio": 2.1518
+      },
+      "source_section": "Ablation and Discussion",
+      "extraction_quality": "high",
+      "candidate_roles": [
+        "result",
+        "ablation",
+        "discussion"
+      ],
+      "notes": "",
+      "cleanup_needed": false,
+      "capture_metadata": {
+        "selection_mode": "cropped-vector-pdf",
+        "selected_candidate": {
+          "id": "vector-2",
+          "kind": "vector",
+          "source": "drawings",
+          "page": 11,
+          "xref": null,
+          "page_coverage": 0.0605,
+          "confidence": 0.348,
+          "suggested_mode": "vector",
+          "drawing_rects": 14,
+          "nearby_text_blocks": 21,
+          "nearby_text_preview": [
+            "Hardware-only",
+            "(+layout)",
+            "(+Request Scheduling)"
+          ],
+          "reason": "vector cluster from 14 drawing rect(s) with 21 nearby text block(s)",
+          "bbox": [
+            42.864,
+            216.378,
+            294.042,
+            333.106
+          ],
+          "source_bbox": [
+            42.864,
+            216.378,
+            294.042,
+            333.106
+          ]
+        },
+        "candidates": null
+      },
+      "equation": null
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,53 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 4,
+  "candidate_id": "vector-1",
+  "candidate_region": "auto",
+  "bbox": [
+    79.02,
+    83.687,
+    532.958,
+    337.91
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig03-architecture.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-1",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.49
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-1",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 4,
+    "xref": null,
+    "page_coverage": 0.2381,
+    "confidence": 0.49,
+    "suggested_mode": "vector",
+    "drawing_rects": 179,
+    "nearby_text_blocks": 70,
+    "nearby_text_preview": [
+      "TSVs & Periphery",
+      "Bank 0 Bank 1 Bank 2 Bank 3",
+      "Bank Group I/O"
+    ],
+    "reason": "vector cluster from 179 drawing rect(s) with 70 nearby text block(s)",
+    "bbox": [
+      79.02,
+      83.687,
+      532.958,
+      337.91
+    ],
+    "source_bbox": [
+      79.02,
+      83.687,
+      532.958,
+      337.91
+    ]
+  }
+}

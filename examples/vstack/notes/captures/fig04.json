@@ -1,0 +1,53 @@
+{
+  "pdf": "/Users/youwei/Downloads/slides/vstack.pdf",
+  "page": 4,
+  "candidate_id": "vector-2",
+  "candidate_region": "auto",
+  "bbox": [
+    65.811,
+    377.832,
+    281.985,
+    509.9
+  ],
+  "selection_mode": "cropped-vector-pdf",
+  "primary_output": "/Users/youwei/Downloads/slides/out/vstack/assets/vstack-fig04-stack-design.pdf",
+  "matched_candidates": [
+    {
+      "id": "vector-2",
+      "kind": "vector",
+      "source": "drawings",
+      "score": 1.0,
+      "confidence": 0.347
+    }
+  ],
+  "selected_candidate": {
+    "id": "vector-2",
+    "kind": "vector",
+    "source": "drawings",
+    "page": 4,
+    "xref": null,
+    "page_coverage": 0.0589,
+    "confidence": 0.347,
+    "suggested_mode": "vector",
+    "drawing_rects": 27,
+    "nearby_text_blocks": 17,
+    "nearby_text_preview": [
+      "Interposer",
+      "GPU Die",
+      "PU PU PU"
+    ],
+    "reason": "vector cluster from 27 drawing rect(s) with 17 nearby text block(s)",
+    "bbox": [
+      65.811,
+      377.832,
+      281.985,
+      509.9
+    ],
+    "source_bbox": [
+      65.811,
+      377.832,
+      281.985,
+      509.9
+    ]
+  }
+}
