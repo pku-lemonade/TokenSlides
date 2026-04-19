@@ -1,6 +1,6 @@
 # `imgs` API
 
-`imgs` is the theme's common image layout helper for single images, side-by-side image groups, captions, and auto-filling the remaining slide height.
+`imgs` is the theme's common image layout helper for single images, side-by-side image groups, vertical stacks, captions, and auto-filling the remaining slide height.
 
 Source: [images.typ](./images.typ)
 
@@ -33,10 +33,11 @@ Captions are shown automatically if at least one item provides a caption.
 
 ### Layout
 
-- `width`: Overall width of the image block. Default: `60%`
-- `widths`: Per-image column widths for multi-image layouts. Default: `auto`
-- `gap`: Horizontal gap between multiple images. Default: `0em`
-- `valign`: Vertical alignment inside multi-image grid cells. Default: `horizon`
+- `dir`: Layout direction. Use `ltr` or `rtl` for horizontal rows and `ttb` or `btt` for vertical stacks. Default: `ltr`
+- `width`: Overall width of the image block. Default: `100%`
+- `widths`: Per-image column widths for horizontal multi-image layouts. Default: `auto`
+- `gap`: Gap between items. Horizontal rows use it as column gap; vertical stacks use it as row gap. Default: `0em`
+- `valign`: Vertical alignment inside horizontal multi-image grid cells. Default: `horizon`
 
 ### Image Sizing
 
@@ -159,10 +160,27 @@ Use this when you want stable, manual figure sizing.
 
 Use this on slides where text comes first and the figure should expand to use the rest of the page.
 If your whole deck mostly uses this mode, prefer the theme-level `imgs-config: (fill-height: true, ...)`.
+When the image is width-limited rather than height-limited, the helper now keeps spare vertical slack above the image row so the caption stays visually attached under the image.
+
+### 7. Vertical Stacked Evidence
+
+```typst
+#imgs(
+  ("/examples/assets/overview.png", [Overview]),
+  ("/examples/assets/detail.png", [Detail]),
+  dir: ttb,
+  width: 100%,
+  gap: 0.6em,
+)
+```
+
+Use this for right-column evidence stacks such as overview-plus-zoom or result-plus-breakdown. When `fill-height` is active, `imgs(dir: ttb, ...)` shares the remaining height across the stacked items instead of letting each figure block fill it independently.
 
 ## Behavior Notes
 
 - `fill-height: true` is intended for content slides where the image block appears after the main text.
+- In fill-height mode, captions stay directly under the rendered image row; spare height is kept above the image instead of between the image and caption.
+- Do not build a vertical evidence column by chaining multiple `#imgs(...)` blocks when the deck default is `fill-height: true`; use `#imgs(..., dir: ttb)` so the stacked items divide the available height predictably.
 - Very wide composite figures may still look small in vertical layouts because width becomes the limiting dimension. In those cases, splitting or cropping the figure is still the better choice.
 - `img-height` and `fill-height` are different modes:
   - `img-height` is manual and fixed.
@@ -172,7 +190,7 @@ If your whole deck mostly uses this mode, prefer the theme-level `imgs-config: (
 
 These helpers are for small anchored images such as logos and QR codes, not main evidence figures.
 
-### 7. Place The Theme Logo
+### 8. Place The Theme Logo
 
 ```typst
 #place-logo(width: 10%)
@@ -180,7 +198,7 @@ These helpers are for small anchored images such as logos and QR codes, not main
 
 Use this for the default theme logo in the top-right corner.
 
-### 8. Place A Bottom-Right QR Code
+### 9. Place A Bottom-Right QR Code
 
 ```typst
 #place-image(
@@ -194,4 +212,3 @@ Use this for the default theme logo in the top-right corner.
 ```
 
 Use this on thank-you or contact slides when you want a QR code plus a short mono caption.
-
