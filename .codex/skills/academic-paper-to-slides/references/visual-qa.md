@@ -1,6 +1,7 @@
 # Visual QA
 
 Use this rubric after the deck compiles. A slide that technically compiles can still fail visually.
+Use `archetypes.md` for composition choice and `lemonade-theme.md` for helper usage; this file is only the rendered acceptance rubric.
 
 ## Compile Pass
 
@@ -36,10 +37,6 @@ Use this rubric after the deck compiles. A slide that technically compiles can s
 - Table-plus-figure slides only pass if both remain clearly readable.
 - Side-by-side slides wrap text cleanly and keep the figure inside its column.
 - Method-overview side-by-side slides only pass if the evidence column looks intentional: one tall figure, one tall crop, or a balanced vertical stack. A short centered image with large dead whitespace fails.
-- If the slide could be fixed by reusing another recovered asset or extraction-stage sub-asset, do that before reaching for post-processing crop cleanup.
-- Adjacent figure-heavy slides do not all reuse the exact same archetype unless the content truly demands it.
-- Ordinary figure layout should use the theme helper. A deck-local replacement helper is a smell unless `theme/images.typ` truly lacks the needed behavior.
-- Body boxes and captions should not spend space on low-information phrasing such as `Figure X shows ...` or obvious restatements of what the viewer can already see.
 
 ## Language Pass
 
