@@ -6,12 +6,15 @@ Use a small set of reusable compositions. The goal is predictable, readable page
 
 ## Selection Rules
 
+- Use this reference for composition choice and slide-shape tradeoffs. For final pass/fail checks, use `visual-qa.md`.
 - Default to simpler archetypes before inventing a custom composition.
 - Choose by rendered geometry, not by semantic label alone.
 - On figure-led slides, keep the figure as the main evidence; the text explains why it matters.
 - Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.
 - Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.
 - If a slide still needs too many words after choosing an archetype, split the material across slides.
+- If a mechanism explanation and its validating evidence cannot both stay readable, split them into consecutive slides instead of forcing one overloaded page.
+- Prefer adjacent slides for overview plus detail, policy plus equation, and mechanism plus overhead pairings before shrinking either element.
 
 ## Title slide
 
@@ -116,7 +119,7 @@ Contract:
 
 Notes:
 
-- The caption identifies the figure. A dedicated takeaway box is optional if another short body box already carries the judgment.
+- This archetype works best when the figure already carries the story and the text only adds a short judgment.
 
 ## Method Overview Side-by-Side
 
@@ -178,7 +181,7 @@ Contract:
 Notes:
 
 - Prefer already recovered companion assets or extraction-stage sub-assets over ad hoc late crops.
-- Render stacked evidence columns with `#imgs(..., dir: ttb)` so the right-column visuals share the available height instead of each figure block filling it independently.
+- For helper details behind stacked evidence columns, see `lemonade-theme.md`.
 
 ## Method Cards (2 or 3 Only)
 
