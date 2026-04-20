@@ -25,6 +25,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - do not add deck-local wrappers such as `figcell` for ordinary figure layout unless you first confirmed that `theme/images.typ` cannot express the needed behavior
 - if a side-by-side slide does not wrap text correctly, the image helper may be escaping its column; use a plain in-cell image block instead of shrinking text
 - if a side-column figure is short, first look for another recovered asset or sub-asset that can share the column; then prefer a tall crop or a vertically stacked evidence column built from one or two `#imgs(...)` blocks instead of leaving dead whitespace
+- if a figure-led or comparison slide still needs short follow-on support, keep it inside the box system instead of leaving loose bullets around `#imgs(...)`
 - if the same image-layout problem appears across multiple slides, inspect `theme/images.typ` and fix the helper instead of swapping helpers page by page
 - if a multi-panel source figure turns into a tiny center thumbnail, crop or split the evidence before abandoning `#imgs(...)`
 - keep color overrides local to the current example or deck unless the user asks to change the theme globally

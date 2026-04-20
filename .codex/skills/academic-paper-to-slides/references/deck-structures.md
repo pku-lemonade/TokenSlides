@@ -2,62 +2,50 @@
 
 Treat these as deck arcs, not literal one-slide-per-section templates. Convert the chosen arc into a slide map before writing Typst.
 
-## 1. General Paper Talk
+For artifact responsibilities and slide-map field guidance, use `planning-artifacts.md`.
+
+## 1. Systems Paper Reading / OSDI-SOSP Style
 
 Use when the user asks for a paper presentation, reading report, or seminar without a defense-specific context.
 
-Typical arc:
+This is the default paper-reading arc in this skill. Treat it as coverage-first when the paper has several mechanisms, moving parts, or nearby validating evidence.
 
-1. 研究背景 / Motivation
-2. 问题定义 / Problem
-3. 核心方法 / Method
-4. 关键设计 / Algorithm or System Design
-5. 实验设置 / Evaluation Setup
-6. 主要结果 / Main Results
-7. 局限与讨论 / Limitations or Discussion
-8. 总结 / Takeaways
+Minimum narrative skeleton:
 
-## 2. Systems Paper Reading / OSDI-SOSP Style
+1. Research background or motivation
+2. Problem definition or prior-work gap
+3. Thesis and overview
+4. Mechanism A
+5. Mechanism B or policy detail
+6. Evaluation setup and baselines
+7. Main results
+8. Overhead, robustness, or sensitivity
+9. Limitations, critique, or takeaways
 
-Use when the source is a systems, architecture, storage, database, kernel, networking, or serving paper, especially when the paper's value comes from workload pathologies, system decomposition, or several distinct mechanisms.
+Expanded default when the paper has enough structure to support it:
 
-This arc applies to both English and Chinese decks. Treat language choice and deck arc as separate decisions.
-
-Typical arc:
-
-1. Workload pressure or motivating failure
-2. Why existing systems fail
-3. Thesis and contributions
-4. System overview
-5. Mechanism A
-6. Mechanism B or policy detail
-7. Evaluation setup and baselines
-8. Main results
-9. Overhead, robustness, or sensitivity
-10. Limitations, critique, or takeaways
+1. Motivation or concrete failure
+2. Why prior work misses it
+3. Thesis and overview
+4. Mechanism A
+5. Mechanism A evidence or tradeoff, if present
+6. Mechanism B
+7. Mechanism B evidence or policy detail, if present
+8. Mechanism C, runtime, or coordination detail, if present
+9. Evaluation setup and baselines
+10. Main results
+11. Robustness, overhead, or limitations
 
 Notes:
 
-- Spend at least two pages before deep design if the motivation depends on concrete pathologies or production constraints.
-- If the system has two or more independent mechanisms, give them separate slides instead of hiding them inside one summary page.
+- Spend at least two pages before deep design if the motivation depends on concrete failures, pathologies, or operating constraints.
+- If the paper has two or more independent mechanisms, give them separate slides instead of hiding them inside one summary page.
+- If the paper has several distinct mechanisms or mechanism-specific evidence, prefer the expanded arc over the minimum skeleton.
+- The majority of non-front-matter and non-back-matter slides should usually serve the design-related arc rather than a compressed overview-plus-results template.
+- Treat overhead or tradeoff pages as optional companions to a mechanism, not mandatory filler when the paper does not present them.
 - Separate the main performance win from overhead or tradeoff evidence whenever both matter.
 
-## 3. Chinese Paper Reading / Seminar
-
-Use when the talk is a reading report, group seminar, or literature sharing.
-
-Use this as the default Chinese seminar arc for non-systems papers. For systems papers, prefer `Systems Paper Reading / OSDI-SOSP Style` and then apply `chinese-academic-style.md` for wording.
-
-Typical arc:
-
-1. 研究背景
-2. 论文要解决的问题
-3. 方法概览
-4. 方法细节
-5. 实验结果
-6. 论文评价 / 思考
-
-## 4. Chinese Thesis Defense / Progress Report
+## 2. Chinese Thesis Defense / Progress Report
 
 Use when the user explicitly asks for 开题 / 中期 / 预答辩 / 答辩.
 
@@ -75,5 +63,5 @@ For progress or timeline pages, follow the narrative the user wants to present. 
 ## Selection Rule
 
 - If the user names the occasion, follow the occasion.
-- If the user only provides a paper PDF, default to `Systems Paper Reading / OSDI-SOSP Style` for systems papers and `General Paper Talk` otherwise.
-- If the user wants Chinese academic style but does not specify a scenario, use `Systems Paper Reading / OSDI-SOSP Style` for systems papers and `Chinese Paper Reading / Seminar` otherwise.
+- If the user only provides a paper PDF, default to `Systems Paper Reading / OSDI-SOSP Style`.
+- If the user wants Chinese academic style but does not specify a scenario, use `Systems Paper Reading / OSDI-SOSP Style` plus `chinese-academic-style.md`.
