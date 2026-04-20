@@ -1,6 +1,6 @@
 {
   "schema_version": "academic-paper-to-slides/v1",
-  "workspace": "out/tokencake",
+  "workspace": "examples/tokencake",
   "deck": {
     "title": "Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications",
     "scenario": "paper-reading",
@@ -8,11 +8,13 @@
     "theme": "lemonade",
     "source_pdf": "tokencake.pdf",
     "created_at": "2026-04-18T11:35:17+00:00",
-    "updated_at": "2026-04-18T12:21:44+00:00"
+    "updated_at": "2026-04-20T01:14:50+00:00",
+    "short_title": "Tokencake"
   },
   "archetype_policy": {
     "mode": "fixed-theme",
-    "reference": ".codex/skills/academic-paper-to-slides/references/archetypes.md"
+    "reference": ".codex/skills/academic-paper-to-slides/references/archetypes.json",
+    "derived_doc": ".codex/skills/academic-paper-to-slides/references/archetypes.md"
   },
   "slides": [
     {
@@ -37,30 +39,6 @@
       "content_density": "low",
       "qa_expectations": [
         "Title remains readable on the title slide"
-      ]
-    },
-    {
-      "slide_id": "section-motivation",
-      "section": "Motivation",
-      "title": "Motivation",
-      "rhetorical_role": "section-divider",
-      "archetype": "Outline / Roadmap",
-      "takeaway": "Multi-agent workloads expose KV-cache pathologies that current serving systems do not handle well.",
-      "claim_ids": [
-        "c1"
-      ],
-      "evidence": [
-        {
-          "kind": "claim",
-          "ref": "c1",
-          "detail": "Space contention and time underutilization"
-        }
-      ],
-      "asset_ids": [],
-      "equation_ids": [],
-      "content_density": "low",
-      "qa_expectations": [
-        "Divider page remains visually clean"
       ]
     },
     {
@@ -195,31 +173,41 @@
       "qa_expectations": [
         "Table stays concise",
         "Each row states one gap clearly"
-      ]
-    },
-    {
-      "slide_id": "section-design",
-      "section": "Design",
-      "title": "Design",
-      "rhetorical_role": "section-divider",
-      "archetype": "Outline / Roadmap",
-      "takeaway": "Tokencake combines a DAG-aware frontend with coordinated time and space schedulers around the KV cache.",
-      "claim_ids": [
-        "c3"
       ],
-      "evidence": [
-        {
-          "kind": "claim",
-          "ref": "c3",
-          "detail": "Architecture and coordination thesis"
-        }
-      ],
-      "asset_ids": [],
-      "equation_ids": [],
-      "content_density": "low",
-      "qa_expectations": [
-        "Divider page remains visually clean"
-      ]
+      "table": {
+        "headers": [
+          "View",
+          "Examples",
+          "Optimizes",
+          "Still misses"
+        ],
+        "rows": [
+          [
+            "Agent-aware",
+            "Parrot / Autellix / Teola",
+            "DAG order, stage overlap",
+            "No KV-cache control, so critical inversion remains."
+          ],
+          [
+            "KV-cache-centric",
+            "vLLM / Mooncake / CachedAttention / LMCache",
+            "Fragmentation or offload",
+            "No agent criticality or function-call trigger."
+          ]
+        ],
+        "columns": [
+          1.0,
+          1.2,
+          1.15,
+          1.45
+        ],
+        "align": [
+          "left",
+          "left",
+          "left",
+          "left"
+        ]
+      }
     },
     {
       "slide_id": "design-overview",
@@ -242,6 +230,18 @@
         "fig4-overview"
       ],
       "equation_ids": [],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "Thesis",
+          "body": "Multi-agent serving should manage KV cache across both time and space, not as a scheduler-only tweak."
+        },
+        {
+          "style": "highlight",
+          "label": "Control split",
+          "body": "The frontend exposes agent structure, while the time and space schedulers share one memory pool."
+        }
+      ],
       "content_density": "medium",
       "qa_expectations": [
         "Overview figure is dominant evidence",
@@ -320,6 +320,18 @@
         "eq1-duration-blend",
         "eq2-transfer-cost"
       ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "Runtime",
+          "body": "`call_start` and `call_finish` turn a tool stall into an explicit offload and prefetch window."
+        },
+        {
+          "style": "highlight",
+          "label": "Decision",
+          "body": "Offload only when the predicted stall exceeds transfer cost, then upload before the expected resume time."
+        }
+      ],
       "content_density": "medium",
       "qa_expectations": [
         "Lifecycle figure stays legible",
@@ -365,6 +377,18 @@
         "eq3-static-priority",
         "eq4-dynamic-priority"
       ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "Priority",
+          "body": "Static DAG importance is combined with dynamic wait-time urgency to decide which agent types deserve protection."
+        },
+        {
+          "style": "highlight",
+          "label": "Control loop",
+          "body": "Tokencake grows the reserved pool under pressure while keeping a shared pool for opportunistic use."
+        }
+      ],
       "content_density": "medium",
       "qa_expectations": [
         "Feedback-loop figure remains readable",
@@ -372,35 +396,11 @@
       ]
     },
     {
-      "slide_id": "section-evaluation",
-      "section": "Evaluation",
-      "title": "Evaluation",
-      "rhetorical_role": "section-divider",
-      "archetype": "Outline / Roadmap",
-      "takeaway": "The evaluation tests whether more productive KV-cache use yields better latency, utilization, and stability.",
-      "claim_ids": [
-        "c6"
-      ],
-      "evidence": [
-        {
-          "kind": "claim",
-          "ref": "c6",
-          "detail": "Measured gains under load"
-        }
-      ],
-      "asset_ids": [],
-      "equation_ids": [],
-      "content_density": "low",
-      "qa_expectations": [
-        "Divider page remains visually clean"
-      ]
-    },
-    {
       "slide_id": "eval-setup",
       "section": "Evaluation",
       "title": "Experimental Setup",
       "rhetorical_role": "evaluation-setup",
-      "archetype": "Table-Led Structured Slide",
+      "archetype": "Motivation / Background",
       "takeaway": "The evaluation stresses realistic multi-agent workloads on two Qwen sizes and compares against mainstream serving baselines.",
       "claim_ids": [
         "c6"
@@ -419,10 +419,27 @@
       ],
       "asset_ids": [],
       "equation_ids": [],
-      "content_density": "high",
+      "content_density": "medium",
       "qa_expectations": [
-        "Setup table remains readable",
-        "No overflow from hardware details"
+        "Setup slide remains box-led rather than turning into a dense table",
+        "Hardware and benchmark details stay within one page"
+      ],
+      "boxes": [
+        {
+          "style": "info",
+          "label": "Stress test",
+          "body": "Two representative agentic apps, two Qwen sizes, and mainstream baselines stress both concurrency and dependency-heavy workflows."
+        },
+        {
+          "style": "highlight",
+          "label": "Platform",
+          "body": "Qwen2.5-14B on A100 80GB, Qwen2.5-32B on H200 140GB, plus 100GB of CPU swap space for offloaded KV cache."
+        }
+      ],
+      "bullets": [
+        "Benchmarks: Code-Writer stresses concurrent agents; Deep Research stresses dependency-heavy workflows.",
+        "Load: request arrivals follow application QPS and tool latencies are both Poisson-simulated.",
+        "Baselines / metrics: vLLM and LightLLM; end-to-end latency, GPU KV usage, and abnormal agent count."
       ]
     },
     {

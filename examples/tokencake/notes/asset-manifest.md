@@ -1,4 +1,4 @@
-# tokencake Asset Manifest
+# Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications Asset Manifest
 
 Artifact Progress:
 - [x] Extract paper text to `notes/source.txt`
@@ -6,9 +6,9 @@ Artifact Progress:
 - [x] Render `notes/asset-manifest.md` from `notes/assets.json`
 
 Scenario: en paper-reading deck.
-Extraction status: assets-registered
+Extraction status: source-extracted
 
-Source text: `out/tokencake/notes/source.txt` via `pdftotext-layout`.
+Source text: `examples/tokencake/notes/source.txt` via `pdftotext-layout`.
 Pages: `13`
 
 ## Figure Assets
@@ -19,7 +19,7 @@ Pages: `13`
 - Page: `1`
 - BBox: `[324.417, 198.747, 433.829, 321.466]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig1a-multi-agent-coding.jpeg`
+- Primary output: `examples/tokencake/assets/fig1a-multi-agent-coding.jpeg`
 - Dimensions: 2220 x 2490 (ar=0.8916)
 - Caption: Multi-agent coding application with collaborating programmer, checker, reviewer, and reviser agents.
 - Section hint: Introduction
@@ -32,7 +32,7 @@ Pages: `13`
 - Page: `1`
 - BBox: `[442.128, 196.440, 551.540, 321.448]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig1b-deep-research.jpeg`
+- Primary output: `examples/tokencake/assets/fig1b-deep-research.jpeg`
 - Dimensions: 2280 x 2605 (ar=0.8752)
 - Caption: Deep Research application with planner, searcher, summary, reflector, and generation stages.
 - Section hint: Introduction
@@ -45,7 +45,7 @@ Pages: `13`
 - Page: `2`
 - BBox: `[53.722, 74.904, 294.276, 211.868]`
 - Capture kind: `cropped-composite-pdf`
-- Primary output: `out/tokencake/assets/fig2-space-contention.pdf`
+- Primary output: `examples/tokencake/assets/fig2-space-contention.pdf`
 - Dimensions: 240.554 x 136.964 (ar=1.7563)
 - Caption: Critical-path agents get preempted when non-critical agents occupy KV-cache space first.
 - Section hint: Introduction
@@ -58,7 +58,7 @@ Pages: `13`
 - Page: `2`
 - BBox: `[56.905, 74.904, 166.317, 184.316]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig2a-space-contention-analysis.jpeg`
+- Primary output: `examples/tokencake/assets/fig2a-space-contention-analysis.jpeg`
 - Dimensions: 1200 x 1200 (ar=1.0)
 - Caption: Preemption events accumulate steadily in the Code-Writer workload.
 - Section hint: Introduction
@@ -71,7 +71,7 @@ Pages: `13`
 - Page: `2`
 - BBox: `[180.984, 83.534, 291.872, 185.061]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig2b-space-contention-diagram.jpeg`
+- Primary output: `examples/tokencake/assets/fig2b-space-contention-diagram.jpeg`
 - Dimensions: 770 x 705 (ar=1.0922)
 - Caption: A non-critical agent can occupy memory first and preempt a critical-path agent.
 - Section hint: Introduction
@@ -84,7 +84,7 @@ Pages: `13`
 - Page: `2`
 - BBox: `[317.677, 74.904, 558.003, 211.868]`
 - Capture kind: `cropped-composite-pdf`
-- Primary output: `out/tokencake/assets/fig3-time-underutilization.pdf`
+- Primary output: `examples/tokencake/assets/fig3-time-underutilization.pdf`
 - Dimensions: 240.326 x 136.964 (ar=1.7547)
 - Caption: Function-call stalls leave KV-cache blocks idle or force expensive eviction and recomputation.
 - Section hint: Introduction
@@ -97,7 +97,7 @@ Pages: `13`
 - Page: `2`
 - BBox: `[320.860, 74.904, 430.272, 184.316]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig3a-idle-kv-blocks.jpeg`
+- Primary output: `examples/tokencake/assets/fig3a-idle-kv-blocks.jpeg`
 - Dimensions: 1200 x 1200 (ar=1.0)
 - Caption: Stalled agents can occupy up to 18.5 percent of used GPU KV cache.
 - Section hint: Introduction
@@ -110,7 +110,7 @@ Pages: `13`
 - Page: `2`
 - BBox: `[444.858, 77.202, 555.922, 185.168]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig3b-kv-cache-lifecycle.jpeg`
+- Primary output: `examples/tokencake/assets/fig3b-kv-cache-lifecycle.jpeg`
 - Dimensions: 1255 x 1220 (ar=1.0287)
 - Caption: During a function call, the system must choose between wasting memory and paying recomputation later.
 - Section hint: Introduction
@@ -123,7 +123,7 @@ Pages: `13`
 - Page: `3`
 - BBox: `[322.231, 76.325, 553.716, 228.460]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig4-overview.jpeg`
+- Primary output: `examples/tokencake/assets/fig4-overview.jpeg`
 - Dimensions: 1940 x 1275 (ar=1.5216)
 - Caption: Tokencake combines a frontend API with coordinated space and time schedulers around the KV cache.
 - Section hint: Overview
@@ -136,7 +136,7 @@ Pages: `13`
 - Page: `4`
 - BBox: `[69.852, 75.856, 278.195, 175.905]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig5-api.jpeg`
+- Primary output: `examples/tokencake/assets/fig5-api.jpeg`
 - Dimensions: 4927 x 2366 (ar=2.0824)
 - Caption: The frontend expresses a multi-agent workflow as a DAG with staged function nodes.
 - Section hint: Frontend API
@@ -149,7 +149,7 @@ Pages: `13`
 - Page: `4`
 - BBox: `[322.231, 76.285, 553.716, 153.808]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig6-coordination.jpeg`
+- Primary output: `examples/tokencake/assets/fig6-coordination.jpeg`
 - Dimensions: 2135 x 715 (ar=2.986)
 - Caption: The space scheduler and time scheduler cooperate on reservation, offload, and prefetch decisions.
 - Section hint: Overview
@@ -162,7 +162,7 @@ Pages: `13`
 - Page: `5`
 - BBox: `[322.231, 243.898, 553.716, 359.220]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig7-lifecycle.jpeg`
+- Primary output: `examples/tokencake/assets/fig7-lifecycle.jpeg`
 - Dimensions: 1375 x 685 (ar=2.0073)
 - Caption: The time scheduler analyzes, offloads, predicts completion, and uploads KV cache before resumption.
 - Section hint: Time Scheduler
@@ -175,7 +175,7 @@ Pages: `13`
 - Page: `7`
 - BBox: `[58.340, 76.276, 289.697, 214.825]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig8-space-scheduler.jpeg`
+- Primary output: `examples/tokencake/assets/fig8-space-scheduler.jpeg`
 - Dimensions: 1745 x 1045 (ar=1.6699)
 - Caption: The space scheduler updates critical-agent reservations from priority and observed memory pressure.
 - Section hint: Space Scheduler
@@ -188,7 +188,7 @@ Pages: `13`
 - Page: `10`
 - BBox: `[58.351, 515.256, 289.687, 605.341]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig10-gpu-utilization.jpeg`
+- Primary output: `examples/tokencake/assets/fig10-gpu-utilization.jpeg`
 - Dimensions: 3495 x 1361 (ar=2.568)
 - Caption: Tokencake sustains about 86 to 87 percent GPU KV-cache utilization versus roughly 70 to 74 percent for vLLM.
 - Section hint: Evaluation
@@ -201,7 +201,7 @@ Pages: `13`
 - Page: `10`
 - BBox: `[63.279, 80.977, 548.734, 306.645]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig9-latency.jpeg`
+- Primary output: `examples/tokencake/assets/fig9-latency.jpeg`
 - Dimensions: 5279 x 2454 (ar=2.1512)
 - Caption: Tokencake scales better with load and cuts end-to-end latency versus vLLM and LightLLM.
 - Section hint: Evaluation
@@ -214,7 +214,7 @@ Pages: `13`
 - Page: `11`
 - BBox: `[58.276, 160.696, 289.761, 390.385]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig11-agent-latency.jpeg`
+- Primary output: `examples/tokencake/assets/fig11-agent-latency.jpeg`
 - Dimensions: 4126 x 4094 (ar=1.0078)
 - Caption: Every agent type runs faster on Tokencake than on the baselines.
 - Section hint: Evaluation
@@ -227,7 +227,7 @@ Pages: `13`
 - Page: `11`
 - BBox: `[322.283, 76.276, 553.664, 181.756]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig12-abnormal-agents.jpeg`
+- Primary output: `examples/tokencake/assets/fig12-abnormal-agents.jpeg`
 - Dimensions: 3501 x 1596 (ar=2.1936)
 - Caption: Tokencake sharply reduces abnormal critical-path agents with unusually long runtimes.
 - Section hint: Evaluation
@@ -240,7 +240,7 @@ Pages: `13`
 - Page: `11`
 - BBox: `[322.231, 383.286, 553.716, 487.212]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig13-offload-vs-recompute.jpeg`
+- Primary output: `examples/tokencake/assets/fig13-offload-vs-recompute.jpeg`
 - Dimensions: 3497 x 1570 (ar=2.2274)
 - Caption: KV-cache transfer is orders of magnitude cheaper than recomputing the same context.
 - Section hint: Evaluation
@@ -253,7 +253,7 @@ Pages: `13`
 - Page: `12`
 - BBox: `[58.276, 76.323, 289.761, 211.356]`
 - Capture kind: `native-raster`
-- Primary output: `out/tokencake/assets/fig14-overhead-mitigation.jpeg`
+- Primary output: `examples/tokencake/assets/fig14-overhead-mitigation.jpeg`
 - Dimensions: 3600 x 2100 (ar=1.7143)
 - Caption: CPU block buffering and gradual GPU reservation reduce transfer overhead from seconds to milliseconds.
 - Section hint: Evaluation

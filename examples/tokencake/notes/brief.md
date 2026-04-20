@@ -4,8 +4,8 @@
 
 - Title: Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications
 - Authors: Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo
-- Venue/status: arXiv preprint
-- Date: 2025-10-31
+- Venue/status: arXiv:2510.18586v2
+- Date: October 31, 2025
 - Talk mode: en paper-reading deck
 
 ## Presentation Thesis

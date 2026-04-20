@@ -10,7 +10,7 @@
   config-info(
     title: [Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications],
     venue: [arXiv:2510.18586v2],
-    author: [Zhuohang Bian et al.],
+    author: [Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo],
     institution: [Peking University],
     short-title: [Tokencake],
     date: [October 31, 2025],
@@ -24,115 +24,130 @@
 == Agentic Workloads Stress KV Cache
 
 #ibox[
-  *Workload:* multi-agent DAGs mix critical-path dependencies with long external tool stalls.
-]
-
-#hbox[
-  *Tool latency:* Table 1 spans `100 ms` to `5-30 s`, so the idle window is large enough to schedule around.
+  *Takeaway:* Multi-agent DAGs mix critical-path dependencies with long external tool stalls, so serving sees both heterogeneous agent importance and large idle windows.
 ]
 
 #imgs(
-  (image("assets/fig1a-multi-agent-coding.jpeg"), [Multi-agent coding]),
-  (image("assets/fig1b-deep-research.jpeg"), [Deep research]),
+  (image("assets/fig1a-multi-agent-coding.jpeg"), [Multi-agent Coding]),
+  (image("assets/fig1b-deep-research.jpeg"), [Deep Research]),
+  width: 96%,
   gap: 0.8em,
 )
+
+// Render mode: script
+// Claim ids: c1
+// Evidence: asset:fig1a-coding (Coding workflow example); asset:fig1b-deep-research (Research workflow example); text:table-1 (Tool latencies span 100 ms to 5-30 s with large variability); assets=fig1a-coding, fig1b-deep-research
+// QA: Both workflow panels stay readable, Boxes stay to one line each
 
 == Space Contention
 
 #ibox[
-  *Claim:* FCFS-style allocation lets non-critical agents occupy scarce KV-cache blocks before critical-path work arrives.
-]
-
-#hbox[
-  *Consequence:* the evicted critical agent must rebuild its prefix, so one bad memory decision delays the whole workflow.
+  *Takeaway:* FCFS-style allocation lets non-critical agents occupy scarce KV-cache blocks before critical-path work arrives.
 ]
 
 #imgs(
-  (image("assets/fig2a-space-contention-analysis.jpeg"), [Critical inversion events are frequent]),
-  (image("assets/fig2b-space-contention-diagram.jpeg"), [A non-critical agent preempts a critical one]),
-  widths: (1.05fr, 0.95fr),
+  (image("assets/fig2a-space-contention-analysis.jpeg"), [Contention Analysis]),
+  (image("assets/fig2b-space-contention-diagram.jpeg"), [Critical Inversion Diagram]),
+  width: 96%,
   gap: 0.8em,
 )
+
+// Render mode: script
+// Claim ids: c1
+// Evidence: asset:fig2a-space-contention-analysis (Preemption events accumulate over time); asset:fig2b-space-contention-diagram (Critical inversion cartoon); assets=fig2a-space-contention-analysis, fig2b-space-contention-diagram
+// QA: Both panels remain readable, The consequence box stays concise
 
 == Time Underutilization
 
 #ibox[
-  *Claim:* function-call stalls leave useful KV cache idle on the GPU, even though active requests still need memory.
-]
-
-#hbox[
-  *Peak waste:* Figure 3a shows stalled agents can occupy up to `18.5%` of the used GPU KV cache.
+  *Takeaway:* Function-call stalls leave useful KV cache idle on the GPU, even though active requests still need memory.
 ]
 
 #imgs(
-  (image("assets/fig3a-idle-kv-blocks.jpeg"), [Idle KV-cache blocks over time]),
-  (image("assets/fig3b-kv-cache-lifecycle.jpeg"), [Inference1 -> function call -> Inference2 lifecycle]),
-  widths: (1.05fr, 0.95fr),
+  (image("assets/fig3a-idle-kv-blocks.jpeg"), [Idle KV Blocks]),
+  (image("assets/fig3b-kv-cache-lifecycle.jpeg"), [KV-Cache Lifecycle]),
+  width: 96%,
   gap: 0.8em,
 )
 
+// Render mode: script
+// Claim ids: c1
+// Evidence: asset:fig3a-idle-kv-blocks (18.5% peak waste); asset:fig3b-kv-cache-lifecycle (Keep-vs-evict tradeoff); assets=fig3a-idle-kv-blocks, fig3b-kv-cache-lifecycle
+// QA: Peak-waste number is legible, Lifecycle diagram stays readable
+
 == Why Existing Systems Miss It
 
-#ibox[
-  *Gap:* prior systems optimize either application scheduling or KV-cache management, but not both together.
-]
-
 #table(
-  columns: (1fr, 1.2fr, 1.15fr, 1.45fr),
+  columns: (1.0fr, 1.2fr, 1.15fr, 1.45fr),
   inset: 8pt,
   align: (left, left, left, left),
-  [*View*], [*Examples*], [*Optimizes*], [*Still misses*],
+  [*View*],
+  [*Examples*],
+  [*Optimizes*],
+  [*Still misses*],
   [Agent-aware],
   [Parrot / Autellix / Teola],
   [DAG order, stage overlap],
   [No KV-cache control, so critical inversion remains.],
-
   [KV-cache-centric],
   [vLLM / Mooncake / CachedAttention / LMCache],
   [Fragmentation or offload],
   [No agent criticality or function-call trigger.],
 )
 
+// Render mode: script
+// Claim ids: c2
+// Evidence: text:source-introduction (Parrot / Autellix / Teola vs vLLM / Mooncake / CachedAttention / LMCache); text:table-2 (Reactive versus function-call-aware offload and prefetch)
+// QA: Table stays concise, Each row states one gap clearly
+
 = Design
 
 == Tokencake Overview
 
 #grid(
-  columns: (0.82fr, 1.18fr),
+  columns: (0.92fr, 1.08fr),
   gutter: 0.8em,
   [
     #ibox[
-      *Thesis:* multi-agent serving should manage KV cache across both time and space.
+      *Thesis:* Multi-agent serving should manage KV cache across both time and space, not as a scheduler-only tweak.
     ]
-
+    
     #hbox[
-      *Space Scheduler:* reserves blocks for critical agents under pressure.
+      *Control split:* The frontend exposes agent structure, while the time and space schedulers share one memory pool.
     ]
+    
   ],
   [
     #imgs(
-      (image("assets/fig4-overview.jpeg"), [Frontend API + space scheduler + time scheduler]),
+      (image("assets/fig4-overview.jpeg"), [Tokencake Overview]),
+      width: 100%,
     )
+    
   ],
 )
+
+// Render mode: script
+// Claim ids: c3
+// Evidence: asset:fig4-overview (Frontend API + space scheduler + time scheduler); assets=fig4-overview
+// QA: Overview figure is dominant evidence, Boxes remain one line each
 
 == Expose Agent Context to the Runtime
 
 #ibox[
-  *Key move:* Tokencake does not treat a tool-using request as a black box; the API exports structure the runtime can optimize.
-]
-
-#hbox[
-  *What the runtime learns:* DAG dependencies, internal function-call stages, and `predict_time` for cold-start forecasts.
+  *Takeaway:* The API exports DAG structure, internal function-call stages, and predict_time, which turns the runtime into an application-aware controller.
 ]
 
 #imgs(
-  (image("assets/fig5-api.jpeg"), [API graph + staged `FuncNode`]),
-  (image("assets/fig6-coordination.jpeg"), [Space/time schedulers share one memory pool]),
-  width: 94%,
-  widths: (1.25fr, 0.95fr),
+  (image("assets/fig5-api.jpeg"), [Frontend API]),
+  (image("assets/fig6-coordination.jpeg"), [Scheduler Coordination]),
+  width: 96%,
   gap: 0.8em,
 )
+
+// Render mode: script
+// Claim ids: c3
+// Evidence: asset:fig5-api (Staged FuncNode graph definition); asset:fig6-coordination (Joint scheduler coordination); assets=fig5-api, fig6-coordination
+// QA: API figure stays readable, Coordination diagram does not become a thumbnail
 
 == Function-Call-Aware Time Scheduler
 
@@ -141,19 +156,27 @@
   gutter: 0.8em,
   [
     #ibox[
-      *Runtime:* `call_start` and `call_finish` turn a tool stall into an explicit scheduling window.
+      *Runtime:* `call_start` and `call_finish` turn a tool stall into an explicit offload and prefetch window.
     ]
-
+    
     #hbox[
-      *Decision:* offload only when the predicted stall is longer than transfer cost; forecast resume time with $t_"final" = alpha dot t_"req" + (1 - alpha) dot t_"hist"$.
+      *Decision:* Offload only when the predicted stall exceeds transfer cost, then upload before the expected resume time.
     ]
+    
   ],
   [
     #imgs(
-      (image("assets/fig7-lifecycle.jpeg"), [Offload at call start, prefetch before predicted resume]),
+      (image("assets/fig7-lifecycle.jpeg"), [Time Scheduler Lifecycle]),
+      width: 100%,
     )
+    
   ],
 )
+
+// Render mode: script
+// Claim ids: c4
+// Evidence: asset:fig7-lifecycle (Offload / predict / upload lifecycle); equation:eq1-duration-blend (Duration estimate); equation:eq2-transfer-cost (Transfer threshold); text:algorithm-1 (Benefit-driven offload decision); assets=fig7-lifecycle; equations=eq1-duration-blend, eq2-transfer-cost
+// QA: Lifecycle figure stays legible, Equation text fits without shrinking
 
 == Dynamic Memory Partitioning
 
@@ -162,158 +185,143 @@
   gutter: 0.8em,
   [
     #ibox[
-      *Priority:* static DAG importance is combined with dynamic wait-time urgency to select protected agent types.
+      *Priority:* Static DAG importance is combined with dynamic wait-time urgency to decide which agent types deserve protection.
     ]
-
+    
     #hbox[
-      *Control loop:* a shared pool serves everyone, while the reserved pool expands under high GPU pressure.
+      *Control loop:* Tokencake grows the reserved pool under pressure while keeping a shared pool for opportunistic use.
     ]
+    
   ],
   [
     #imgs(
-      (image("assets/fig8-space-scheduler.jpeg"), [Hybrid priority drives adaptive memory reservation]),
+      (image("assets/fig8-space-scheduler.jpeg"), [Space Scheduler Feedback Loop]),
+      width: 100%,
     )
+    
   ],
 )
+
+// Render mode: script
+// Claim ids: c5
+// Evidence: asset:fig8-space-scheduler (Reservation feedback loop); equation:eq3-static-priority (Structural importance); equation:eq4-dynamic-priority (Runtime urgency); text:algorithm-2 (Two-phase reservation update); assets=fig8-space-scheduler; equations=eq3-static-priority, eq4-dynamic-priority
+// QA: Feedback-loop figure remains readable, Priority formulas fit cleanly
 
 = Evaluation
 
 == Experimental Setup
 
-#grid(
-  columns: (1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #ibox[
-      *Stress test:* two representative agentic apps, two Qwen sizes, and mainstream baselines.
-    ]
+#ibox[
+  *Stress test:* Two representative agentic apps, two Qwen sizes, and mainstream baselines stress both concurrency and dependency-heavy workflows.
+]
 
-    #hbox[
-      *Platform:* Qwen2.5-14B on A100 `80GB`, Qwen2.5-32B on H200 `140GB`, plus `100GB` CPU swap.
-    ]
-  ],
-  [
-    #nbox[
-      *Benchmarks:* Code-Writer stresses concurrent agents; Deep Research stresses dependency-heavy workflows.
-    ]
+#hbox[
+  *Platform:* Qwen2.5-14B on A100 80GB, Qwen2.5-32B on H200 140GB, plus 100GB of CPU swap space for offloaded KV cache.
+]
 
-    #sbox[
-      *Load:* request arrivals follow a Poisson process over application QPS; tool latencies are also Poisson-simulated.
-    ]
+#nbox(compact: true)[
+  Benchmarks: Code-Writer stresses concurrent agents; Deep Research stresses dependency-heavy workflows. Load: request arrivals follow application QPS and tool latencies are both Poisson-simulated. Baselines / metrics: vLLM and LightLLM; end-to-end latency, GPU KV usage, and abnormal agent count.
+]
 
-    #ibox[
-      *Baselines / metrics:* vLLM and LightLLM; end-to-end latency, GPU KV usage, and abnormal agent count.
-    ]
-  ],
-)
+// Render mode: script
+// Claim ids: c6
+// Evidence: text:section-7.1 (Qwen2.5-14B / A100 80GB, Qwen2.5-32B / H200 140GB, 100GB CPU swap); text:section-7.1 (Code-Writer, Deep Research, Poisson arrivals, vLLM, LightLLM)
+// QA: Setup slide remains box-led rather than turning into a dense table, Hardware and benchmark details stay within one page
 
 == Latency Improves Under Load
 
 #ibox[
-  *Main result:* Tokencake pulls away as memory pressure rises, which matches the paper's contention thesis.
-]
-
-#hbox[
-  *Anchor number:* at `1.0 QPS`, average end-to-end latency falls by over `47.06%` versus vLLM.
+  *Takeaway:* Tokencake pulls away as memory pressure rises, which matches the paper’s contention thesis.
 ]
 
 #imgs(
-  (image("assets/fig9-latency.jpeg"), [Latency versus application QPS across two workloads and two model sizes]),
+  (image("assets/fig9-latency.jpeg"), [End-to-End Latency]),
+  width: 94%,
 )
+
+// Render mode: script
+// Claim ids: c6
+// Evidence: asset:fig9-latency (Latency vs QPS); text:section-7.2 (47.06% lower latency than vLLM at 1.0 QPS); assets=fig9-latency
+// QA: All four subplots remain readable, Anchor number stays prominent
 
 == GPU Memory Stays Productive
 
 #ibox[
-  *Why latency drops:* Tokencake moves stalled KV cache off the GPU, so occupied memory is mostly attached to computation-ready work.
-]
-
-#hbox[
-  *Utilization:* Tokencake stays around `85.7%` to `87.0%` GPU KV-cache usage, up to `16.9%` higher than vLLM.
+  *Takeaway:* Offloading stalled caches keeps utilization near 86 to 87 percent instead of leaving memory occupied but not useful.
 ]
 
 #imgs(
-  (image("assets/fig10-gpu-utilization.jpeg"), [Higher effective GPU KV-cache usage across load levels]),
+  (image("assets/fig10-gpu-utilization.jpeg"), [GPU KV Utilization]),
+  width: 94%,
 )
+
+// Render mode: script
+// Claim ids: c6
+// Evidence: asset:fig10-gpu-utilization (Higher GPU KV utilization); text:section-7.2 (Up to 16.9% higher utilization than vLLM); assets=fig10-gpu-utilization
+// QA: Bar labels remain legible, Takeaway box stays short
 
 == Critical-Path Agents Stop Stalling
 
 #ibox[
-  *Stability result:* agent-aware reservations cut the long-tail stalls that dominate workflow completion time.
-]
-
-#hbox[
-  *File Write example:* abnormal agents drop from `90` to `27` versus both baselines.
+  *Takeaway:* Agent-aware reservations cut the long-tail stalls that dominate workflow completion time.
 ]
 
 #imgs(
-  (image("assets/fig12-abnormal-agents.jpeg"), [Fewer latency outliers for tool-heavy agents]),
+  (image("assets/fig12-abnormal-agents.jpeg"), [Abnormal Agents]),
+  width: 94%,
 )
+
+// Render mode: script
+// Claim ids: c6
+// Evidence: asset:fig12-abnormal-agents (Abnormal-agent count); text:section-7.3 (File Write abnormal agents drop from 90 to 27 versus both baselines); asset:fig11-agent-latency (Most agent types also run faster); assets=fig12-abnormal-agents
+// QA: Abnormal-agent bars remain readable, Anchor number is easy to spot
 
 == Reuse Beats Recompute
 
 #ibox[
-  *Tradeoff:* if a tool stall is long enough, moving KV cache is far cheaper than rebuilding the prefix later.
-]
-
-#hbox[
-  *4096 blocks:* transfer is about `60 ms` total (`32 ms` offload, `29 ms` upload), while recomputation is about `8943 ms`.
+  *Takeaway:* If a tool stall is long enough, moving KV cache is far cheaper than rebuilding the prefix later.
 ]
 
 #imgs(
-  (image("assets/fig13-offload-vs-recompute.jpeg"), [Transfer cost stays far below recomputation cost]),
+  (image("assets/fig13-offload-vs-recompute.jpeg"), [Transfer vs Recomputation]),
+  width: 94%,
 )
+
+// Render mode: script
+// Claim ids: c6
+// Evidence: asset:fig13-offload-vs-recompute (Transfer versus recompute); text:section-7.4 (4096 blocks: about 60 ms transfer versus about 8943 ms recomputation); assets=fig13-offload-vs-recompute
+// QA: Comparison curve stays readable, One key number remains visible
 
 == Offload Overhead Needs Mitigation
 
 #ibox[
-  *Second tradeoff:* proactive offload only works if the runtime removes the bursty allocation overhead it creates.
-]
-
-#hbox[
-  *5120 blocks:* baseline upload reaches `15163 ms`, while the optimized path keeps it at `4.4 ms`.
+  *Takeaway:* Proactive offload only works if the runtime removes the bursty allocation overhead it creates.
 ]
 
 #imgs(
-  (
-    image("assets/fig14-overhead-mitigation.jpeg"),
-    [CPU buffering and gradual reservation keep transfer latency in single-digit milliseconds],
-  ),
+  (image("assets/fig14-overhead-mitigation.jpeg"), [Overhead Mitigation]),
+  width: 94%,
 )
+
+// Render mode: script
+// Claim ids: c6
+// Evidence: asset:fig14-overhead-mitigation (Optimized versus baseline transfer latency); text:section-7.4 (5120 blocks: 15163 ms baseline upload versus 4.4 ms optimized); assets=fig14-overhead-mitigation
+// QA: Upload-latency comparison stays readable, Optimization box stays concise
+
+= Takeaways
 
 == What Matters in Tokencake
 
-#grid(
-  columns: (1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #ibox[
-      *Systems thesis:* multi-agent serving fails because the KV cache is both space-contended and time-underutilized.
-    ]
+// Render mode: script
+// Claim ids: c6
+// Evidence: claim:c4 (Function-call-aware time scheduling); claim:c5 (Criticality-aware space scheduling); asset:fig9-latency (Latency gains); asset:fig10-gpu-utilization (Memory productivity); asset:fig12-abnormal-agents (Critical-path stability); asset:fig14-overhead-mitigation (Practical offload overhead)
+// QA: Final boxes stay balanced, Limitations fit without overflow
 
-    #hbox[
-      *Design thesis:* the runtime needs both function-call-aware offload and criticality-aware reservation.
-    ]
-  ],
-  [
-    #sbox[
-      *Evidence:* lower latency, higher utilization, and fewer abnormal agents all point to the same mechanism: more productive GPU memory.
-    ]
+= Back Matter
 
-    #nbox[
-      *Limits:* current results depend on simple time prediction and single-GPU evaluation, so distributed extension is the obvious next step.
-    ]
-  ],
-)
+== Questions?
 
-#thank-you-slide(
-  title: [Questions?],
-)[
-  #place-image(
-    assets.qr-code,
-    caption: "pku-lemonade",
-    width: 20%,
-    position: bottom + right,
-    dx: 0em,
-    dy: 1em,
-  )
-]
+// Render mode: script
+// Claim ids: c6
+// Evidence: text:closing (Thank-you slide with QR code)
+// QA: QR code remains visible, Closing slide stays uncluttered

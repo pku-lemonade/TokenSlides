@@ -1,6 +1,6 @@
 {
   "schema_version": "academic-paper-to-slides/v1",
-  "workspace": "out/tokencake",
+  "workspace": "examples/tokencake",
   "paper": {
     "title": "Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications",
     "authors": [
@@ -9,12 +9,13 @@
       "Teng Ma",
       "Youwei Zhuo"
     ],
-    "venue": "arXiv preprint",
-    "date": "2025-10-31",
+    "venue": "arXiv:2510.18586v2",
+    "date": "October 31, 2025",
     "scenario": "paper-reading",
     "language": "en",
     "source_pdf": "tokencake.pdf",
-    "institution": "Peking University"
+    "institution": "Peking University",
+    "short_title": "Tokencake"
   },
   "presentation_thesis": "Tokencake argues that multi-agent LLM serving is bottlenecked by KV-cache management, so the runtime must manage cache lifecycle with both function-call awareness and agent criticality rather than treating memory as a passive byproduct of compute scheduling.",
   "problem_framing": [

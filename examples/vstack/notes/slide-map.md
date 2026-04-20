@@ -13,10 +13,11 @@
 | 9 | 设计 | Runtime 策略 | 异构 stack 只是前提，真正决定收益的是哪些 KV 值得占 compute-layer 空间。 | text:source.txt:721-790 (topology-aware placement、category-aware eviction、bounded replication) | Table-Led Structured Slide | script | mechanism | medium |
 | 10 | 评估 | 实验设置 | 评估覆盖 4 个模型与 4 类 production-derived traces，故意跨越高复用到低复用两端。 | asset:fig07-workloads (四类 trace 的输入输出长度分布); text:source.txt:813-928 (平台、对比对象、模型与 traces); assets=fig07-workloads | Motivation / Background | script | evaluation-setup | medium |
 | 11 | 评估 | 吞吐与容量收益 | vStack 在 16 个 model-trace 组合上全部优于 AttAcc，且模型越大、overflow 越严重，增益越强。 | asset:fig08-throughput (所有组合均优于 AttAcc，GPT-175B 上 Uniform OOM); text:source.txt:975-986 (几何平均 1.62x，按模型 1.20x / 1.38x / 1.94x / 2.15x); text:source.txt:1057-1064 (2x latency SLO 下容量几何平均 1.70x); assets=fig08-throughput | Wide or Fat Evidence | script | result | medium |
-| 12 | 评估 | 时延优势 | 更短的 attention step 会更早释放 decode slots，因此 queueing 不会像 AttAcc 那样在高负载下发散。 | asset:fig09-latency (end-to-end latency vs. QPS); asset:fig11-ttft-tbt (TTFT / TBT 分解); text:source.txt:1038-1044 (queue delay 在 QPS=0.2 / 1.0 分别下降 86% / 95%); text:source.txt:1075-1078 (TTFT 几何平均 127x); assets=fig09-latency, fig11-ttft-tbt | Method Overview With Stacked Evidence | script | result | medium |
-| 13 | 评估 | 收益来源与能耗 | 最大单项收益先来自 KV-aware layout，且这些吞吐改进不是靠更高能耗换来的。 | asset:fig12-ablation (layout +57.9% 为最大单项收益); asset:fig10-energy (每 token 能耗下降 30%-47%); assets=fig12-ablation, fig10-energy | Two-Up Comparison | script | result | medium |
-| 14 | 评估 | 论文边界 | 当 hot/cold 分层不明显或工作集本就能放进 flat PIM tier 时，vStack 的价值会明显收缩。 | text:source.txt:981-986 (Qwen3-4B / thinking 只有 1.03x); text:source.txt:1187-1200 (命中率悖论与 weighted service time) | Table-Led Structured Slide | script | discussion | medium |
-| 15 | 总结 | 结论 | 这篇论文把 HBM-PIM 从 attention 加速器推进成面向 KV serving 的异构 memory substrate。 | claim:c3 (stack thesis); claim:c6 (measured benefit) | Conclusion / Takeaways | script | conclusion | low |
+| 12 | 评估 | 高负载下时延不发散 | vStack 在高负载下维持平稳 end-to-end latency，说明 compute-visible KV miss 没有像 AttAcc 那样把 queueing 放大。 | asset:fig09-latency (end-to-end latency vs. QPS); text:source.txt:1038-1044 (queue delay 在 QPS=0.2 / 1.0 分别下降 86% / 95%); assets=fig09-latency | Wide or Fat Evidence | script | result | medium |
+| 13 | 评估 | TTFT 主导时延差距 | vStack 的主要时延优势来自更早释放 decode slots，而不是单步 attention 延迟的边际改进。 | asset:fig11-ttft-tbt (TTFT / TBT 分解); text:source.txt:1075-1078 (TTFT 几何平均 127x，峰值超过 4500x); assets=fig11-ttft-tbt | Wide or Fat Evidence | script | result | medium |
+| 14 | 评估 | 收益来源与能耗 | 最大单项收益先来自 KV-aware layout，且这些吞吐改进不是靠更高能耗换来的。 | asset:fig12-ablation (layout +57.9% 为最大单项收益); asset:fig10-energy (每 token 能耗下降 30%-47%); assets=fig12-ablation, fig10-energy | Two-Up Comparison | script | result | medium |
+| 15 | 评估 | 论文边界 | 当 hot/cold 分层不明显或工作集本就能放进 flat PIM tier 时，vStack 的价值会明显收缩。 | text:source.txt:981-986 (Qwen3-4B / thinking 只有 1.03x); text:source.txt:1187-1200 (命中率悖论与 weighted service time) | Table-Led Structured Slide | script | discussion | medium |
+| 16 | 总结 | 结论 | 这篇论文把 HBM-PIM 从 attention 加速器推进成面向 KV serving 的异构 memory substrate。 | claim:c3 (stack thesis); claim:c6 (measured benefit) | Conclusion / Takeaways | script | conclusion | low |
 
 ## QA Expectations
 
@@ -31,7 +32,8 @@
 - design-runtime: 策略表不出现换页, 表格文字仍明显短于论文原文
 - eval-setup: Figure 7 仍能看清四类 trace 的差异, 左侧设置说明不挤压成三段长文
 - eval-throughput: Figure 8 的各子图标签仍可读, 两条结论 box 不遮挡宽图空间
-- eval-latency: Figure 9 与 Figure 11 在右列都保持可读, 左侧两条结论不挤占 stacked evidence 的高度
+- eval-latency: Figure 9 的各子图在单页宽图中仍可读, 结论 box 不压缩主结果图高度
+- eval-ttft: Figure 11 在单页宽图中保持 TTFT/TBT 对比可读, 标题保持单行，不把判断挤进图下注释
 - eval-energy-ablation: Figure 12 与 Figure 10 均不缩成缩略图, 比较页标题保持单行
 - discussion-limits: 边界页不出现续页, 四条边界仍保留判断而非复述摘要
 - conclusion: 总结页不沦为摘要复读, 三条 takeaways 在单页内均可读
