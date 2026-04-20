@@ -1,6 +1,6 @@
 {
   "schema_version": "academic-paper-to-slides/v1",
-  "workspace": "out/vstack",
+  "workspace": "examples/vstack",
   "deck": {
     "title": "vStack：面向高效 LLM 推理的异构 HBM-PIM 架构与运行时",
     "short_title": "vStack",
@@ -9,7 +9,7 @@
     "theme": "lemonade",
     "source_pdf": "vstack.pdf",
     "created_at": "2026-04-19T03:38:20+00:00",
-    "updated_at": "2026-04-19T03:55:00+00:00"
+    "updated_at": "2026-04-20T01:13:20+00:00"
   },
   "archetype_policy": {
     "mode": "fixed-theme",
@@ -502,16 +502,16 @@
         {
           "style": "info",
           "label": "平台 / 对比",
-          "body": "DGX-A100，8 GPUs，bank-level PIM；Full-GPU / Uniform / AttAcc / vStack 共用同一 scheduler。"
+          "body": "DGX-A100，8 GPUs，bank-level PIM；Full-GPU / Uniform / AttAcc / vStack 共享同一 scheduler。"
         },
         {
           "style": "success",
           "label": "覆盖范围",
-          "body": "模型从 4B 到 175B；trace 从高复用短 API 到低复用长推理，正好覆盖 vStack 最可能受益与失效的两端。"
+          "body": "模型 4B-175B；trace 覆盖高复用短 API 到低复用长推理两端。"
         }
       ],
       "bullets": [
-        "带宽：UCIe 512 GB/s × 5 stacks，TSV DMA 896 GB/s / stack，NVLink3 600 GB/s。",
+        "互连：UCIe 512 GB/s × 5、TSV DMA 896 GB/s / stack、NVLink3 600 GB/s。",
         "模型：Qwen3-4B、Qwen3-32B、Devstral-123B、GPT-175B。"
       ],
       "content_density": "medium",
@@ -572,10 +572,10 @@
     {
       "slide_id": "eval-latency",
       "section": "评估",
-      "title": "时延优势",
+      "title": "高负载下时延不发散",
       "rhetorical_role": "result",
-      "archetype": "Method Overview With Stacked Evidence",
-      "takeaway": "更短的 attention step 会更早释放 decode slots，因此 queueing 不会像 AttAcc 那样在高负载下发散。",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "vStack 在高负载下维持平稳 end-to-end latency，说明 compute-visible KV miss 没有像 AttAcc 那样把 queueing 放大。",
       "claim_ids": [
         "c6"
       ],
@@ -586,24 +586,13 @@
           "detail": "end-to-end latency vs. QPS"
         },
         {
-          "kind": "asset",
-          "ref": "fig11-ttft-tbt",
-          "detail": "TTFT / TBT 分解"
-        },
-        {
           "kind": "text",
           "ref": "source.txt:1038-1044",
           "detail": "queue delay 在 QPS=0.2 / 1.0 分别下降 86% / 95%"
-        },
-        {
-          "kind": "text",
-          "ref": "source.txt:1075-1078",
-          "detail": "TTFT 几何平均 127x"
         }
       ],
       "asset_ids": [
-        "fig09-latency",
-        "fig11-ttft-tbt"
+        "fig09-latency"
       ],
       "asset_caption_mode": "short",
       "boxes": [
@@ -611,7 +600,41 @@
           "style": "info",
           "label": "Queueing",
           "body": "Devstral-123B / traceA 上，平均 queue delay 在 QPS=0.2 下降 86%，在 QPS=1.0 下降 95%。"
+        }
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 9 的各子图在单页宽图中仍可读",
+        "结论 box 不压缩主结果图高度"
+      ]
+    },
+    {
+      "slide_id": "eval-ttft",
+      "section": "评估",
+      "title": "TTFT 主导时延差距",
+      "rhetorical_role": "result",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "vStack 的主要时延优势来自更早释放 decode slots，而不是单步 attention 延迟的边际改进。",
+      "claim_ids": [
+        "c6"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "fig11-ttft-tbt",
+          "detail": "TTFT / TBT 分解"
         },
+        {
+          "kind": "text",
+          "ref": "source.txt:1075-1078",
+          "detail": "TTFT 几何平均 127x，峰值超过 4500x"
+        }
+      ],
+      "asset_ids": [
+        "fig11-ttft-tbt"
+      ],
+      "asset_caption_mode": "short",
+      "boxes": [
         {
           "style": "success",
           "label": "TTFT",
@@ -620,8 +643,8 @@
       ],
       "content_density": "medium",
       "qa_expectations": [
-        "Figure 9 与 Figure 11 在右列都保持可读",
-        "左侧两条结论不挤占 stacked evidence 的高度"
+        "Figure 11 在单页宽图中保持 TTFT/TBT 对比可读",
+        "标题保持单行，不把判断挤进图下注释"
       ]
     },
     {

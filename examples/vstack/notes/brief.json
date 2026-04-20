@@ -1,6 +1,6 @@
 {
   "schema_version": "academic-paper-to-slides/v1",
-  "workspace": "out/vstack",
+  "workspace": "examples/vstack",
   "paper": {
     "title": "vStack: A Heterogeneous HBM-PIM Architecture and Runtime for Efficient LLM Inference",
     "authors": [

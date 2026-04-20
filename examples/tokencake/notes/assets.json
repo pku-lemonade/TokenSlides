@@ -1,24 +1,24 @@
 {
   "schema_version": "academic-paper-to-slides/v1",
-  "workspace": "out/tokencake",
+  "workspace": "examples/tokencake",
   "source_pdf": "tokencake.pdf",
   "metadata": {
-    "paper_title": "tokencake",
+    "paper_title": "Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications",
     "scenario": "paper-reading",
     "language": "en",
     "theme": "lemonade",
     "created_at": "2026-04-18T11:35:17+00:00",
-    "updated_at": "2026-04-18T11:44:14+00:00"
+    "updated_at": "2026-04-20T01:13:23+00:00"
   },
   "source_text": {
-    "path": "out/tokencake/notes/source.txt",
+    "path": "examples/tokencake/notes/source.txt",
     "extractor": "pdftotext-layout",
-    "generated_at": "2026-04-18T11:35:17+00:00",
+    "generated_at": "2026-04-20T01:13:23+00:00",
     "page_count": 13,
     "notes": ""
   },
   "extraction": {
-    "status": "assets-registered",
+    "status": "source-extracted",
     "priority_order": [
       "figure",
       "table",
@@ -41,7 +41,7 @@
         321.466
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig1a-multi-agent-coding.jpeg",
+      "primary_output": "examples/tokencake/assets/fig1a-multi-agent-coding.jpeg",
       "normalized_caption": "Multi-agent coding application with collaborating programmer, checker, reviewer, and reviser agents.",
       "raw_caption": "Multi-agent coding application with collaborating programmer, checker, reviewer, and reviser agents.",
       "dimensions": {
@@ -74,7 +74,7 @@
         321.448
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig1b-deep-research.jpeg",
+      "primary_output": "examples/tokencake/assets/fig1b-deep-research.jpeg",
       "normalized_caption": "Deep Research application with planner, searcher, summary, reflector, and generation stages.",
       "raw_caption": "Deep Research application with planner, searcher, summary, reflector, and generation stages.",
       "dimensions": {
@@ -107,7 +107,7 @@
         211.868
       ],
       "capture_kind": "cropped-composite-pdf",
-      "primary_output": "out/tokencake/assets/fig2-space-contention.pdf",
+      "primary_output": "examples/tokencake/assets/fig2-space-contention.pdf",
       "normalized_caption": "Critical-path agents get preempted when non-critical agents occupy KV-cache space first.",
       "raw_caption": "Critical-path agents get preempted when non-critical agents occupy KV-cache space first.",
       "dimensions": {
@@ -140,7 +140,7 @@
         211.868
       ],
       "capture_kind": "cropped-composite-pdf",
-      "primary_output": "out/tokencake/assets/fig3-time-underutilization.pdf",
+      "primary_output": "examples/tokencake/assets/fig3-time-underutilization.pdf",
       "normalized_caption": "Function-call stalls leave KV-cache blocks idle or force expensive eviction and recomputation.",
       "raw_caption": "Function-call stalls leave KV-cache blocks idle or force expensive eviction and recomputation.",
       "dimensions": {
@@ -173,7 +173,7 @@
         228.46
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig4-overview.jpeg",
+      "primary_output": "examples/tokencake/assets/fig4-overview.jpeg",
       "normalized_caption": "Tokencake combines a frontend API with coordinated space and time schedulers around the KV cache.",
       "raw_caption": "Tokencake combines a frontend API with coordinated space and time schedulers around the KV cache.",
       "dimensions": {
@@ -206,7 +206,7 @@
         175.905
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig5-api.jpeg",
+      "primary_output": "examples/tokencake/assets/fig5-api.jpeg",
       "normalized_caption": "The frontend expresses a multi-agent workflow as a DAG with staged function nodes.",
       "raw_caption": "The frontend expresses a multi-agent workflow as a DAG with staged function nodes.",
       "dimensions": {
@@ -239,7 +239,7 @@
         153.808
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig6-coordination.jpeg",
+      "primary_output": "examples/tokencake/assets/fig6-coordination.jpeg",
       "normalized_caption": "The space scheduler and time scheduler cooperate on reservation, offload, and prefetch decisions.",
       "raw_caption": "The space scheduler and time scheduler cooperate on reservation, offload, and prefetch decisions.",
       "dimensions": {
@@ -272,7 +272,7 @@
         359.22
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig7-lifecycle.jpeg",
+      "primary_output": "examples/tokencake/assets/fig7-lifecycle.jpeg",
       "normalized_caption": "The time scheduler analyzes, offloads, predicts completion, and uploads KV cache before resumption.",
       "raw_caption": "The time scheduler analyzes, offloads, predicts completion, and uploads KV cache before resumption.",
       "dimensions": {
@@ -305,7 +305,7 @@
         214.825
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig8-space-scheduler.jpeg",
+      "primary_output": "examples/tokencake/assets/fig8-space-scheduler.jpeg",
       "normalized_caption": "The space scheduler updates critical-agent reservations from priority and observed memory pressure.",
       "raw_caption": "The space scheduler updates critical-agent reservations from priority and observed memory pressure.",
       "dimensions": {
@@ -338,7 +338,7 @@
         306.645
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig9-latency.jpeg",
+      "primary_output": "examples/tokencake/assets/fig9-latency.jpeg",
       "normalized_caption": "Tokencake scales better with load and cuts end-to-end latency versus vLLM and LightLLM.",
       "raw_caption": "Tokencake scales better with load and cuts end-to-end latency versus vLLM and LightLLM.",
       "dimensions": {
@@ -371,7 +371,7 @@
         605.341
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig10-gpu-utilization.jpeg",
+      "primary_output": "examples/tokencake/assets/fig10-gpu-utilization.jpeg",
       "normalized_caption": "Tokencake sustains about 86 to 87 percent GPU KV-cache utilization versus roughly 70 to 74 percent for vLLM.",
       "raw_caption": "Tokencake sustains about 86 to 87 percent GPU KV-cache utilization versus roughly 70 to 74 percent for vLLM.",
       "dimensions": {
@@ -404,7 +404,7 @@
         390.385
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig11-agent-latency.jpeg",
+      "primary_output": "examples/tokencake/assets/fig11-agent-latency.jpeg",
       "normalized_caption": "Every agent type runs faster on Tokencake than on the baselines.",
       "raw_caption": "Every agent type runs faster on Tokencake than on the baselines.",
       "dimensions": {
@@ -437,7 +437,7 @@
         181.756
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig12-abnormal-agents.jpeg",
+      "primary_output": "examples/tokencake/assets/fig12-abnormal-agents.jpeg",
       "normalized_caption": "Tokencake sharply reduces abnormal critical-path agents with unusually long runtimes.",
       "raw_caption": "Tokencake sharply reduces abnormal critical-path agents with unusually long runtimes.",
       "dimensions": {
@@ -470,7 +470,7 @@
         487.212
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig13-offload-vs-recompute.jpeg",
+      "primary_output": "examples/tokencake/assets/fig13-offload-vs-recompute.jpeg",
       "normalized_caption": "KV-cache transfer is orders of magnitude cheaper than recomputing the same context.",
       "raw_caption": "KV-cache transfer is orders of magnitude cheaper than recomputing the same context.",
       "dimensions": {
@@ -503,7 +503,7 @@
         211.356
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig14-overhead-mitigation.jpeg",
+      "primary_output": "examples/tokencake/assets/fig14-overhead-mitigation.jpeg",
       "normalized_caption": "CPU block buffering and gradual GPU reservation reduce transfer overhead from seconds to milliseconds.",
       "raw_caption": "CPU block buffering and gradual GPU reservation reduce transfer overhead from seconds to milliseconds.",
       "dimensions": {
@@ -668,7 +668,7 @@
         184.316
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig2a-space-contention-analysis.jpeg",
+      "primary_output": "examples/tokencake/assets/fig2a-space-contention-analysis.jpeg",
       "normalized_caption": "Preemption events accumulate steadily in the Code-Writer workload.",
       "raw_caption": "Preemption events accumulate steadily in the Code-Writer workload.",
       "dimensions": {
@@ -701,7 +701,7 @@
         185.061
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig2b-space-contention-diagram.jpeg",
+      "primary_output": "examples/tokencake/assets/fig2b-space-contention-diagram.jpeg",
       "normalized_caption": "A non-critical agent can occupy memory first and preempt a critical-path agent.",
       "raw_caption": "A non-critical agent can occupy memory first and preempt a critical-path agent.",
       "dimensions": {
@@ -734,7 +734,7 @@
         184.316
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig3a-idle-kv-blocks.jpeg",
+      "primary_output": "examples/tokencake/assets/fig3a-idle-kv-blocks.jpeg",
       "normalized_caption": "Stalled agents can occupy up to 18.5 percent of used GPU KV cache.",
       "raw_caption": "Stalled agents can occupy up to 18.5 percent of used GPU KV cache.",
       "dimensions": {
@@ -767,7 +767,7 @@
         185.168
       ],
       "capture_kind": "native-raster",
-      "primary_output": "out/tokencake/assets/fig3b-kv-cache-lifecycle.jpeg",
+      "primary_output": "examples/tokencake/assets/fig3b-kv-cache-lifecycle.jpeg",
       "normalized_caption": "During a function call, the system must choose between wasting memory and paying recomputation later.",
       "raw_caption": "During a function call, the system must choose between wasting memory and paying recomputation later.",
       "dimensions": {

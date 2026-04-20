@@ -42,7 +42,7 @@
   ],
   [
     #imgs(
-      (image("assets/vstack-fig01-workflow.pdf"), [Prefill 与 decode 的资源形态差异]),
+      (image("assets/vstack-fig01-workflow.png"), [Prefill 与 decode 的资源形态差异]),
       width: 100%,
     )
     
@@ -65,7 +65,7 @@
 ]
 
 #imgs(
-  (image("assets/vstack-fig02-baselines.pdf"), [Uniform 与 Dedicated-PIM 的结构失配]),
+  (image("assets/vstack-fig02-baselines.png"), [Uniform 与 Dedicated-PIM 的结构失配]),
   width: 94%,
 )
 
@@ -126,7 +126,7 @@
   ],
   [
     #imgs(
-      (image("assets/vstack-fig03-architecture.pdf"), [vStack 系统架构]),
+      (image("assets/vstack-fig03-architecture.png"), [vStack 系统架构]),
       width: 100%,
     )
     
@@ -178,7 +178,7 @@
 ]
 
 #imgs(
-  (image("assets/vstack-fig05-kv-layout.pdf"), [K/V 非对称布局]),
+  (image("assets/vstack-fig05-kv-layout.png"), [K/V 非对称布局]),
   width: 94%,
 )
 
@@ -198,7 +198,7 @@
 ]
 
 #imgs(
-  (image("assets/vstack-fig06-lifecycle.pdf"), [KV 生命周期与 K8V4 路径]),
+  (image("assets/vstack-fig06-lifecycle.png"), [KV 生命周期与 K8V4 路径]),
   width: 94%,
 )
 
@@ -243,21 +243,21 @@
   gutter: 0.8em,
   [
     #ibox[
-      *平台 / 对比:* DGX-A100，8 GPUs，bank-level PIM；Full-GPU / Uniform / AttAcc / vStack 共用同一 scheduler。
+      *平台 / 对比:* DGX-A100，8 GPUs，bank-level PIM；Full-GPU / Uniform / AttAcc / vStack 共享同一 scheduler。
     ]
     
     #sbox[
-      *覆盖范围:* 模型从 4B 到 175B；trace 从高复用短 API 到低复用长推理，正好覆盖 vStack 最可能受益与失效的两端。
+      *覆盖范围:* 模型 4B-175B；trace 覆盖高复用短 API 到低复用长推理两端。
     ]
     
     #nbox(compact: true)[
-      带宽：UCIe 512 GB/s × 5 stacks，TSV DMA 896 GB/s / stack，NVLink3 600 GB/s。 模型：Qwen3-4B、Qwen3-32B、Devstral-123B、GPT-175B。
+      互连：UCIe 512 GB/s × 5、TSV DMA 896 GB/s / stack、NVLink3 600 GB/s。 模型：Qwen3-4B、Qwen3-32B、Devstral-123B、GPT-175B。
     ]
     
   ],
   [
     #imgs(
-      (image("assets/vstack-fig07-workloads.pdf"), [四类 trace 的输入输出长度分布]),
+      (image("assets/vstack-fig07-workloads.png"), [四类 trace 的输入输出长度分布]),
       width: 100%,
     )
     
@@ -280,7 +280,7 @@
 ]
 
 #imgs(
-  (image("assets/vstack-fig08-throughput.pdf"), [吞吐收益随 overflow 压力增强]),
+  (image("assets/vstack-fig08-throughput.png"), [吞吐收益随 overflow 压力增强]),
   width: 98%,
 )
 
@@ -289,37 +289,37 @@
 // Evidence: asset:fig08-throughput (所有组合均优于 AttAcc，GPT-175B 上 Uniform OOM); text:source.txt:975-986 (几何平均 1.62x，按模型 1.20x / 1.38x / 1.94x / 2.15x); text:source.txt:1057-1064 (2x latency SLO 下容量几何平均 1.70x); assets=fig08-throughput
 // QA: Figure 8 的各子图标签仍可读, 两条结论 box 不遮挡宽图空间
 
-== 时延优势
+== 高负载下时延不发散
 
-#grid(
-  columns: (1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #ibox[
-      *Queueing:* Devstral-123B / traceA 上，平均 queue delay 在 QPS=0.2 下降 86%，在 QPS=1.0 下降 95%。
-    ]
-    
-    #sbox[
-      *TTFT:* AttAcc 相对 vStack 的 p50 TTFT 几何平均高 127x，峰值超过 4500x，说明优势首先来自更早释放 decode slots。
-    ]
-    
-  ],
-  [
-    #imgs(
-      (image("assets/vstack-fig09-latency.pdf"), [高负载下延迟不会像 AttAcc 一样发散]),
-      (image("assets/vstack-fig11-ttft-tbt.pdf"), [TTFT 主导总体时延差距]),
-      dir: ttb,
-      width: 100%,
-      gap: 0.6em,
-    )
-    
-  ],
+#ibox[
+  *Queueing:* Devstral-123B / traceA 上，平均 queue delay 在 QPS=0.2 下降 86%，在 QPS=1.0 下降 95%。
+]
+
+#imgs(
+  (image("assets/vstack-fig09-latency.png"), [高负载下延迟不会像 AttAcc 一样发散]),
+  width: 98%,
 )
 
 // Render mode: script
 // Claim ids: c6
-// Evidence: asset:fig09-latency (end-to-end latency vs. QPS); asset:fig11-ttft-tbt (TTFT / TBT 分解); text:source.txt:1038-1044 (queue delay 在 QPS=0.2 / 1.0 分别下降 86% / 95%); text:source.txt:1075-1078 (TTFT 几何平均 127x); assets=fig09-latency, fig11-ttft-tbt
-// QA: Figure 9 与 Figure 11 在右列都保持可读, 左侧两条结论不挤占 stacked evidence 的高度
+// Evidence: asset:fig09-latency (end-to-end latency vs. QPS); text:source.txt:1038-1044 (queue delay 在 QPS=0.2 / 1.0 分别下降 86% / 95%); assets=fig09-latency
+// QA: Figure 9 的各子图在单页宽图中仍可读, 结论 box 不压缩主结果图高度
+
+== TTFT 主导时延差距
+
+#sbox[
+  *TTFT:* AttAcc 相对 vStack 的 p50 TTFT 几何平均高 127x，峰值超过 4500x，说明优势首先来自更早释放 decode slots。
+]
+
+#imgs(
+  (image("assets/vstack-fig11-ttft-tbt.png"), [TTFT 主导总体时延差距]),
+  width: 98%,
+)
+
+// Render mode: script
+// Claim ids: c6
+// Evidence: asset:fig11-ttft-tbt (TTFT / TBT 分解); text:source.txt:1075-1078 (TTFT 几何平均 127x，峰值超过 4500x); assets=fig11-ttft-tbt
+// QA: Figure 11 在单页宽图中保持 TTFT/TBT 对比可读, 标题保持单行，不把判断挤进图下注释
 
 == 收益来源与能耗
 
@@ -332,9 +332,9 @@
 ]
 
 #imgs(
-  (image("assets/vstack-fig12-ablation.pdf"), [布局贡献最大，其次是调度与压缩]),
-  (image("assets/vstack-fig10-energy.pdf"), [每 token 能耗同步下降]),
-  width: 100%,
+  (image("assets/vstack-fig12-ablation.png"), [布局贡献最大，其次是调度与压缩]),
+  (image("assets/vstack-fig10-energy.png"), [每 token 能耗同步下降]),
+  width: 96%,
   gap: 0.8em,
 )
 
