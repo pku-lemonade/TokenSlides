@@ -1,15 +1,16 @@
 {
   "schema_version": "academic-paper-to-slides/v1",
-  "workspace": "examples/tokencake",
+  "workspace": "out/tokencake",
   "deck": {
-    "title": "Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications",
+    "title": "Tokencake",
+    "short_title": "Tokencake",
+    "date": "October 2025",
     "scenario": "paper-reading",
     "language": "en",
     "theme": "lemonade",
     "source_pdf": "tokencake.pdf",
-    "created_at": "2026-04-18T11:35:17+00:00",
-    "updated_at": "2026-04-20T01:14:50+00:00",
-    "short_title": "Tokencake"
+    "created_at": "2026-04-20T11:57:16+00:00",
+    "updated_at": "2026-04-20T12:10:00+00:00"
   },
   "archetype_policy": {
     "mode": "fixed-theme",
@@ -18,670 +19,447 @@
   },
   "slides": [
     {
-      "slide_id": "title",
-      "section": "Front Matter",
-      "title": "Tokencake",
-      "rhetorical_role": "title",
-      "archetype": "Title slide",
-      "takeaway": "KV-cache management is the central systems bottleneck for multi-agent LLM serving.",
-      "claim_ids": [
-        "c3"
-      ],
-      "evidence": [
-        {
-          "kind": "text",
-          "ref": "paper-metadata",
-          "detail": "Title, authors, arXiv version, and date"
-        }
-      ],
-      "asset_ids": [],
-      "equation_ids": [],
-      "content_density": "low",
-      "qa_expectations": [
-        "Title remains readable on the title slide"
-      ]
-    },
-    {
-      "slide_id": "motivation-workloads",
+      "slide_id": "s01-workload-shift",
       "section": "Motivation",
-      "title": "Agentic Workloads Stress KV Cache",
+      "title": "Workload Shift",
       "rhetorical_role": "motivation",
-      "archetype": "Two-Up Comparison",
-      "takeaway": "Multi-agent DAGs mix critical-path dependencies with long external tool stalls, so serving sees both heterogeneous agent importance and large idle windows.",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "Agentic applications mix dependency-critical agents with long tool stalls, so KV cache becomes a shared workflow resource rather than a per-request detail.",
       "claim_ids": [
-        "c1"
+        "C1"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig1a-coding",
-          "detail": "Coding workflow example"
-        },
-        {
-          "kind": "asset",
-          "ref": "fig1b-deep-research",
-          "detail": "Research workflow example"
+          "ref": "tokencake-fig01-workloads",
+          "detail": "Code-Writer and Deep Research"
         },
         {
           "kind": "text",
-          "ref": "table-1",
-          "detail": "Tool latencies span 100 ms to 5-30 s with large variability"
+          "ref": "source:47-50;481-490",
+          "detail": "Representative multi-agent workloads combine frequent tool calls with internal agent dependencies."
         }
       ],
       "asset_ids": [
-        "fig1a-coding",
-        "fig1b-deep-research"
+        "tokencake-fig01-workloads"
       ],
-      "equation_ids": [],
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Workloads",
+          "body": "Code-Writer stresses many specialized agents and frequent file or tool calls; Deep Research uses fewer agents but a tighter dependency chain."
+        },
+        {
+          "style": "neutral",
+          "label": "Systems implication",
+          "body": "Some agents sit on the critical path while others wait on external tools, so naive KV-cache placement wastes scarce GPU memory."
+        }
+      ],
+      "asset_caption_mode": "none",
       "content_density": "medium",
       "qa_expectations": [
-        "Both workflow panels stay readable",
-        "Boxes stay to one line each"
+        "Figure 1 stays readable at large scale.",
+        "Both support boxes stay to two short lines."
       ]
     },
     {
-      "slide_id": "motivation-space-contention",
+      "slide_id": "s02-two-cache-failures",
       "section": "Motivation",
-      "title": "Space Contention",
+      "title": "Two Cache Failures",
       "rhetorical_role": "problem",
       "archetype": "Two-Up Comparison",
-      "takeaway": "FCFS-style allocation lets non-critical agents occupy scarce KV-cache blocks before critical-path work arrives.",
+      "takeaway": "Tokencake starts from two coupled pathologies: critical agents can be evicted by less important work, and stalled agents leave idle KV cache on the GPU.",
       "claim_ids": [
-        "c1"
+        "C1"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig2a-space-contention-analysis",
-          "detail": "Preemption events accumulate over time"
+          "ref": "tokencake-fig02-space-contention"
         },
         {
           "kind": "asset",
-          "ref": "fig2b-space-contention-diagram",
-          "detail": "Critical inversion cartoon"
-        }
-      ],
-      "asset_ids": [
-        "fig2a-space-contention-analysis",
-        "fig2b-space-contention-diagram"
-      ],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Both panels remain readable",
-        "The consequence box stays concise"
-      ]
-    },
-    {
-      "slide_id": "motivation-time-underutilization",
-      "section": "Motivation",
-      "title": "Time Underutilization",
-      "rhetorical_role": "problem",
-      "archetype": "Two-Up Comparison",
-      "takeaway": "Function-call stalls leave useful KV cache idle on the GPU, even though active requests still need memory.",
-      "claim_ids": [
-        "c1"
-      ],
-      "evidence": [
-        {
-          "kind": "asset",
-          "ref": "fig3a-idle-kv-blocks",
-          "detail": "18.5% peak waste"
-        },
-        {
-          "kind": "asset",
-          "ref": "fig3b-kv-cache-lifecycle",
-          "detail": "Keep-vs-evict tradeoff"
-        }
-      ],
-      "asset_ids": [
-        "fig3a-idle-kv-blocks",
-        "fig3b-kv-cache-lifecycle"
-      ],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Peak-waste number is legible",
-        "Lifecycle diagram stays readable"
-      ]
-    },
-    {
-      "slide_id": "motivation-prior-systems",
-      "section": "Motivation",
-      "title": "Why Existing Systems Miss It",
-      "rhetorical_role": "positioning",
-      "archetype": "Table-Led Structured Slide",
-      "takeaway": "Prior systems optimize either workflow scheduling or KV-cache management, but not both together for agentic workloads.",
-      "claim_ids": [
-        "c2"
-      ],
-      "evidence": [
-        {
-          "kind": "text",
-          "ref": "source-introduction",
-          "detail": "Parrot / Autellix / Teola vs vLLM / Mooncake / CachedAttention / LMCache"
+          "ref": "tokencake-fig03-time-underutilization"
         },
         {
           "kind": "text",
-          "ref": "table-2",
-          "detail": "Reactive versus function-call-aware offload and prefetch"
+          "ref": "source:146-148",
+          "detail": "Stalled agents can occupy 18.5% of used KV cache at peak."
         }
       ],
-      "asset_ids": [],
-      "equation_ids": [],
+      "asset_ids": [
+        "tokencake-fig02-space-contention",
+        "tokencake-fig03-time-underutilization"
+      ],
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Space",
+          "body": "Critical inversion forces recomputation when a non-critical agent occupies scarce GPU blocks first."
+        },
+        {
+          "style": "neutral",
+          "label": "Time",
+          "body": "Tool stalls leave the first inference prefix idle on GPU; peaks reach 18.5% of used KV cache."
+        }
+      ],
+      "asset_caption_mode": "none",
       "content_density": "medium",
       "qa_expectations": [
-        "Table stays concise",
-        "Each row states one gap clearly"
-      ],
-      "table": {
-        "headers": [
-          "View",
-          "Examples",
-          "Optimizes",
-          "Still misses"
-        ],
-        "rows": [
-          [
-            "Agent-aware",
-            "Parrot / Autellix / Teola",
-            "DAG order, stage overlap",
-            "No KV-cache control, so critical inversion remains."
-          ],
-          [
-            "KV-cache-centric",
-            "vLLM / Mooncake / CachedAttention / LMCache",
-            "Fragmentation or offload",
-            "No agent criticality or function-call trigger."
-          ]
-        ],
-        "columns": [
-          1.0,
-          1.2,
-          1.15,
-          1.45
-        ],
-        "align": [
-          "left",
-          "left",
-          "left",
-          "left"
-        ]
-      }
+        "Both composite figures remain legible side by side.",
+        "The support text does not push the figures into thumbnail size."
+      ]
     },
     {
-      "slide_id": "design-overview",
+      "slide_id": "s03-tokencake-thesis",
       "section": "Design",
-      "title": "Tokencake Overview",
+      "title": "Tokencake Thesis",
       "rhetorical_role": "thesis",
       "archetype": "Method Overview Side-by-Side",
-      "takeaway": "Tokencake co-optimizes KV-cache management across both time and space, not as a bolt-on scheduler tweak.",
+      "takeaway": "Tokencake co-optimizes KV cache across both space and time instead of separating workflow scheduling from memory management.",
       "claim_ids": [
-        "c3"
+        "C2"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig4-overview",
-          "detail": "Frontend API + space scheduler + time scheduler"
-        }
-      ],
-      "asset_ids": [
-        "fig4-overview"
-      ],
-      "equation_ids": [],
-      "boxes": [
-        {
-          "style": "info",
-          "label": "Thesis",
-          "body": "Multi-agent serving should manage KV cache across both time and space, not as a scheduler-only tweak."
-        },
-        {
-          "style": "highlight",
-          "label": "Control split",
-          "body": "The frontend exposes agent structure, while the time and space schedulers share one memory pool."
-        }
-      ],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Overview figure is dominant evidence",
-        "Boxes remain one line each"
-      ]
-    },
-    {
-      "slide_id": "design-agent-context",
-      "section": "Design",
-      "title": "Expose Agent Context to the Runtime",
-      "rhetorical_role": "mechanism-overview",
-      "archetype": "Two-Up Comparison",
-      "takeaway": "The API exports DAG structure, internal function-call stages, and predict_time, which turns the runtime into an application-aware controller.",
-      "claim_ids": [
-        "c3"
-      ],
-      "evidence": [
-        {
-          "kind": "asset",
-          "ref": "fig5-api",
-          "detail": "Staged FuncNode graph definition"
-        },
-        {
-          "kind": "asset",
-          "ref": "fig6-coordination",
-          "detail": "Joint scheduler coordination"
-        }
-      ],
-      "asset_ids": [
-        "fig5-api",
-        "fig6-coordination"
-      ],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "API figure stays readable",
-        "Coordination diagram does not become a thumbnail"
-      ]
-    },
-    {
-      "slide_id": "design-time-scheduler",
-      "section": "Design",
-      "title": "Function-Call-Aware Time Scheduler",
-      "rhetorical_role": "mechanism-detail",
-      "archetype": "Method Overview Side-by-Side",
-      "takeaway": "Offload only when a predicted stall is long enough to create useful scheduling capacity, then upload before resume.",
-      "claim_ids": [
-        "c4"
-      ],
-      "evidence": [
-        {
-          "kind": "asset",
-          "ref": "fig7-lifecycle",
-          "detail": "Offload / predict / upload lifecycle"
-        },
-        {
-          "kind": "equation",
-          "ref": "eq1-duration-blend",
-          "detail": "Duration estimate"
-        },
-        {
-          "kind": "equation",
-          "ref": "eq2-transfer-cost",
-          "detail": "Transfer threshold"
+          "ref": "tokencake-fig04-overview"
         },
         {
           "kind": "text",
-          "ref": "algorithm-1",
-          "detail": "Benefit-driven offload decision"
+          "ref": "source:155-157;184-190",
+          "detail": "One graph feeds both schedulers, and coordination keeps their policies consistent."
         }
       ],
       "asset_ids": [
-        "fig7-lifecycle"
-      ],
-      "equation_ids": [
-        "eq1-duration-blend",
-        "eq2-transfer-cost"
+        "tokencake-fig04-overview"
       ],
       "boxes": [
         {
-          "style": "info",
-          "label": "Runtime",
-          "body": "`call_start` and `call_finish` turn a tool stall into an explicit offload and prefetch window."
-        },
-        {
           "style": "highlight",
-          "label": "Decision",
-          "body": "Offload only when the predicted stall exceeds transfer cost, then upload before the expected resume time."
+          "label": "Core idea",
+          "body": "Tokencake couples graph-aware metadata with two policies: proactive offload and prefetch around tool stalls, and critical-agent reservation under memory pressure."
         }
       ],
       "content_density": "medium",
       "qa_expectations": [
-        "Lifecycle figure stays legible",
-        "Equation text fits without shrinking"
+        "The overview figure stays readable in the side column.",
+        "Left-column boxes remain terse."
       ]
     },
     {
-      "slide_id": "design-space-scheduler",
+      "slide_id": "s04-time-scheduler",
       "section": "Design",
-      "title": "Dynamic Memory Partitioning",
-      "rhetorical_role": "mechanism-detail",
-      "archetype": "Method Overview Side-by-Side",
-      "takeaway": "Tokencake protects critical agents with adaptive reservations driven by hybrid priority and observed memory pressure.",
+      "title": "Time Scheduler",
+      "rhetorical_role": "mechanism",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "Function-call stalls are predictable enough to turn idle KV-cache time into a planned offload window.",
       "claim_ids": [
-        "c5"
+        "C3"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig8-space-scheduler",
-          "detail": "Reservation feedback loop"
-        },
-        {
-          "kind": "equation",
-          "ref": "eq3-static-priority",
-          "detail": "Structural importance"
-        },
-        {
-          "kind": "equation",
-          "ref": "eq4-dynamic-priority",
-          "detail": "Runtime urgency"
+          "ref": "tokencake-fig07-time-lifecycle"
         },
         {
           "kind": "text",
-          "ref": "algorithm-2",
-          "detail": "Two-phase reservation update"
+          "ref": "source:239-271",
+          "detail": "Tokencake is proactive and event-driven, unlike reactive offload policies."
         }
       ],
       "asset_ids": [
-        "fig8-space-scheduler"
-      ],
-      "equation_ids": [
-        "eq3-static-priority",
-        "eq4-dynamic-priority"
+        "tokencake-fig07-time-lifecycle"
       ],
       "boxes": [
         {
-          "style": "info",
+          "style": "highlight",
+          "label": "Trigger",
+          "body": "Tokencake uses function-call events rather than generic inactivity heuristics, so the offload window is explicit."
+        },
+        {
+          "style": "neutral",
+          "label": "Mechanism",
+          "body": "Static graph analysis gives cold-start estimates, runtime feedback refines them, and predictive upload hides transfer latency before the agent resumes."
+        }
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "The lifecycle figure stays readable at near-full width."
+      ]
+    },
+    {
+      "slide_id": "s05-space-scheduler",
+      "section": "Design",
+      "title": "Space Scheduler",
+      "rhetorical_role": "mechanism",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "Critical-path agents need explicit memory protection, so Tokencake reserves GPU KV blocks by hybrid priority rather than arrival order.",
+      "claim_ids": [
+        "C4"
+      ],
+      "evidence": [
+        {
+          "kind": "asset",
+          "ref": "tokencake-fig08-space-feedback"
+        },
+        {
+          "kind": "text",
+          "ref": "source:346-367;391-392",
+          "detail": "Priority and pressure jointly control the reserved pool."
+        }
+      ],
+      "asset_ids": [
+        "tokencake-fig08-space-feedback"
+      ],
+      "boxes": [
+        {
+          "style": "highlight",
           "label": "Priority",
-          "body": "Static DAG importance is combined with dynamic wait-time urgency to decide which agent types deserve protection."
+          "body": "Critical agents are chosen by hybrid priority, combining DAG structure with runtime importance."
         },
         {
-          "style": "highlight",
-          "label": "Control loop",
-          "body": "Tokencake grows the reserved pool under pressure while keeping a shared pool for opportunistic use."
-        }
-      ],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Feedback-loop figure remains readable",
-        "Priority formulas fit cleanly"
-      ]
-    },
-    {
-      "slide_id": "eval-setup",
-      "section": "Evaluation",
-      "title": "Experimental Setup",
-      "rhetorical_role": "evaluation-setup",
-      "archetype": "Motivation / Background",
-      "takeaway": "The evaluation stresses realistic multi-agent workloads on two Qwen sizes and compares against mainstream serving baselines.",
-      "claim_ids": [
-        "c6"
-      ],
-      "evidence": [
-        {
-          "kind": "text",
-          "ref": "section-7.1",
-          "detail": "Qwen2.5-14B / A100 80GB, Qwen2.5-32B / H200 140GB, 100GB CPU swap"
-        },
-        {
-          "kind": "text",
-          "ref": "section-7.1",
-          "detail": "Code-Writer, Deep Research, Poisson arrivals, vLLM, LightLLM"
-        }
-      ],
-      "asset_ids": [],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Setup slide remains box-led rather than turning into a dense table",
-        "Hardware and benchmark details stay within one page"
-      ],
-      "boxes": [
-        {
-          "style": "info",
-          "label": "Stress test",
-          "body": "Two representative agentic apps, two Qwen sizes, and mainstream baselines stress both concurrency and dependency-heavy workflows."
-        },
-        {
-          "style": "highlight",
-          "label": "Platform",
-          "body": "Qwen2.5-14B on A100 80GB, Qwen2.5-32B on H200 140GB, plus 100GB of CPU swap space for offloaded KV cache."
+          "style": "neutral",
+          "label": "Reservation",
+          "body": "The reserved pool grows with memory pressure and is divided across critical agents by score and historical memory demand."
         }
       ],
       "bullets": [
-        "Benchmarks: Code-Writer stresses concurrent agents; Deep Research stresses dependency-heavy workflows.",
-        "Load: request arrivals follow application QPS and tool latencies are both Poisson-simulated.",
-        "Baselines / metrics: vLLM and LightLLM; end-to-end latency, GPU KV usage, and abnormal agent count."
+        "The configurable critical_ratio controls how many agent types receive protection."
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "Figure 8 remains legible without shrinking the support text."
       ]
     },
     {
-      "slide_id": "eval-latency",
+      "slide_id": "s06-evaluation-setup",
       "section": "Evaluation",
-      "title": "Latency Improves Under Load",
-      "rhetorical_role": "evaluation-main",
-      "archetype": "Figure-Led Vertical",
-      "takeaway": "Tokencake pulls away as memory pressure rises, which matches the paper’s contention thesis.",
+      "title": "Evaluation Setup",
+      "rhetorical_role": "setup",
+      "archetype": "Motivation / Background",
+      "takeaway": "The evaluation isolates Tokencake's memory-policy contribution on two representative multi-agent applications under increasing load.",
       "claim_ids": [
-        "c6"
+        "C5"
+      ],
+      "evidence": [
+        {
+          "kind": "text",
+          "ref": "source:468-490",
+          "detail": "Code-Writer and Deep Research stress different multi-agent pathologies."
+        },
+        {
+          "kind": "text",
+          "ref": "source:470-471;481-483",
+          "detail": "Baselines do not include Tokencake's proactive offload or predictive upload."
+        }
+      ],
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Workloads",
+          "body": "Code-Writer stresses concurrency and tool use; Deep Research stresses dependency depth and inter-agent coordination."
+        },
+        {
+          "style": "neutral",
+          "label": "Baselines",
+          "body": "vLLM is the main baseline, while LightLLM shows Tokencake still wins against another optimized serving stack."
+        },
+        {
+          "style": "success",
+          "label": "Metrics",
+          "body": "The paper reports end-to-end latency, GPU KV utilization, abnormal agents, and offload microbenchmarks."
+        }
+      ],
+      "bullets": [
+        "Request arrivals follow a Poisson process across increasing QPS."
+      ],
+      "content_density": "medium",
+      "qa_expectations": [
+        "The slide stays compact without needing an extra workload figure."
+      ]
+    },
+    {
+      "slide_id": "s07-loaded-system-gains",
+      "section": "Evaluation",
+      "title": "Loaded-System Gains",
+      "rhetorical_role": "results",
+      "archetype": "Wide or Fat Evidence",
+      "takeaway": "Tokencake's advantage grows with load because it frees GPU memory for active requests instead of letting stalled agents pin it.",
+      "claim_ids": [
+        "C5"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig9-latency",
-          "detail": "Latency vs QPS"
+          "ref": "tokencake-fig09-latency"
         },
         {
           "kind": "text",
-          "ref": "section-7.2",
-          "detail": "47.06% lower latency than vLLM at 1.0 QPS"
+          "ref": "source:516-517",
+          "detail": "At 1.0 QPS, Tokencake reduces end-to-end latency by over 47.06% versus vLLM."
         }
       ],
       "asset_ids": [
-        "fig9-latency"
+        "tokencake-fig09-latency"
       ],
-      "equation_ids": [],
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Main result",
+          "body": "At 1.0 QPS, Tokencake cuts end-to-end latency by over 47.06% versus vLLM, and the gap widens as memory pressure rises."
+        },
+        {
+          "style": "neutral",
+          "label": "Interpretation",
+          "body": "The benefit is modest when the system is not memory-bound, but it grows once tool stalls and agent interference start to constrain batch size."
+        }
+      ],
       "content_density": "medium",
       "qa_expectations": [
-        "All four subplots remain readable",
-        "Anchor number stays prominent"
+        "The multi-panel latency figure stays readable at full width."
       ]
     },
     {
-      "slide_id": "eval-utilization",
+      "slide_id": "s08-utilization-and-stability",
       "section": "Evaluation",
-      "title": "GPU Memory Stays Productive",
-      "rhetorical_role": "evaluation-support",
-      "archetype": "Figure-Led Vertical",
-      "takeaway": "Offloading stalled caches keeps utilization near 86 to 87 percent instead of leaving memory occupied but not useful.",
+      "title": "Utilization and Stability",
+      "rhetorical_role": "results",
+      "archetype": "Method Overview With Stacked Evidence",
+      "takeaway": "Tokencake's latency gain comes from repurposing memory for active work and reducing contention-driven outliers on the critical path.",
       "claim_ids": [
-        "c6"
+        "C5"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig10-gpu-utilization",
-          "detail": "Higher GPU KV utilization"
+          "ref": "tokencake-fig10-utilization"
+        },
+        {
+          "kind": "asset",
+          "ref": "tokencake-fig12-abnormal-agents"
         },
         {
           "kind": "text",
-          "ref": "section-7.2",
-          "detail": "Up to 16.9% higher utilization than vLLM"
+          "ref": "source:536-537;572-576",
+          "detail": "Utilization reaches 86-87%, up to 16.9% above vLLM, while abnormal agents are those above 1.5x the type average."
         }
       ],
       "asset_ids": [
-        "fig10-gpu-utilization"
+        "tokencake-fig10-utilization",
+        "tokencake-fig12-abnormal-agents"
       ],
-      "equation_ids": [],
+      "boxes": [
+        {
+          "style": "highlight",
+          "label": "Memory efficiency",
+          "body": "Tokencake keeps GPU KV utilization at 86-87%, up to 16.9% above vLLM, because idle caches leave the GPU."
+        },
+        {
+          "style": "neutral",
+          "label": "Critical path",
+          "body": "Abnormal agents above 1.5x the type-average latency drop sharply, which signals fewer contention-induced stalls."
+        }
+      ],
+      "asset_caption_mode": "none",
       "content_density": "medium",
       "qa_expectations": [
-        "Bar labels remain legible",
-        "Takeaway box stays short"
+        "Both evaluation plots remain readable when stacked."
       ]
     },
     {
-      "slide_id": "eval-critical-path",
+      "slide_id": "s09-offload-beats-recompute",
       "section": "Evaluation",
-      "title": "Critical-Path Agents Stop Stalling",
-      "rhetorical_role": "evaluation-support",
-      "archetype": "Figure-Led Vertical",
-      "takeaway": "Agent-aware reservations cut the long-tail stalls that dominate workflow completion time.",
+      "title": "Offload Beats Recompute",
+      "rhetorical_role": "tradeoff",
+      "archetype": "Method Overview With Stacked Evidence",
+      "takeaway": "Offloading only helps if transfer stays far cheaper than recomputation, and Tokencake's buffering and reservation optimizations make that true in practice.",
       "claim_ids": [
-        "c6"
+        "C6"
       ],
       "evidence": [
         {
           "kind": "asset",
-          "ref": "fig12-abnormal-agents",
-          "detail": "Abnormal-agent count"
-        },
-        {
-          "kind": "text",
-          "ref": "section-7.3",
-          "detail": "File Write abnormal agents drop from 90 to 27 versus both baselines"
+          "ref": "tokencake-fig13-offload-tradeoff"
         },
         {
           "kind": "asset",
-          "ref": "fig11-agent-latency",
-          "detail": "Most agent types also run faster"
-        }
-      ],
-      "asset_ids": [
-        "fig12-abnormal-agents"
-      ],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Abnormal-agent bars remain readable",
-        "Anchor number is easy to spot"
-      ]
-    },
-    {
-      "slide_id": "eval-reuse-vs-recompute",
-      "section": "Evaluation",
-      "title": "Reuse Beats Recompute",
-      "rhetorical_role": "evaluation-support",
-      "archetype": "Figure-Led Vertical",
-      "takeaway": "If a tool stall is long enough, moving KV cache is far cheaper than rebuilding the prefix later.",
-      "claim_ids": [
-        "c6"
-      ],
-      "evidence": [
-        {
-          "kind": "asset",
-          "ref": "fig13-offload-vs-recompute",
-          "detail": "Transfer versus recompute"
+          "ref": "tokencake-fig14-overhead-mitigation"
         },
         {
           "kind": "text",
-          "ref": "section-7.4",
-          "detail": "4096 blocks: about 60 ms transfer versus about 8943 ms recomputation"
+          "ref": "source:575-576;610-612;638-640",
+          "detail": "4096 blocks transfer in about 60 ms versus nearly 9,000 ms recomputation; 5120-block upload drops from 15,163 ms to 4.4 ms."
         }
       ],
       "asset_ids": [
-        "fig13-offload-vs-recompute"
+        "tokencake-fig13-offload-tradeoff",
+        "tokencake-fig14-overhead-mitigation"
       ],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Comparison curve stays readable",
-        "One key number remains visible"
-      ]
-    },
-    {
-      "slide_id": "eval-overhead-mitigation",
-      "section": "Evaluation",
-      "title": "Offload Overhead Needs Mitigation",
-      "rhetorical_role": "evaluation-support",
-      "archetype": "Figure-Led Vertical",
-      "takeaway": "Proactive offload only works if the runtime removes the bursty allocation overhead it creates.",
-      "claim_ids": [
-        "c6"
-      ],
-      "evidence": [
+      "boxes": [
         {
-          "kind": "asset",
-          "ref": "fig14-overhead-mitigation",
-          "detail": "Optimized versus baseline transfer latency"
+          "style": "highlight",
+          "label": "Transfer versus recompute",
+          "body": "For 4096 blocks, transfer takes about 60 ms while recomputation takes nearly 9,000 ms, so reuse is decisively cheaper."
         },
         {
-          "kind": "text",
-          "ref": "section-7.4",
-          "detail": "5120 blocks: 15163 ms baseline upload versus 4.4 ms optimized"
+          "style": "neutral",
+          "label": "System cost",
+          "body": "Tokencake cuts 5120-block upload latency from 15,163 ms to 4.4 ms, making proactive offload operationally viable."
         }
       ],
-      "asset_ids": [
-        "fig14-overhead-mitigation"
-      ],
-      "equation_ids": [],
+      "asset_caption_mode": "none",
       "content_density": "medium",
       "qa_expectations": [
-        "Upload-latency comparison stays readable",
-        "Optimization box stays concise"
+        "The two tradeoff plots stay readable when stacked."
       ]
     },
     {
-      "slide_id": "takeaways",
+      "slide_id": "s10-what-this-establishes",
       "section": "Takeaways",
-      "title": "What Matters in Tokencake",
+      "title": "What This Paper Establishes",
       "rhetorical_role": "conclusion",
       "archetype": "Conclusion / Takeaways",
-      "takeaway": "The paper’s contribution is the combination of function-call-aware time scheduling and criticality-aware memory partitioning, with remaining limits in prediction quality and single-GPU scope.",
+      "takeaway": "Tokencake's real contribution is memory-aware, agent-aware co-design: once KV cache is managed as a workflow resource, agentic serving can trade idle memory for lower latency and fewer critical-path stalls.",
       "claim_ids": [
-        "c6"
+        "C2"
       ],
       "evidence": [
         {
-          "kind": "claim",
-          "ref": "c4",
-          "detail": "Function-call-aware time scheduling"
-        },
-        {
-          "kind": "claim",
-          "ref": "c5",
-          "detail": "Criticality-aware space scheduling"
+          "kind": "asset",
+          "ref": "tokencake-fig09-latency"
         },
         {
           "kind": "asset",
-          "ref": "fig9-latency",
-          "detail": "Latency gains"
+          "ref": "tokencake-fig12-abnormal-agents"
         },
         {
           "kind": "asset",
-          "ref": "fig10-gpu-utilization",
-          "detail": "Memory productivity"
-        },
-        {
-          "kind": "asset",
-          "ref": "fig12-abnormal-agents",
-          "detail": "Critical-path stability"
-        },
-        {
-          "kind": "asset",
-          "ref": "fig14-overhead-mitigation",
-          "detail": "Practical offload overhead"
+          "ref": "tokencake-fig14-overhead-mitigation"
         }
       ],
-      "asset_ids": [],
-      "equation_ids": [],
-      "content_density": "medium",
-      "qa_expectations": [
-        "Final boxes stay balanced",
-        "Limitations fit without overflow"
-      ]
-    },
-    {
-      "slide_id": "thank-you",
-      "section": "Back Matter",
-      "title": "Questions?",
-      "rhetorical_role": "closing",
-      "archetype": "Conclusion / Takeaways",
-      "takeaway": "Questions and discussion.",
-      "claim_ids": [
-        "c6"
-      ],
-      "evidence": [
+      "boxes": [
         {
-          "kind": "text",
-          "ref": "closing",
-          "detail": "Thank-you slide with QR code"
+          "style": "highlight",
+          "label": "Main lesson",
+          "body": "The paper is strongest when it treats KV cache as a first-class shared resource across both time and space."
+        },
+        {
+          "style": "success",
+          "label": "Why it convinces",
+          "body": "The mechanism slides connect cleanly to workload-level latency gains, higher utilization, and fewer critical-path outliers."
+        },
+        {
+          "style": "neutral",
+          "label": "Limits",
+          "body": "The predictor is simple and the evaluation is single-GPU, so multi-GPU coordination and richer forecasts remain open problems."
         }
       ],
-      "asset_ids": [],
-      "equation_ids": [],
       "content_density": "low",
       "qa_expectations": [
-        "QR code remains visible",
-        "Closing slide stays uncluttered"
+        "The final slide reads as a judgment, not a section-by-section recap."
       ]
     }
   ],
-  "notes": "Titles should stay on one line where possible. Prefer explicit takeaway boxes over long captions."
+  "notes": "Deck arc follows the default systems paper reading structure: workload shift, failure modes, design thesis, the two schedulers, evaluation setup, main results, supporting tradeoff evidence, and critique."
 }

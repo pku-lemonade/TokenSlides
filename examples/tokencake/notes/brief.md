@@ -4,86 +4,84 @@
 
 - Title: Tokencake: A KV-Cache-centric Serving Framework for LLM-based Multi-Agent Applications
 - Authors: Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo
-- Venue/status: arXiv:2510.18586v2
+- Venue/status: arXiv preprint (v2)
 - Date: October 31, 2025
 - Talk mode: en paper-reading deck
 
 ## Presentation Thesis
 
-Tokencake argues that multi-agent LLM serving is bottlenecked by KV-cache management, so the runtime must manage cache lifecycle with both function-call awareness and agent criticality rather than treating memory as a passive byproduct of compute scheduling.
+Tokencake argues that multi-agent LLM serving should treat KV cache as a shared workflow resource across both time and space: proactive offload and prefetch exploit tool stalls, while critical-path-aware reservation prevents agent interference.
 
 ## Problem Framing
 
-- Workload shift: Multi-agent applications execute as DAGs with heterogeneous agent importance and frequent external function calls.
-- Pathology 1: Space contention causes critical inversion when non-critical agents consume scarce GPU KV-cache blocks before critical-path work arrives.
-- Pathology 2: Time underutilization leaves stalled agents’ KV cache idle on the GPU during long tool calls.
-- Why prior work misses it: Agent-aware schedulers ignore KV-cache placement, while KV-cache-centric systems remain reactive and agent-agnostic.
+- Workload shift: Multi-agent applications combine agent-agent dependencies with long external function calls, so KV-cache usage is no longer a simple per-request lifecycle.
+- Space contention: A non-critical agent can evict a critical-path agent, forcing context recomputation and stalling the entire workflow.
+- Time underutilization: During a function call, an agent's KV cache sits idle on the GPU; the paper reports peaks where 18.5% of the used KV-cache pool is occupied by stalled agents.
+- Prior-work gap: Compute-centric agent schedulers ignore GPU memory state, while memory-centric KV-cache systems remain agent-agnostic and reactive.
 
 ## Deck-Level Claims
 
-- c1: Multi-agent applications create two distinct KV-cache pathologies: critical-path space contention and function-call time underutilization.
-  Evidence: fig1a-coding, fig1b-deep-research, fig2a-space-contention-analysis, fig2b-space-contention-diagram, fig3a-idle-kv-blocks, fig3b-kv-cache-lifecycle, 18.5% peak idle-cache waste
-- c2: Existing systems optimize either workflow scheduling or KV-cache management, but not both jointly for agentic workloads.
-  Evidence: Parrot, Autellix, Teola, vLLM, Mooncake, CachedAttention, LMCache, Table 2 trigger comparison
-- c3: Tokencake’s central design is a KV-cache-centric runtime that exposes agent structure through the frontend and coordinates space and time schedulers around one memory pool.
-  Evidence: fig4-overview, fig5-api, fig6-coordination
-- c4: The Time Scheduler should offload only when the predicted stall window exceeds transfer cost and should prefetch before the agent resumes.
-  Evidence: fig7-lifecycle, eq1-duration-blend, eq2-transfer-cost, Algorithm 1
-- c5: The Space Scheduler avoids critical inversion by reserving memory for critical agents using hybrid priority and runtime memory-pressure feedback.
-  Evidence: fig8-space-scheduler, eq3-static-priority, eq4-dynamic-priority, Algorithm 2
-- c6: The combined policy keeps GPU memory productive and translates into large wins under load: lower end-to-end latency, higher KV-cache utilization, fewer abnormal agents, and viable offload overhead.
-  Evidence: fig9-latency, fig10-gpu-utilization, fig12-abnormal-agents, fig13-offload-vs-recompute, fig14-overhead-mitigation, 47.06% latency reduction, 16.9% utilization gain
+- C1: Agentic multi-agent workloads expose two distinct KV-cache failures: critical-path contention in space and idle-cache underutilization in time.
+  Evidence: tokencake-fig02-space-contention, tokencake-fig03-time-underutilization, 18.5% idle used KV cache at peak
+- C2: Tokencake's core contribution is to co-optimize KV-cache management across both dimensions instead of treating scheduling and memory management as separate problems.
+  Evidence: tokencake-fig04-overview, tokencake-fig06-coordination
+- C3: The Time Scheduler uses function-call awareness to proactively offload stalled agents and predictively upload their KV cache before resumption.
+  Evidence: tokencake-fig07-time-lifecycle, Table 2 comparison against reactive policies
+- C4: The Space Scheduler protects critical agents through hybrid-priority scoring and dynamic memory partitioning rather than FIFO allocation.
+  Evidence: tokencake-fig08-space-feedback, critical_ratio, hybrid priority metric
+- C5: Co-optimizing the two schedulers improves loaded-system performance, cutting end-to-end latency by over 47.06% and raising effective GPU KV utilization by up to 16.9% versus vLLM.
+  Evidence: tokencake-fig09-latency, tokencake-fig10-utilization, tokencake-fig12-abnormal-agents
+- C6: The offload policy is practical because transfer is far cheaper than recomputation, and Tokencake's buffering and reservation optimizations keep upload overhead in the millisecond range.
+  Evidence: tokencake-fig13-offload-tradeoff, tokencake-fig14-overhead-mitigation
 
 ## Method Breakdown
 
-- Frontend API: Represents the application as a DAG, adds staged FuncNode abstractions, and lets developers provide predict_time hints.
-- Time Scheduler: Uses call_start / call_finish events, predictive duration modeling, opportunistic offload, and predictive upload.
-- CPU block buffering: Caches freed CPU blocks in an internal free list so bursty offload cycles avoid expensive allocator churn.
-- Gradual GPU reservation: Reserves destination blocks over multiple cycles so predictive upload does not stall on one large allocation.
-- Space Scheduler: Partitions GPU KV-cache into shared and reserved pools, then adjusts reserve size and per-agent shares from pressure, historical usage, and hybrid priority.
+- Frontend graph plus metadata: Users describe the agent DAG and function-call nodes, including predicted tool time, so the runtime can reason about dependencies and stall windows.
+- Time Scheduler: Static graph analysis finds LLM -> tool -> LLM patterns; runtime call_start and call_finish events drive benefit-based offload and predictive upload.
+- Space Scheduler: The scheduler designates the top critical_ratio of agent types as critical using hybrid priority, then splits GPU KV memory into shared and reserved pools that adapt to memory pressure.
+- Offload optimizations: CPU block buffering and gradual GPU block reservation keep frequent offload and upload operations cheap enough to use proactively.
 
 ## Evaluation Setting
 
-- Implementation: About 9k lines of Python with Triton kernels and reused vLLM components.
-- Models / hardware: Qwen2.5-14B on NVIDIA A100 80GB and Qwen2.5-32B on NVIDIA H200 140GB.
-- Swap space: 100GB of CPU memory reserved for offloaded KV cache.
-- Benchmarks: Code-Writer and Deep Research.
-- Workload model: Requests and tool latencies are both generated with Poisson processes.
-- Baselines: vLLM and LightLLM.
-- Metrics: End-to-End Latency, GPU KV Cache Utilization, and Abnormal Agent Count (>1.5x mean latency for its type).
+- Applications: Code-Writer and Deep Research represent tool-heavy, dependency-rich multi-agent workloads.
+- Baselines: vLLM and LightLLM isolate the effect of Tokencake's agent-aware memory policies because neither baseline includes proactive offloading or predictive uploading.
+- Metrics: End-to-end latency, GPU KV-cache utilization, agent latency, abnormal-agent count, and offload or recompute microbenchmarks.
+- Load model: Request arrivals follow a Poisson process with comparisons reported across increasing QPS.
 
 ## Quantitative Anchors
 
-- Idle-cache waste: Up to 18.5% of used GPU KV cache is held by stalled agents.
-- Headline latency gain: At 1.0 QPS, Tokencake reduces average end-to-end latency by over 47.06% versus vLLM.
-- GPU utilization: Tokencake sustains about 85.7% to 87.0% utilization, up to 16.9% higher than vLLM.
-- Abnormal agents: File Write abnormal agents fall from 90 to 27 versus both baselines.
-- Transfer vs recompute: For 4096 blocks, transfer costs about 60 ms while recomputation costs about 8943 ms.
-- Mitigated upload cost: At 5120 blocks, optimized upload is 4.4 ms versus 15163 ms in the unoptimized baseline.
+- Latency improvement: over 47.06% lower end-to-end latency versus vLLM at 1.0 QPS
+- KV utilization: up to 16.9% higher effective GPU KV-cache utilization
+- Idle cache peak: 18.5% of used KV cache occupied by stalled agents at peak
+- Transfer versus recompute: 4096 blocks: about 60 ms transfer versus nearly 9,000 ms recomputation
+- Upload overhead mitigation: 5120-block upload drops from 15,163 ms to 4.4 ms with Tokencake's optimizations
+- Critical-path metric: abnormal agent means execution time above 1.5x the type average
 
 ## Evidence Map
 
-- c1: asset:fig1a-coding, asset:fig1b-deep-research, asset:fig2a-space-contention-analysis, asset:fig2b-space-contention-diagram, asset:fig3a-idle-kv-blocks, asset:fig3b-kv-cache-lifecycle
-- c2: text:source-introduction, text:table-2
-- c3: asset:fig4-overview, asset:fig5-api, asset:fig6-coordination
-- c4: asset:fig7-lifecycle, equation:eq1-duration-blend, equation:eq2-transfer-cost, text:algorithm-1
-- c5: asset:fig8-space-scheduler, equation:eq3-static-priority, equation:eq4-dynamic-priority, text:algorithm-2
-- c6: asset:fig9-latency, asset:fig10-gpu-utilization, asset:fig12-abnormal-agents, asset:fig13-offload-vs-recompute, asset:fig14-overhead-mitigation
+- C1: asset:tokencake-fig02-space-contention, asset:tokencake-fig03-time-underutilization, text:source:29-31;146-148
+- C2: asset:tokencake-fig04-overview, asset:tokencake-fig06-coordination, text:source:155-157;184-190
+- C3: asset:tokencake-fig07-time-lifecycle, text:source:239-271;470-471
+- C4: asset:tokencake-fig08-space-feedback, text:source:346-367;391-392
+- C5: asset:tokencake-fig09-latency, asset:tokencake-fig10-utilization, asset:tokencake-fig12-abnormal-agents, text:source:516-517;536-537
+- C6: asset:tokencake-fig13-offload-tradeoff, asset:tokencake-fig14-overhead-mitigation, text:source:575-576;610-612;638-640
 
 ## Limitations
 
-- Prediction model: The scheduler relies on a relatively simple execution-time predictor and could benefit from richer features such as function-call arguments.
-- Deployment scope: The evaluation is single-GPU; extending the design to multi-GPU and NVLink-backed hierarchies remains future work.
+- Prediction model: Tool-time prediction is deliberately simple; richer features such as call arguments are left to future work.
+- Single-GPU scope: The evaluation is limited to one GPU, so distributed KV-cache placement remains open.
+- Benchmark breadth: The paper evaluates two representative multi-agent applications rather than a broad public benchmark suite.
 
 ## Best Asset-to-Claim Matches
 
-- Workload examples: fig1a-coding, fig1b-deep-research
-- Workload pathologies: fig2a-space-contention-analysis, fig2b-space-contention-diagram, fig3a-idle-kv-blocks, fig3b-kv-cache-lifecycle
-- Architecture and coordination: fig4-overview, fig5-api, fig6-coordination
-- Time-scheduler mechanism: fig7-lifecycle, eq1-duration-blend, eq2-transfer-cost
-- Space-scheduler mechanism: fig8-space-scheduler, eq3-static-priority, eq4-dynamic-priority
-- Headline results: fig9-latency, fig10-gpu-utilization, fig12-abnormal-agents, fig13-offload-vs-recompute, fig14-overhead-mitigation
+- Workload model: tokencake-fig01-workloads
+- Core pathologies: tokencake-fig02-space-contention, tokencake-fig03-time-underutilization
+- System overview: tokencake-fig04-overview, tokencake-fig06-coordination
+- Time scheduler mechanism: tokencake-fig07-time-lifecycle
+- Space scheduler mechanism: tokencake-fig08-space-feedback
+- Main performance result: tokencake-fig09-latency, tokencake-fig10-utilization, tokencake-fig12-abnormal-agents
+- Offload practicality: tokencake-fig13-offload-tradeoff, tokencake-fig14-overhead-mitigation
 
 ## Notes
 
-Use the Systems Paper Reading / OSDI-SOSP Style arc. Keep titles short and make the KV-cache thesis explicit on every evidence slide.
+Table 2 is useful background, but the deck can cover the prior-work gap with concise text boxes instead of a dense table crop.
