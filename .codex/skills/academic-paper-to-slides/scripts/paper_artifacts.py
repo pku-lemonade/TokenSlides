@@ -26,6 +26,8 @@ FIGURE_FORWARD_ARCHETYPES = {
     "Two-Up Comparison",
     "Results Comparison",
     "Motivation / Background",
+    "Method Overview Side-by-Side",
+    "Method Overview With Stacked Evidence",
 }
 SCRIPT_DIR = Path(__file__).resolve().parent
 ARCHETYPE_SPECS_PATH = SCRIPT_DIR.parent / "references" / "archetypes.json"
@@ -1665,7 +1667,7 @@ def render_comparison_body(
     bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
     lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
     if len(asset_entries) >= 2:
-        lines.extend(render_imgs_block(asset_entries[:2], width="100%"))
+        lines.extend(render_imgs_block(asset_entries[:2], width="96%"))
     elif slide.get("table"):
         lines.extend(render_table_block(slide.get("table")))
     elif asset_entries:
@@ -2292,6 +2294,14 @@ def validate_archetype_required_fields(
                 warnings.append(
                     f"slide {slide_id} uses {slide.get('archetype')} but needs {min_items}+ asset_ids or a table"
                 )
+
+    archetype_name = str(slide.get("archetype") or "")
+    if archetype_name in {"Method Overview Side-by-Side", "Method Overview With Stacked Evidence"}:
+        has_support = bool(slide.get("boxes") or slide.get("bullets") or plain_text(slide.get("takeaway")).strip())
+        if not has_support:
+            warnings.append(
+                f"slide {slide_id} uses {archetype_name} but has no left-column support text; add boxes, bullets, or a takeaway"
+            )
 
 
 def validate_archetype_limits(
