@@ -163,7 +163,8 @@
         "Wide or Fat Evidence"
       ],
       "notes": [
-        "This is the default method archetype when the overview asset is tall or thin enough for a side column."
+        "This is the default method archetype when the overview asset is tall or thin enough for a side column.",
+        "Do not leave the left column blank. Provide boxes or bullets, or let the takeaway render as the fallback support line."
       ]
     },
     "Method Overview With Stacked Evidence": {
@@ -200,7 +201,8 @@
       ],
       "notes": [
         "Prefer already recovered companion assets or extraction-stage sub-assets over ad hoc late crops.",
-        "For helper details behind stacked evidence columns, see `lemonade-theme.md`."
+        "For helper details behind stacked evidence columns, see `lemonade-theme.md`.",
+        "Do not leave the left column blank. Provide boxes or bullets, or let the takeaway render as the fallback support line."
       ]
     },
     "Method Cards (2 or 3 Only)": {

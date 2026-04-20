@@ -93,4 +93,4 @@ Artifact Progress:
 - For Chinese decks with paper-derived figures, default to `asset_caption_mode: short` on figure-bearing slides.
 - Use `asset_caption_mode: none` or an empty `asset_captions` override only when the figure is unmistakable without a caption and the page budget is genuinely tight.
 - Plan takeaways and captions as short lines. If a slide already uses body boxes, keep additional support inside the box system instead of introducing loose bullets as a third text style.
-
+- For `Method Overview Side-by-Side` and `Method Overview With Stacked Evidence`, ensure the left column has renderable support text: `boxes`, `bullets`, or a takeaway box. Evidence references and `equation_ids` alone do not create body text.
