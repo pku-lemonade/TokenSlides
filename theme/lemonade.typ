@@ -2,7 +2,7 @@
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, slide-page-sizes, aspect-ratios, title-alignments, imgs-config as default-imgs-config, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, cur-imgs-config, bleed
-#import "base.typ": touying-slides, config-page, config-common, config-colors, config-info
+#import "base.typ": touying-slides, config-page, config-common, config-colors, config-info, pause, meanwhile
 
 #import "boxes.typ": *
 #import "images.typ": *
