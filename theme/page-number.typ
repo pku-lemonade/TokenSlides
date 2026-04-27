@@ -1,10 +1,10 @@
-#import "base.typ": fonts, cur-ar, cur-colors
+#import "base.typ": cur-ar, cur-colors, fonts
 #import "base.typ": utils
 
 // CONFIG
 #let top-page-number-layouts = (
-    "16-9": (dx: 1em, dy: 0em, text-size: 24pt),
-    "4-3": (dx: 1em, dy: 0em, text-size: 24pt),
+    "16-9": (dx: 1.25em, dy: 0em, text-size: 32pt),
+    "4-3": (dx: 1em, dy: 0em, text-size: 32pt),
 )
 
 #let top-page-number-config = (
