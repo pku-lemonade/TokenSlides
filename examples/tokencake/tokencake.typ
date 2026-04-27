@@ -3,18 +3,18 @@
 #set text(lang: "en")
 
 #show: lemonade-theme.with(
-  aspect-ratio: "16-9",
-  title-align: "left",
-  box-compact: true,
-  footer: "bar",
-  config-info(
-    title: [Tokencake],
-    venue: [arXiv preprint (v2)],
-    author: [Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo],
-    institution: [Peking University],
-    short-title: [Tokencake],
-    date: [October 31, 2025],
-  ),
+    aspect-ratio: "16-9",
+    title-align: "left",
+    box-compact: true,
+    footer: "bar",
+    config-info(
+        title: [Tokencake],
+        venue: [arXiv preprint (v2)],
+        author: [Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo],
+        institution: [Peking University],
+        short-title: [Tokencake],
+        date: [October 31, 2025],
+    ),
 )
 
 #title-slide()
@@ -24,16 +24,16 @@
 == Workload Shift
 
 #hbox[
-  *Workloads:* Code-Writer stresses many specialized agents and frequent file or tool calls; Deep Research uses fewer agents but a tighter dependency chain.
+    *Workloads:* Code-Writer stresses many specialized agents and frequent file or tool calls; Deep Research uses fewer agents but a tighter dependency chain.
 ]
 
 #nbox[
-  *Systems implication:* Some agents sit on the critical path while others wait on external tools, so naive KV-cache placement wastes scarce GPU memory.
+    *Systems implication:* Some agents sit on the critical path while others wait on external tools, so naive KV-cache placement wastes scarce GPU memory.
 ]
 
 #imgs(
-  image("assets/tokencake-fig01-workloads.pdf"),
-  width: 98%,
+    image("assets/tokencake-fig01-workloads.pdf"),
+    width: 98%,
 )
 
 // Render mode: script
@@ -44,18 +44,18 @@
 == Two Cache Failures
 
 #hbox[
-  *Space:* Critical inversion forces recomputation when a non-critical agent occupies scarce GPU blocks first.
+    *Space:* Critical inversion forces recomputation when a non-critical agent occupies scarce GPU blocks first.
 ]
 
 #nbox[
-  *Time:* Tool stalls leave the first inference prefix idle on GPU; peaks reach 18.5% of used KV cache.
+    *Time:* Tool stalls leave the first inference prefix idle on GPU; peaks reach 18.5% of used KV cache.
 ]
 
 #imgs(
-  image("assets/tokencake-fig02-space-contention.pdf"),
-  image("assets/tokencake-fig03-time-underutilization.pdf"),
-  width: 96%,
-  gap: 0.8em,
+    image("assets/tokencake-fig02-space-contention.pdf"),
+    image("assets/tokencake-fig03-time-underutilization.pdf"),
+    width: 96%,
+    gap: 0.8em,
 )
 
 // Render mode: script
@@ -68,21 +68,22 @@
 == Tokencake Thesis
 
 #grid(
-  columns: (0.92fr, 1.08fr),
-  gutter: 0.8em,
-  [
-    #hbox[
-      *Core idea:* Tokencake couples graph-aware metadata with two policies: proactive offload and prefetch around tool stalls, and critical-agent reservation under memory pressure.
-    ]
+    columns: (0.92fr, 1.08fr),
+    gutter: 0.8em,
+    [
+        #hbox[
+            *Core idea:* Tokencake couples graph-aware metadata with two policies: proactive offload and prefetch around tool stalls, and critical-agent reservation under memory pressure.
+        ]
+    ],
+    pause,
 
-  ],
-  [
-    #imgs(
-      (image("assets/tokencake-fig04-overview.jpeg"), [Tokencake Overview]),
-      width: 100%,
-    )
+    [
+        #imgs(
+            (image("assets/tokencake-fig04-overview.jpeg"), [Tokencake Overview]),
+            width: 100%,
+        )
 
-  ],
+    ],
 )
 
 // Render mode: script
@@ -93,16 +94,16 @@
 == Time Scheduler
 
 #hbox[
-  *Trigger:* Tokencake uses function-call events rather than generic inactivity heuristics, so the offload window is explicit.
+    *Trigger:* Tokencake uses function-call events rather than generic inactivity heuristics, so the offload window is explicit.
 ]
 
 #nbox[
-  *Mechanism:* Static graph analysis gives cold-start estimates, runtime feedback refines them, and predictive upload hides transfer latency before the agent resumes.
+    *Mechanism:* Static graph analysis gives cold-start estimates, runtime feedback refines them, and predictive upload hides transfer latency before the agent resumes.
 ]
 
 #imgs(
-  (image("assets/tokencake-fig07-time-lifecycle.jpeg"), [Time Scheduler Lifecycle]),
-  width: 98%,
+    (image("assets/tokencake-fig07-time-lifecycle.jpeg"), [Time Scheduler Lifecycle]),
+    width: 98%,
 )
 
 // Render mode: script
@@ -113,16 +114,16 @@
 == Space Scheduler
 
 #hbox[
-  *Priority:* Critical agents are chosen by hybrid priority, combining DAG structure with runtime importance.
+    *Priority:* Critical agents are chosen by hybrid priority, combining DAG structure with runtime importance.
 ]
 
 #nbox[
-  *Reservation:* The reserved pool grows with memory pressure and is divided across critical agents by score and historical memory demand. The configurable critical_ratio controls how many agent types receive protection.
+    *Reservation:* The reserved pool grows with memory pressure and is divided across critical agents by score and historical memory demand. The configurable critical_ratio controls how many agent types receive protection.
 ]
 
 #imgs(
-  (image("assets/tokencake-fig08-space-feedback.jpeg"), [Dynamic Memory Partitioning]),
-  width: 98%,
+    (image("assets/tokencake-fig08-space-feedback.jpeg"), [Dynamic Memory Partitioning]),
+    width: 98%,
 )
 
 // Render mode: script
@@ -135,15 +136,15 @@
 == Evaluation Setup
 
 #hbox[
-  *Workloads:* Code-Writer stresses concurrency and tool use; Deep Research stresses dependency depth and inter-agent coordination.
+    *Workloads:* Code-Writer stresses concurrency and tool use; Deep Research stresses dependency depth and inter-agent coordination.
 ]
 
 #nbox[
-  *Baselines:* vLLM is the main baseline, while LightLLM shows Tokencake still wins against another optimized serving stack.
+    *Baselines:* vLLM is the main baseline, while LightLLM shows Tokencake still wins against another optimized serving stack.
 ]
 
 #sbox[
-  *Metrics:* The paper reports end-to-end latency, GPU KV utilization, abnormal agents, and offload microbenchmarks. Request arrivals follow a Poisson process across increasing QPS.
+    *Metrics:* The paper reports end-to-end latency, GPU KV utilization, abnormal agents, and offload microbenchmarks. Request arrivals follow a Poisson process across increasing QPS.
 ]
 
 // Render mode: script
@@ -154,16 +155,16 @@
 == Loaded-System Gains
 
 #hbox[
-  *Main result:* At 1.0 QPS, Tokencake cuts end-to-end latency by over 47.06% versus vLLM, and the gap widens as memory pressure rises.
+    *Main result:* At 1.0 QPS, Tokencake cuts end-to-end latency by over 47.06% versus vLLM, and the gap widens as memory pressure rises.
 ]
 
 #nbox[
-  *Interpretation:* The benefit is modest when the system is not memory-bound, but it grows once tool stalls and agent interference start to constrain batch size.
+    *Interpretation:* The benefit is modest when the system is not memory-bound, but it grows once tool stalls and agent interference start to constrain batch size.
 ]
 
 #imgs(
-  (image("assets/tokencake-fig09-latency.jpeg"), [End-to-End Latency]),
-  width: 98%,
+    (image("assets/tokencake-fig09-latency.jpeg"), [End-to-End Latency]),
+    width: 98%,
 )
 
 // Render mode: script
@@ -174,28 +175,28 @@
 == Utilization and Stability
 
 #grid(
-  columns: (1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #hbox[
-      *Memory efficiency:* Tokencake keeps GPU KV utilization at 86-87%, up to 16.9% above vLLM, because idle caches leave the GPU.
-    ]
+    columns: (1fr, 1fr),
+    gutter: 0.8em,
+    [
+        #hbox[
+            *Memory efficiency:* Tokencake keeps GPU KV utilization at 86-87%, up to 16.9% above vLLM, because idle caches leave the GPU.
+        ]
 
-    #nbox[
-      *Critical path:* Abnormal agents above 1.5x the type-average latency drop sharply, which signals fewer contention-induced stalls.
-    ]
+        #nbox[
+            *Critical path:* Abnormal agents above 1.5x the type-average latency drop sharply, which signals fewer contention-induced stalls.
+        ]
 
-  ],
-  [
-    #imgs(
-      image("assets/tokencake-fig10-utilization.jpeg"),
-      image("assets/tokencake-fig12-abnormal-agents.jpeg"),
-      dir: ttb,
-      width: 100%,
-      gap: 0.6em,
-    )
+    ],
+    [
+        #imgs(
+            image("assets/tokencake-fig10-utilization.jpeg"),
+            image("assets/tokencake-fig12-abnormal-agents.jpeg"),
+            dir: ttb,
+            width: 100%,
+            gap: 0.6em,
+        )
 
-  ],
+    ],
 )
 
 // Render mode: script
@@ -206,28 +207,28 @@
 == Offload Beats Recompute
 
 #grid(
-  columns: (1fr, 1fr),
-  gutter: 0.8em,
-  [
-    #hbox[
-      *Transfer versus recompute:* For 4096 blocks, transfer takes about 60 ms while recomputation takes nearly 9,000 ms, so reuse is decisively cheaper.
-    ]
+    columns: (1fr, 1fr),
+    gutter: 0.8em,
+    [
+        #hbox[
+            *Transfer versus recompute:* For 4096 blocks, transfer takes about 60 ms while recomputation takes nearly 9,000 ms, so reuse is decisively cheaper.
+        ]
 
-    #nbox[
-      *System cost:* Tokencake cuts 5120-block upload latency from 15,163 ms to 4.4 ms, making proactive offload operationally viable.
-    ]
+        #nbox[
+            *System cost:* Tokencake cuts 5120-block upload latency from 15,163 ms to 4.4 ms, making proactive offload operationally viable.
+        ]
 
-  ],
-  [
-    #imgs(
-      image("assets/tokencake-fig13-offload-tradeoff.jpeg"),
-      image("assets/tokencake-fig14-overhead-mitigation.jpeg"),
-      dir: ttb,
-      width: 100%,
-      gap: 0.6em,
-    )
+    ],
+    [
+        #imgs(
+            image("assets/tokencake-fig13-offload-tradeoff.jpeg"),
+            image("assets/tokencake-fig14-overhead-mitigation.jpeg"),
+            dir: ttb,
+            width: 100%,
+            gap: 0.6em,
+        )
 
-  ],
+    ],
 )
 
 // Render mode: script
@@ -240,15 +241,15 @@
 == What This Paper Establishes
 
 #hbox[
-  *Main lesson:* The paper is strongest when it treats KV cache as a first-class shared resource across both time and space.
+    *Main lesson:* The paper is strongest when it treats KV cache as a first-class shared resource across both time and space.
 ]
 
 #sbox[
-  *Why it convinces:* The mechanism slides connect cleanly to workload-level latency gains, higher utilization, and fewer critical-path outliers.
+    *Why it convinces:* The mechanism slides connect cleanly to workload-level latency gains, higher utilization, and fewer critical-path outliers.
 ]
 
 #nbox[
-  *Limits:* The predictor is simple and the evaluation is single-GPU, so multi-GPU coordination and richer forecasts remain open problems.
+    *Limits:* The predictor is simple and the evaluation is single-GPU, so multi-GPU coordination and richer forecasts remain open problems.
 ]
 
 // Render mode: script
