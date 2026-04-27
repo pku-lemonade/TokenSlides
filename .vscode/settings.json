@@ -1,6 +1,7 @@
 {
     "tinymist.rootPath": "${workspaceFolder}",
     "tinymist.formatterMode": "typstyle",
+    "tinymist.formatterIndentSize": 4,
     "tinymist.lint.enabled": true,
     "tinymist.lint.when": "onSave",
     "tinymist.copyAndPaste": "enable",
@@ -8,6 +9,9 @@
     "tinymist.onPaste": "$dir/assets/$name",
     "[typst]": {
         "editor.defaultFormatter": "myriad-dreamin.tinymist",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
     }
 }
