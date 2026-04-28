@@ -1,4 +1,4 @@
-#import "base.typ": cur-box, cur-box-compact, cur-colors, font-sizes
+#import "base.typ": cur-box, cur-box-compact, cur-box-fill, cur-colors, font-sizes
 
 // CONFIG
 #let box-config = (
@@ -49,14 +49,16 @@
         let border-width = box-config.border-width
         let frame-width = box-config.frame-width
         let use-border = box-config.left-border
-        let has-fill = style.fill != none
+        let fill = if cur-box-fill.get() { style.at("fill", default: none) } else { none }
+        let border = style.border
+        let has-fill = fill != none
         let inset-left = if use-border { spacing-config.inset-left + border-width } else { spacing-config.inset-left }
         let stroke = if use-border {
             if has-fill {
-                (left: border-width + style.border)
+                (left: border-width + border)
             } else {
                 (
-                    left: border-width + style.border,
+                    left: border-width + border,
                     top: frame-width + colors.table-stroke,
                     right: frame-width + colors.table-stroke,
                     bottom: frame-width + colors.table-stroke,
@@ -66,7 +68,7 @@
 
         block(
             breakable: breakable,
-            fill: style.fill,
+            fill: fill,
             width: 100%,
             inset: (
                 left: inset-left,
