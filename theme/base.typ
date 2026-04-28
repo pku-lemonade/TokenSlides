@@ -21,10 +21,10 @@
 // CONFIG (frequently tweaked)
 #let font-sizes = (
     small: 18pt,
-    body: 24pt,
+    body: 28pt,
     body-title: 32pt,
     title: 44pt,
-    slide-title: 36pt,
+    slide-title: 40pt,
     section: 40pt,
     code: 20pt,
 )
@@ -63,7 +63,7 @@
 )
 
 #let fonts = (
-    body: ("Inter", "Arial", "Source Han Sans SC", ),
+    body: ("Inter", "Arial", "Source Han Sans SC"),
     math: "New Computer Modern Math",
     mono: ("Inconsolata", "Source Han Sans SC"),
 )
@@ -108,22 +108,24 @@
     code-fg: rgb("#EDEDED"),
 )
 
+// Box styles define the accent border and the optional soft fill once.
+// `lemonade-theme(box-fill: ...)` decides whether the fill is rendered.
 #let light-box-styles = (
-    highlight: (fill: none, border: rgb("#f59e0b")),
-    info: (fill: none, border: rgb("#3b82f6")),
-    error: (fill: none, border: rgb("#ef4444")),
-    success: (fill: none, border: rgb("#22c55e")),
-    neutral: (fill: none, border: rgb("#737373")),
-    purple: (fill: none, border: rgb("#8b5cf6")),
+    highlight: (border: rgb("#f59e0b"), fill: rgb("#fffbeb")),
+    info: (border: rgb("#3b82f6"), fill: rgb("#eff6ff")),
+    error: (border: rgb("#ef4444"), fill: rgb("#fef2f2")),
+    success: (border: rgb("#22c55e"), fill: rgb("#f0fdf4")),
+    neutral: (border: rgb("#737373"), fill: rgb("#f5f5f5")),
+    purple: (border: rgb("#8b5cf6"), fill: rgb("#f5f3ff")),
 )
 
 #let dark-box-styles = (
-    highlight: (fill: none, border: rgb("#F59E0B")),
-    info: (fill: none, border: dark-colors.link),
-    error: (fill: none, border: rgb("#ef4444")),
-    success: (fill: none, border: rgb("#22c55e")),
-    neutral: (fill: none, border: dark-colors.neutral),
-    purple: (fill: none, border: rgb("#8b5cf6")),
+    highlight: (border: rgb("#F59E0B"), fill: rgb("#2f2412")),
+    info: (border: dark-colors.link, fill: rgb("#0b2a3a")),
+    error: (border: rgb("#ef4444"), fill: rgb("#3a1616")),
+    success: (border: rgb("#22c55e"), fill: rgb("#11331f")),
+    neutral: (border: dark-colors.neutral, fill: rgb("#1f1f1f")),
+    purple: (border: rgb("#8b5cf6"), fill: rgb("#241b3a")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.
@@ -141,6 +143,7 @@
 #let cur-colors = state("lec-colors", modes.light.colors)
 #let cur-box = state("lec-box", modes.light.box)
 #let cur-box-compact = state("lec-box-compact", false)
+#let cur-box-fill = state("lec-box-fill", false)
 #let cur-title-align = state("lec-title-align", "center")
 #let cur-imgs-config = state("lec-imgs-config", imgs-config)
 

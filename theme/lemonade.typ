@@ -1,7 +1,7 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, slide-page-sizes, aspect-ratios, title-alignments, imgs-config as default-imgs-config, cur-ar, cur-colors, cur-box, cur-box-compact, cur-title-align, cur-imgs-config, bleed
+#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, slide-page-sizes, aspect-ratios, title-alignments, imgs-config as default-imgs-config, cur-ar, cur-colors, cur-box, cur-box-compact, cur-box-fill, cur-title-align, cur-imgs-config, bleed
 #import "base.typ": touying-slides, config-page, config-common, config-colors, config-info, pause, meanwhile
 
 #import "boxes.typ": *
@@ -28,6 +28,8 @@
     footer: "bar",
     // File-level default for all `hbox/ibox/...`; per-box `compact:` still overrides it.
     box-compact: false,
+    // Use soft filled backgrounds for `hbox/ibox/...` instead of outline-only boxes.
+    box-fill: false,
     // Alignment for content slide titles (`== ...`), not the title/thank-you slides.
     title-align: "center",
     imgs-config: (:),
@@ -77,6 +79,7 @@
     cur-colors.update(colors)
     cur-box.update(theme.box)
     cur-box-compact.update(box-compact)
+    cur-box-fill.update(box-fill)
     cur-title-align.update(title-align)
     cur-imgs-config.update(resolved-imgs-config)
 
