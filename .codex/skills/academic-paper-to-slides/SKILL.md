@@ -10,7 +10,8 @@ Turn a paper into a presentation argument instead of mirroring the PDF page by p
 ## Use This Skill To
 
 - distill one paper or a small paper set into slides
-- extract claims, tables, equations, and exact numbers from a PDF while delegating figure asset recovery to `figure_extractor`
+- extract claims, tables, equations, and exact numbers from a PDF while delegating generated figure creation to `figure-generation` by default
+- preserve original paper figures only when requested by delegating extraction to `figure_extractor`
 - adapt the same source into different academic contexts such as seminar, reading report, overview, or defense
 
 ## Output Layout
@@ -34,7 +35,7 @@ Rules:
 
 - Default to one workspace directory per paper under `out/`.
 - If two source PDFs would map to the same `<paper>` name, disambiguate the workspace directory with a short parent-folder prefix such as `out/<parent>-<paper>/`.
-- Keep briefs, slide maps, crops, and extracted figures inside that paper workspace instead of shared top-level folders.
+- Keep briefs, slide maps, generated figures, crops, and extracted figures inside that paper workspace instead of shared top-level folders.
 - Treat `notes/*.json` as canonical artifacts. Treat the Markdown notes as derived inspection files rendered from JSON.
 
 ## Workflow
@@ -53,7 +54,8 @@ Rules:
 3. Plan the artifacts before writing Typst.
    - Read `references/planning-artifacts.md`.
    - Complete the JSON artifacts and derived notes before drafting slides.
-   - Run source extraction and the initial asset recovery pass before writing `notes/slides.json`.
+   - Run source extraction, choose visual source policy, and finish the visual plan before writing `notes/slides.json`.
+   - Default to generated figures for every deck. Use `figure-generation` for generated visuals; use `figure_extractor` only when the user requests extracted or hybrid paper visuals.
 4. Draft with the local presentation system.
    - Read workspace instructions first if the repo contains `AGENTS.md`.
    - Read `references/lemonade-theme.md` before drafting or revising slides in this repo.
@@ -81,7 +83,7 @@ Rules:
 
 - Rebuild the paper as a presentation argument rather than a section-by-section retelling.
 - Keep `notes/*.json` canonical and re-render the Markdown notes instead of treating the `.md` files as the source of truth.
-- Run the initial asset pass before drafting and keep figure recovery delegated to `figure_extractor`.
+- Run the visual planning pass before drafting. Generated figures are the default and should be delegated to `figure-generation`; extracted figures remain delegated to `figure_extractor` when explicitly selected.
 - Keep a slide-level takeaway in JSON for every planned slide.
 - Assign source-grounded evidence before drafting a slide.
 - Do not rely on captions alone to carry the main takeaway.

@@ -4,6 +4,8 @@
     "Use this reference for composition choice and slide-shape tradeoffs. For final pass/fail checks, use `visual-qa.md`.",
     "Default to simpler archetypes before inventing a custom composition.",
     "Choose by rendered geometry, not by semantic label alone.",
+    "Generated visuals are the default asset source; they must still fit the existing archetypes instead of creating a new layout family.",
+    "Use `#imgs(...)`-compatible figure rows and captions for generated assets unless an existing archetype requires a different scripted renderer.",
     "On figure-led slides, keep the figure as the main evidence; the text explains why it matters.",
     "Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.",
     "Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.",
@@ -126,7 +128,8 @@
         "Two-Up Comparison"
       ],
       "notes": [
-        "This archetype works best when the figure already carries the story and the text only adds a short judgment."
+        "This archetype works best when the figure already carries the story and the text only adds a short judgment.",
+        "For generated lecture visuals, keep one or two dominant panels with short captions; do not turn the image into a dense poster."
       ]
     },
     "Method Overview Side-by-Side": {
@@ -201,6 +204,7 @@
       ],
       "notes": [
         "Prefer already recovered companion assets or extraction-stage sub-assets over ad hoc late crops.",
+        "Generated companion panels are acceptable when they are planned from the same visual intent and stay visually consistent.",
         "For helper details behind stacked evidence columns, see `lemonade-theme.md`.",
         "Do not leave the left column blank. Provide boxes or bullets, or let the takeaway render as the fallback support line."
       ]
@@ -249,7 +253,8 @@
         "Method Overview With Stacked Evidence"
       ],
       "notes": [
-        "Use two cards or three cards only. If a fourth item matters, split the slide."
+        "Use two cards or three cards only. If a fourth item matters, split the slide.",
+        "For generated method cards, keep the cards visually parallel and avoid putting long explanations inside the images."
       ]
     },
     "Two-Up Comparison": {
@@ -285,7 +290,8 @@
         "Results Comparison"
       ],
       "notes": [
-        "Do not force several weakly related panels into one contact sheet just to keep them on one slide."
+        "Do not force several weakly related panels into one contact sheet just to keep them on one slide.",
+        "Generated comparison panels should share a visual grammar so the comparison is about the concept, not stylistic differences."
       ]
     },
     "Results Comparison": {

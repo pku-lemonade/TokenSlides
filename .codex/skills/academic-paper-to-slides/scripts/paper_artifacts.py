@@ -17,6 +17,8 @@ from PIL import Image
 
 SCHEMA_VERSION = "academic-paper-to-slides/v1"
 ALLOWED_ASSET_TYPES = ("figure", "table", "equation")
+ALLOWED_FIGURE_SOURCE_MODES = ("generated", "extracted", "hybrid")
+ALLOWED_ASSET_SOURCE_MODES = ("generated", "extracted")
 ALLOWED_DENSITY_TARGETS = ("low", "medium", "high")
 ALLOWED_REVIEW_STATUSES = ("pending", "pass", "warning", "fail")
 ALLOWED_RENDER_MODES = ("script", "escape")
@@ -188,6 +190,10 @@ def skeleton_assets_json(workspace: Path, pdf_path: Path, title: str, scenario: 
             "priority_order": ["figure", "table", "equation"],
             "notes": "",
         },
+        "visual_policy": {
+            "figure_source_mode": "generated",
+            "notes": "Generated figures are the default. Use extracted or hybrid only when the user requests preserved paper visuals.",
+        },
         "assets": [],
         "notes": "",
     }
@@ -207,6 +213,7 @@ def skeleton_brief_json(workspace: Path, pdf_path: Path, title: str, scenario: s
             "source_pdf": rel_or_abs(pdf_path),
         },
         "presentation_thesis": "",
+        "figure_source_mode": "generated",
         "problem_framing": [],
         "claims": [],
         "mechanisms": [],
@@ -230,6 +237,7 @@ def skeleton_slides_json(workspace: Path, pdf_path: Path, title: str, scenario: 
             "language": language,
             "theme": "lemonade",
             "source_pdf": rel_or_abs(pdf_path),
+            "figure_source_mode": "generated",
             "created_at": timestamp,
             "updated_at": timestamp,
         },
@@ -349,6 +357,14 @@ def infer_capture_kind(selection_mode: str | None) -> str | None:
     return selection_mode or None
 
 
+def infer_asset_source_mode(args: argparse.Namespace, capture: dict[str, Any]) -> str:
+    if args.source_mode:
+        return args.source_mode
+    if capture or args.capture_json or args.page is not None or args.bbox or args.capture_kind:
+        return "extracted"
+    return "generated"
+
+
 def format_bbox(value: Any) -> str:
     if isinstance(value, list):
         return "[" + ", ".join(f"{float(part):.3f}" for part in value) + "]"
@@ -367,6 +383,7 @@ def render_asset_manifest_md(data: dict[str, Any]) -> str:
     metadata = data.get("metadata", {})
     source_text = data.get("source_text", {})
     extraction = data.get("extraction", {})
+    visual_policy = data.get("visual_policy", {})
     assets = sorted(
         data.get("assets", []),
         key=lambda asset: (
@@ -380,11 +397,12 @@ def render_asset_manifest_md(data: dict[str, Any]) -> str:
         "",
         "Artifact Progress:",
         f"- [{'x' if source_text.get('generated_at') else ' '}] Extract paper text to `notes/source.txt`",
-        f"- [{'x' if assets else ' '}] Recover likely visuals and write `notes/assets.json`",
+        f"- [{'x' if assets else ' '}] Produce likely visuals and write `notes/assets.json`",
         f"- [{'x' if assets else ' '}] Render `notes/asset-manifest.md` from `notes/assets.json`",
         "",
         f"Scenario: {metadata.get('language', 'unknown')} {metadata.get('scenario', 'unknown')} deck.",
         f"Extraction status: {extraction.get('status', 'pending')}",
+        f"Figure source mode: `{visual_policy.get('figure_source_mode', 'generated')}`",
         "",
     ]
 
@@ -410,6 +428,8 @@ def render_asset_manifest_md(data: dict[str, Any]) -> str:
             heading = asset.get("label") or asset.get("asset_id") or asset_type.title()
             lines.append(f"### {heading}")
             lines.append(f"- Asset ID: `{asset.get('asset_id', '')}`")
+            if asset.get("source_mode"):
+                lines.append(f"- Source mode: `{asset.get('source_mode')}`")
             lines.append(f"- Source file: `{asset.get('source_file', data.get('source_pdf', ''))}`")
             if asset.get("page") is not None:
                 lines.append(f"- Page: `{asset.get('page')}`")
@@ -429,6 +449,14 @@ def render_asset_manifest_md(data: dict[str, Any]) -> str:
                 lines.append(f"- Caption: {asset.get('normalized_caption')}")
             if asset.get("source_section"):
                 lines.append(f"- Section hint: {asset.get('source_section')}")
+            if asset.get("generation_prompt"):
+                lines.append(f"- Generation prompt: {asset.get('generation_prompt')}")
+            if asset.get("source_evidence"):
+                evidence = asset.get("source_evidence")
+                if isinstance(evidence, list):
+                    lines.append(f"- Source evidence: {', '.join(str(item) for item in evidence)}")
+                else:
+                    lines.append(f"- Source evidence: {evidence}")
             if asset.get("extraction_quality"):
                 lines.append(f"- Extraction quality: {asset.get('extraction_quality')}")
             if asset.get("cleanup_needed"):
@@ -451,7 +479,7 @@ def render_asset_manifest_md(data: dict[str, Any]) -> str:
         [
             "## Pending Assets",
             "",
-            "No assets are registered yet. Use `paper_artifacts.py upsert-asset` after figure extraction.",
+            "No assets are registered yet. Use `paper_artifacts.py upsert-asset` after figure generation or extraction.",
             "",
         ]
     )
@@ -568,23 +596,39 @@ def format_slide_evidence(slide: dict[str, Any]) -> str:
     return "; ".join(chunks)
 
 
+def format_slide_visual(slide: dict[str, Any]) -> str:
+    chunks = []
+    if slide.get("visual_source_mode"):
+        chunks.append(str(slide.get("visual_source_mode")))
+    if slide.get("visual_intent"):
+        chunks.append(str(slide.get("visual_intent")))
+    if slide.get("visual_evidence"):
+        evidence = slide.get("visual_evidence")
+        if isinstance(evidence, list):
+            chunks.append(", ".join(str(item) for item in evidence))
+        else:
+            chunks.append(str(evidence))
+    return "; ".join(chunks)
+
+
 def render_slide_map_md(slides_doc: dict[str, Any]) -> str:
     deck = slides_doc.get("deck", {})
     slides = slides_doc.get("slides", [])
     lines = [
         f"# {deck.get('title', 'Paper')} Slide Map",
         "",
-        "| # | Section | Title | Takeaway | Evidence | Archetype | Render | Role | Density |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| # | Section | Title | Takeaway | Evidence | Visual | Archetype | Render | Role | Density |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for index, slide in enumerate(slides, start=1):
         lines.append(
-            "| {index} | {section} | {title} | {takeaway} | {evidence} | {archetype} | {render_mode} | {role} | {density} |".format(
+            "| {index} | {section} | {title} | {takeaway} | {evidence} | {visual} | {archetype} | {render_mode} | {role} | {density} |".format(
                 index=index,
                 section=str(slide.get("section", "")).replace("|", "/"),
                 title=str(slide.get("title", "")).replace("|", "/"),
                 takeaway=str(slide.get("takeaway", "")).replace("|", "/"),
                 evidence=format_slide_evidence(slide).replace("|", "/"),
+                visual=format_slide_visual(slide).replace("|", "/"),
                 archetype=str(slide.get("archetype", "")).replace("|", "/"),
                 render_mode=str(slide.get("render_mode", "script")).replace("|", "/"),
                 role=str(slide.get("rhetorical_role", "")).replace("|", "/"),
@@ -592,7 +636,7 @@ def render_slide_map_md(slides_doc: dict[str, Any]) -> str:
             )
         )
     if not slides:
-        lines.append("| 1 |  |  |  |  |  |  |  |  |")
+        lines.append("| 1 |  |  |  |  |  |  |  |  |  |")
     lines.append("")
 
     qa_lines = []
@@ -2094,6 +2138,7 @@ def cmd_upsert_asset(args: argparse.Namespace) -> None:
     bbox = args.bbox or capture.get("bbox")
     capture_kind = args.capture_kind or infer_capture_kind(capture.get("selection_mode"))
     primary_output = args.primary_output or capture.get("primary_output")
+    source_mode = infer_asset_source_mode(args, capture)
     normalized_caption = args.normalized_caption or args.raw_caption or ""
     dimensions = load_dimensions(Path(primary_output).expanduser().resolve()) if primary_output else {
         "width": None,
@@ -2104,6 +2149,7 @@ def cmd_upsert_asset(args: argparse.Namespace) -> None:
     entry = {
         "asset_id": args.asset_id,
         "asset_type": args.asset_type,
+        "source_mode": source_mode,
         "label": args.label or args.asset_id,
         "title": args.title or "",
         "source_file": source_file,
@@ -2115,6 +2161,8 @@ def cmd_upsert_asset(args: argparse.Namespace) -> None:
         "raw_caption": args.raw_caption or normalized_caption,
         "dimensions": dimensions,
         "source_section": args.source_section or "",
+        "generation_prompt": args.generation_prompt or "",
+        "source_evidence": list(args.source_evidence or []),
         "extraction_quality": args.quality,
         "candidate_roles": list(args.candidate_role or []),
         "notes": args.notes or "",
@@ -2347,6 +2395,13 @@ def cmd_validate_artifacts(args: argparse.Namespace) -> None:
     slides_doc = load_json(paths["slides_json"])
     review_doc = load_json(paths["review_json"])
 
+    figure_source_mode = (assets_doc.get("visual_policy") or {}).get(
+        "figure_source_mode",
+        (slides_doc.get("deck") or {}).get("figure_source_mode", "generated"),
+    )
+    if figure_source_mode not in ALLOWED_FIGURE_SOURCE_MODES:
+        errors.append(f"unknown figure_source_mode: {figure_source_mode}")
+
     source_path = (assets_doc.get("source_text") or {}).get("path")
     if source_path and not resolve_repo_relative(source_path, workspace).exists():
         warnings.append(f"source_text path does not exist: {source_path}")
@@ -2367,10 +2422,20 @@ def cmd_validate_artifacts(args: argparse.Namespace) -> None:
         asset_type = asset.get("asset_type")
         if asset_type not in ALLOWED_ASSET_TYPES:
             errors.append(f"asset {asset_id} has unknown asset_type: {asset_type}")
+        source_mode = asset.get("source_mode")
+        if not source_mode:
+            source_mode = "extracted" if asset.get("capture_kind") or asset.get("bbox") or asset.get("page") is not None else "generated"
+        if source_mode not in ALLOWED_ASSET_SOURCE_MODES:
+            errors.append(f"asset {asset_id} has unknown source_mode: {source_mode}")
         if asset_type in {"figure", "table"} and asset.get("primary_output"):
             asset_path = resolve_repo_relative(asset["primary_output"], workspace)
             if not asset_path.exists():
                 warnings.append(f"asset {asset_id} primary_output does not exist: {asset['primary_output']}")
+        if asset_type in {"figure", "table"} and source_mode == "generated":
+            if not asset.get("generation_prompt"):
+                warnings.append(f"generated asset {asset_id} is missing generation_prompt")
+            if not asset.get("source_evidence"):
+                warnings.append(f"generated asset {asset_id} is missing source_evidence")
         if asset_type == "equation":
             equation_ids.add(asset_id)
             if not (asset.get("equation") or {}).get("text"):
@@ -2460,6 +2525,13 @@ def cmd_validate_artifacts(args: argparse.Namespace) -> None:
         density = slide.get("content_density")
         if density and density not in ALLOWED_DENSITY_TARGETS:
             warnings.append(f"slide {slide_id} uses unknown content_density: {density}")
+        visual_source_mode = slide.get("visual_source_mode")
+        if visual_source_mode and visual_source_mode not in ALLOWED_FIGURE_SOURCE_MODES:
+            warnings.append(f"slide {slide_id} uses unknown visual_source_mode: {visual_source_mode}")
+        if slide.get("asset_ids") and not slide.get("visual_intent"):
+            warnings.append(f"slide {slide_id} references assets but is missing visual_intent")
+        if slide.get("asset_ids") and not visual_source_mode:
+            warnings.append(f"slide {slide_id} references assets but is missing visual_source_mode")
         if not slide.get("qa_expectations"):
             warnings.append(f"slide {slide_id} is missing qa_expectations")
         table = slide.get("table")
@@ -2552,6 +2624,7 @@ def build_parser() -> argparse.ArgumentParser:
     asset_parser.add_argument("--workspace", required=True)
     asset_parser.add_argument("--asset-id", required=True)
     asset_parser.add_argument("--asset-type", required=True, choices=ALLOWED_ASSET_TYPES)
+    asset_parser.add_argument("--source-mode", choices=ALLOWED_ASSET_SOURCE_MODES)
     asset_parser.add_argument("--label")
     asset_parser.add_argument("--title")
     asset_parser.add_argument("--source-file")
@@ -2563,6 +2636,8 @@ def build_parser() -> argparse.ArgumentParser:
     asset_parser.add_argument("--normalized-caption")
     asset_parser.add_argument("--raw-caption")
     asset_parser.add_argument("--source-section")
+    asset_parser.add_argument("--generation-prompt")
+    asset_parser.add_argument("--source-evidence", action="append")
     asset_parser.add_argument("--quality", default="high")
     asset_parser.add_argument("--candidate-role", action="append")
     asset_parser.add_argument("--notes")
