@@ -20,6 +20,8 @@ Use `archetypes.md` for composition choice and `lemonade-theme.md` for helper us
 ## Figure Pass
 
 - The main figure is readable at screenshot scale.
+- Generated figures are grounded in the slide's `visual_evidence` and do not invent metrics, labels, or claims.
+- Generated figures use a consistent visual language within the deck and meet polished ACM SOSP/OSDI lecture-diagram quality.
 - If the source asset needed cleanup, the crop was prepared reproducibly rather than by ad hoc repeated edits.
 - Cropping removes paper chrome such as page headers, line numbers, original captions, neighboring columns, and unrelated panels.
 - Cropping does not remove axes, legends, low-edge labels, arrow endpoints, or other necessary annotations.
@@ -48,8 +50,9 @@ Use `archetypes.md` for composition choice and `lemonade-theme.md` for helper us
 ## Fix Order
 
 1. Reuse another recovered asset or change the slide archetype.
-2. If the right evidence is missing, recover or split a better source asset.
-3. If the asset shape is close but still carries chrome or awkward margins, rerun `scripts/prepare_figure.py` with a better anchor, margin, or mode.
-4. Compact the wording.
-5. Split the slide.
-6. Only then consider local helper overrides or text-size changes.
+2. If the right evidence is missing, produce a better generated asset or recover/split a better extracted source asset according to `figure_source_mode`.
+3. If a generated figure is close but inaccurate or inconsistent, revise the prompt and regenerate/edit once before changing the slide layout.
+4. If an extracted asset shape is close but still carries chrome or awkward margins, rerun `scripts/prepare_figure.py` with a better anchor, margin, or mode.
+5. Compact the wording.
+6. Split the slide.
+7. Only then consider local helper overrides or text-size changes.

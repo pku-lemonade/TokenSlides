@@ -22,6 +22,8 @@ This file is only about wording and sentence style.
 - 在证据密集的图页或方法页上，优先把标题控制在单行。
 - Remove filler or weak particles such as `了`, `可以`, `会`, `已经`, `正在` unless they change the meaning materially.
 - Avoid turning the title into the full takeaway sentence; put the judgment in the body box instead.
+- For lecture section labels, prefer compact two-character academic nouns.
+- Avoid literal translated labels when a shorter Chinese label works.
 
 ## Preferred Tone
 
@@ -48,37 +50,6 @@ This file is only about wording and sentence style.
 - `图 X 展示了 ...` 这类可以直接改写为结论句的句式
 - body text that repeats the caption
 - long paragraphs that read like an abstract pasted onto a slide
-
-## Example Rewrites
-
-Verbose:
-
-- `从实验结果可以看出，该方法在多个数据集上都取得了比较好的效果，说明其具有一定的有效性。`
-
-Better:
-
-- `多组数据集上均取得稳定增益，说明该机制并非依赖单一工作负载。`
-
-Verbose:
-
-- `图中展示了系统整体架构。`
-
-Better:
-
-- `系统将通信复用与差分存储解耦，实现了时延与显存的同时优化。`
-
-Verbose:
-
-- `图 9 展示了不同负载下的时延对比结果。`
-
-Better:
-
-- `负载越高，Tokencake 的时延优势越明显，说明收益来自显存压力场景。`
-
-Verbose title:
-
-- `Tokencake 减少了关键路径上的异常阻塞`
-
-Better title:
-
-- `关键路径阻塞`
+- uncommon abbreviations or vague jargon when precise common terms are available
+- `学生`
+- `我们今天`
