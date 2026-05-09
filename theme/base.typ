@@ -23,7 +23,7 @@
     small: 18pt,
     body: 28pt,
     body-title: 32pt,
-    title: 44pt,
+    title: 48pt,
     slide-title: 40pt,
     section: 40pt,
     code: 20pt,
@@ -52,8 +52,8 @@
 
 // Default slide margins per aspect ratio.
 #let slide-layouts = (
-    "16-9": (top: 0.75em, bottom: 0em, left: 2em, right: 1.5em),
-    "4-3": (top: 0.75em, bottom: 0em, left: 1.5em, right: 1.5em),
+    "16-9": (top: 0.75em, bottom: 0em, left: 1.5em, right: 1em),
+    "4-3": (top: 0.75em, bottom: 0em, left: 1.25em, right: 1em),
 )
 
 // Match PowerPoint's standard slide canvases instead of Typst/Touying's smaller presentation papers.
