@@ -209,7 +209,7 @@
             highlight-current: highlight-current,
             depth: variant-config.depth,
             text-size: variant-config.text-size,
-            text-weight: ("black",),
+            text-weight: ("bold",),
         )
 
         if outline-config.entry-tracking != none {
