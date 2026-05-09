@@ -52,7 +52,7 @@
 
 // Default slide margins per aspect ratio.
 #let slide-layouts = (
-    "16-9": (top: 0.75em, bottom: 0em, left: 1.5em, right: 1em),
+    "16-9": (top: 0.5em, bottom: 0em, left: 1.5em, right: 1em),
     "4-3": (top: 0.75em, bottom: 0em, left: 1.25em, right: 1em),
 )
 

@@ -13,7 +13,7 @@
 }
 
 // Tighten the full-width `、` so Chinese outline numbers sit close to the title.
-#let outline-zh-numbering = (..nums) => numbering("一、", ..nums) + h(-0.6em)
+#let outline-zh-numbering = (..nums) => numbering("一、", ..nums) + h(-0.1em)
 
 #let outline-numbering-styles = (
     // Arabic digits: 1. 2. 3.
@@ -212,13 +212,8 @@
             text-weight: ("bold",),
         )
 
-        if outline-config.entry-tracking != none {
-            set text(font: fonts.mono, tracking: outline-config.entry-tracking)
-            cont
-        } else {
-            set text(font: fonts.mono)
-            cont
-        }
+        set text(font: fonts.mono, tracking: outline-config.entry-tracking)
+        cont
     }
 
     let main-body = {
