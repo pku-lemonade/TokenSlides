@@ -1,8 +1,12 @@
 #import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
-#import "base.typ": modes, fonts, font-sizes, page-spacing, slide-layouts, slide-page-sizes, aspect-ratios, title-alignments, imgs-config as default-imgs-config, cur-ar, cur-colors, cur-box, cur-box-compact, cur-box-fill, cur-title-align, cur-imgs-config, bleed
-#import "base.typ": touying-slides, config-page, config-common, config-colors, config-info, pause, meanwhile
+#import "base.typ": (
+    aspect-ratios, bleed, cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-imgs-config, cur-title-align,
+    font-sizes, fonts, imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes,
+    title-alignments,
+)
+#import "base.typ": config-colors, config-common, config-info, config-page, meanwhile, pause, touying-slides
 
 #import "boxes.typ": *
 #import "images.typ": *
@@ -39,7 +43,7 @@
     imgs-cap-size: auto,
     imgs-cap-weight: auto,
     ..args,
-    body
+    body,
 ) = {
     assert(aspect-ratio in aspect-ratios)
     assert(mode in modes.keys())
@@ -73,7 +77,7 @@
             imgs-config.at("cap-weight", default: default-imgs-config.cap-weight)
         } else { imgs-cap-weight },
     )
-    let section-slide-fn = (body) => outline-slide(level: 1)
+    let section-slide-fn = body => outline-slide(level: 1)
 
     cur-ar.update(aspect-ratio)
     cur-colors.update(colors)
@@ -109,7 +113,13 @@
         ..args,
     )
 
-    set text(size: font-sizes.body, font: fonts.body, weight: "medium", fill: colors.fg)
+    set text(
+        size: font-sizes.body,
+        font: fonts.body,
+        weight: "medium",
+        fill: colors.fg,
+        features: ("halt",),
+    )
     set par(spacing: spacing.par)
     set heading(numbering: numbly("{1}.", default: "1.1"))
     show math.equation: set text(font: fonts.math)
