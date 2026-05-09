@@ -1,4 +1,4 @@
-#import "base.typ": fonts, font-sizes, bleed, slide-layouts, cur-ar, cur-imgs-config
+#import "base.typ": bleed, cur-ar, cur-imgs-config, font-sizes, fonts, slide-layouts
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -15,7 +15,7 @@
     fit: "contain",
     position: top + right,
     dx: 0.5em,
-    dy: 1em
+    dy: 1em,
 ) = place(position, dx: dx, dy: dy)[
     #align(center)[
         #if caption != none [
@@ -41,9 +41,25 @@
     ]
 ]
 
-#let place-logo(..args) = place-image(assets.logo, dx: -0.5em,dy: -1em, position: top + right, ..args)
-#let place-bottom-right(path, caption: none, ..args) = place-image(path, caption: caption, width: 20%, dx: -1.5em, dy: 0em, position: bottom + right, ..args)
-#let place-bottom-left(path, caption: none, ..args) = place-image(path, caption: caption, width: 20%, dx: 1.5em, dy: 0em, position: bottom + left, ..args)
+#let place-logo(..args) = place-image(assets.logo, dx: -0.5em, dy: -1em, position: top + right, ..args)
+#let place-bottom-right(path, caption: none, ..args) = place-image(
+    path,
+    caption: caption,
+    width: 20%,
+    dx: -1.5em,
+    dy: 0em,
+    position: bottom + right,
+    ..args,
+)
+#let place-bottom-left(path, caption: none, ..args) = place-image(
+    path,
+    caption: caption,
+    width: 20%,
+    dx: 1.5em,
+    dy: 0em,
+    position: bottom + left,
+    ..args,
+)
 
 #let imgs(
     ..images,
@@ -61,7 +77,7 @@
     cap-weight: auto,
     cap-color: auto,
     cap-gap: 0.2em,
-    border: none,
+    border: 0.8pt + rgb("#d4d4d4"),
     border-radius: 0pt,
     inset: 0pt,
 ) = {
@@ -95,7 +111,12 @@
                 block(width: 100%)[
                     #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight, fill: cap-color)
                     // Keep inline code and wrapped lines on the same caption sizing path.
-                    #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight, fill: cap-color)
+                    #show raw: set text(
+                        font: fonts.mono,
+                        size: resolved-cap-size,
+                        weight: resolved-cap-weight,
+                        fill: cap-color,
+                    )
                     #caption
                 ]
             }
@@ -129,7 +150,7 @@
                     radius: border-radius,
                     clip: true,
                     inset: inset,
-                    img
+                    img,
                 )
             } else { img }
             block(width: 100%)[
@@ -163,7 +184,11 @@
             if is-vertical {
                 let vertical-item = (item, resolved-height, available-width: auto) => {
                     let target-height = if resolved-height == auto { img-height } else { resolved-height }
-                    let resolved-item = render-cell(item.source, if target-height == auto { img-width } else { 100% }, target-height)
+                    let resolved-item = render-cell(
+                        item.source,
+                        if target-height == auto { img-width } else { 100% },
+                        target-height,
+                    )
                     if resolved-height != auto and available-width != auto {
                         let natural-item-height = measure(
                             box(width: width)[#render-cell(item.source, img-width, auto)],
@@ -182,7 +207,7 @@
                 }
 
                 let vertical-stack = (resolved-height, available-width: auto) => block(width: 100%)[
-                    #for ((index, item)) in ordered.enumerate() [
+                    #for (index, item) in ordered.enumerate() [
                         #block(
                             spacing: 0pt,
                             below: if item.caption != none { cap-gap } else { 0pt },
@@ -209,13 +234,18 @@
                             set text(size: footer-layout.text-size)
                             v(footer-layout.height)
                         }).height
-                        let caption-height = ordered.map(item => {
-                            if item.caption == none {
-                                0pt
-                            } else {
-                                measure(render-caption(item.caption), width: size.width).height + measure(v(cap-gap)).height
-                            }
-                        }).sum(default: 0pt)
+                        let caption-height = ordered
+                            .map(item => {
+                                if item.caption == none {
+                                    0pt
+                                } else {
+                                    (
+                                        measure(render-caption(item.caption), width: size.width).height
+                                            + measure(v(cap-gap)).height
+                                    )
+                                }
+                            })
+                            .sum(default: 0pt)
                         let stack-gap-height = if count > 1 {
                             measure(v(gap)).height * (count - 1)
                         } else {
@@ -223,10 +253,13 @@
                         }
                         let pad-height = measure(v(resolved-fill-pad)).height
                         let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
-                        let resolved-height = calc.max(
-                            0pt,
-                            remaining-height - footer-height - pad-height - caption-height - stack-gap-height,
-                        ) / count
+                        let resolved-height = (
+                            calc.max(
+                                0pt,
+                                remaining-height - footer-height - pad-height - caption-height - stack-gap-height,
+                            )
+                                / count
+                        )
                         [
                             #place(left)[
                                 #wrap-body(
@@ -272,12 +305,15 @@
                             columns: cols,
                             align: (center + valign,) * (count * 2 - 1),
                             rows: (auto,),
-                            ..ordered.enumerate().map(((i, item)) => {
-                                // Fit images to their grid cell width by default to avoid overflow across pages.
-                                // (Slide decks prioritize predictable layout over intrinsic image sizing.)
-                                let cell = render-cell(item.source, img-width, resolved-height)
-                                if i < count - 1 { (cell, []) } else { (cell,) }
-                            }).flatten()
+                            ..ordered
+                                .enumerate()
+                                .map(((i, item)) => {
+                                    // Fit images to their grid cell width by default to avoid overflow across pages.
+                                    // (Slide decks prioritize predictable layout over intrinsic image sizing.)
+                                    let cell = render-cell(item.source, img-width, resolved-height)
+                                    if i < count - 1 { (cell, []) } else { (cell,) }
+                                })
+                                .flatten()
                         )
                     }
                 ]
@@ -295,12 +331,15 @@
                     grid(
                         columns: cols,
                         align: (center,) * (count * 2 - 1),
-                        ..ordered.enumerate().map(((i, item)) => {
-                            let cell = if item.caption != none {
-                                render-caption(item.caption)
-                            } else { [] }
-                            if i < count - 1 { (cell, []) } else { (cell,) }
-                        }).flatten()
+                        ..ordered
+                            .enumerate()
+                            .map(((i, item)) => {
+                                let cell = if item.caption != none {
+                                    render-caption(item.caption)
+                                } else { [] }
+                                if i < count - 1 { (cell, []) } else { (cell,) }
+                            })
+                            .flatten()
                     )
                 }
 
@@ -322,7 +361,10 @@
                         }
                         let pad-height = measure(v(resolved-fill-pad)).height
                         let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
-                        let resolved-height = calc.max(0pt, remaining-height - caption-height - footer-height - pad-height)
+                        let resolved-height = calc.max(
+                            0pt,
+                            remaining-height - caption-height - footer-height - pad-height,
+                        )
                         let natural-grid-height = if has-captions {
                             measure(
                                 box(width: width)[#images-grid(auto)],
@@ -331,7 +373,9 @@
                         } else {
                             none
                         }
-                        let resolved-images-body = if has-captions and natural-grid-height != none and natural-grid-height < resolved-height {
+                        let resolved-images-body = if (
+                            has-captions and natural-grid-height != none and natural-grid-height < resolved-height
+                        ) {
                             block(width: 100%, height: resolved-height)[
                                 #align(bottom + center)[#images-grid(auto)]
                             ]
