@@ -22,6 +22,16 @@ The parent should pass:
 
 If required labels are not known, ask the parent for them before generating. Do not invent quantitative labels, axes, or numbers.
 
+## Canvas Contract
+
+Generated slide figures should read large inside `#imgs(...)`.
+
+- Keep a tight crop: the main diagram should occupy roughly 85-92% of the bitmap width and height.
+- Use a consistent safe margin across a visual series, typically 4-6% per side after any crop/pad cleanup.
+- Avoid title bands, decorative whitespace, oversized empty corners, and large margins reserved for text that belongs in the slide caption.
+- Keep related figures in the same series on the same canvas ratio, margin width, line weight, token/block scale, and label size.
+- If `$imagegen` returns a good diagram with excessive whitespace, post-process it by trimming empty margins and adding a uniform safe margin instead of regenerating from scratch.
+
 ## Workflow
 
 1. Read only the evidence needed for the visual.
@@ -32,13 +42,16 @@ If required labels are not known, ask the parent for them before generating. Do 
    - State the teaching intent.
    - Name required labels exactly.
    - Request clean systems-diagram quality.
+   - Require a tight crop with the main elements filling the canvas and a small uniform safe margin.
+   - For a figure series, reuse the same canvas ratio, margin width, line weight, and object scale.
    - Avoid over-specifying deck-specific symbols unless the parent supplied them.
 4. Use `$imagegen` and save the selected output into the workspace.
-5. Inspect the rendered bitmap.
+5. Inspect and normalize the rendered bitmap.
    - Labels are legible and accurate.
    - The visual matches the evidence and does not add claims.
    - Style is consistent with neighboring generated figures.
    - No title band, watermark, or explanatory paragraph appears inside the image unless explicitly requested.
+   - The diagram is not visually small because of wide whitespace; trim and pad to the canvas contract when needed.
 6. Iterate once with a targeted prompt if a required label, layout, or style invariant fails.
 7. Return registry-ready metadata to the parent.
 
