@@ -1,10 +1,10 @@
-#import "base.typ": font-sizes, cur-colors, cur-title-align, bleed
-#import "base.typ": touying-slide-wrapper, touying-slide, utils
+#import "base.typ": bleed, cur-colors, cur-title-align, font-sizes
+#import "base.typ": touying-slide, touying-slide-wrapper, utils
 #import "page-number.typ": top-page-number
 
 #let slide-config = (
     show-numbered-heading: false,
-    title-tracking: 0.05em,
+    title-tracking: 0.00em,
     title-body-gap: 0.5em,
 )
 
