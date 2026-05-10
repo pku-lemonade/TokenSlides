@@ -1,11 +1,11 @@
-#import "base.typ": fonts, font-sizes, is-zh-lang, cur-ar, cur-colors
-#import "base.typ": touying-slide-wrapper, touying-slide, utils, config-page
+#import "base.typ": cur-ar, cur-colors, cur-font-sizes, fonts, is-zh-lang
+#import "base.typ": config-page, touying-slide, touying-slide-wrapper, utils
 #import "artifact-badges.typ": artifact-badges
 
 // CONFIG
 #let title-layouts = (
-    "16-9": (top: 0em, bottom: 2em, left: 1em, right: 1em),
-    "4-3": (top: 0em, bottom: 2em, left: 1em, right: 1em),
+    "16-9": (top: 0em, bottom: 0em, left: 1em, right: 1em),
+    "4-3": (top: 0em, bottom: 0em, left: 1em, right: 1em),
 )
 
 #let title-han = (
@@ -37,6 +37,7 @@
 ) = touying-slide-wrapper(self => context {
     let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
+    let font-sizes = cur-font-sizes.get()
     let margins = title-layouts.at(aspect-ratio)
     let date = _display-title-date(self.info)
 
@@ -55,12 +56,12 @@
         artifact-badges(config: (aspect-ratio: aspect-ratio))
         if display-venue != none {
             align(top + center)[
-                #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
+                #text(size: font-sizes.slide-title, font: fonts.body, weight: "bold")[
                     #display-venue
                 ]
             ]
         }
-        place(horizon + center)[
+        align(horizon + center)[
             #text(size: font-sizes.title, weight: "bold", fill: colors.primary)[
                 #self.info.title
             ]
@@ -81,6 +82,7 @@
                 #if date != none { date } else { hide[placeholder] }
             ]
         ]
+        v(2em)
     }
 
     touying-slide(self: self, body)

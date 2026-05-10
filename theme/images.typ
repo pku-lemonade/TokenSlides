@@ -1,4 +1,4 @@
-#import "base.typ": bleed, cur-ar, cur-imgs-config, font-sizes, fonts, slide-layouts
+#import "base.typ": bleed, cur-ar, cur-imgs-config, fonts, slide-layouts
 #import "footer.typ": footer-layouts
 
 // CONFIG

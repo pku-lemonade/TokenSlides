@@ -1,4 +1,4 @@
-#import "base.typ": fonts, font-sizes, cur-ar
+#import "base.typ": fonts, cur-font-sizes, cur-ar
 #import "base.typ": touying-slide-wrapper, touying-slide, utils, config-page
 #import "artifact-badges.typ": artifact-badges
 
@@ -26,6 +26,7 @@
 ) = touying-slide-wrapper(self => context {
     let extra = extras.pos().sum(default: none)
     let aspect-ratio = cur-ar.get()
+    let font-sizes = cur-font-sizes.get()
     let margins = thank-you-layouts.at(aspect-ratio)
 
     let default-config = config-page(

@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, font-sizes, fonts, is-zh-lang
+#import "base.typ": cur-ar, cur-colors, cur-font-sizes, fonts, is-zh-lang
 #import "base.typ": components, touying-slide, touying-slide-wrapper, utils
 
 // CONFIG
@@ -50,12 +50,12 @@
     variants: (
         sections: (
             depth: 1,
-            text-size: (font-sizes.section,),
+            text-size: ("section",),
             use-columns: false,
         ),
         subsections: (
             depth: 2,
-            text-size: (font-sizes.body-title, font-sizes.small),
+            text-size: ("body-title", "small"),
             use-columns: true,
         ),
     ),
@@ -79,6 +79,7 @@
     colors: (:),
     highlight-current: false,
 ) = context {
+    let font-sizes = cur-font-sizes.get()
     let start-page = 1
     let end-page = calc.inf
     if level != none {
@@ -105,9 +106,16 @@
         }
     }
 
+    let resolve-size = size => {
+        if type(size) == str {
+            font-sizes.at(size)
+        } else {
+            size
+        }
+    }
     let entry-size = item => {
         if type(text-size) == array and text-size.len() > 0 {
-            _array-at(text-size, item.level - 1)
+            resolve-size(_array-at(text-size, item.level - 1))
         } else { font-sizes.body }
     }
     let entry-weight = item => _array-at(text-weight, item.level - 1)
@@ -181,6 +189,7 @@
     variant: auto,
 ) = touying-slide-wrapper(self => context {
     let colors = cur-colors.get()
+    let font-sizes = cur-font-sizes.get()
     let variant-name = if variant == auto { outline-config.default-variant } else { variant }
 
     let aspect-ratio = cur-ar.get()
@@ -209,7 +218,7 @@
             highlight-current: highlight-current,
             depth: variant-config.depth,
             text-size: variant-config.text-size,
-            text-weight: ("bold",),
+            text-weight: ("black",),
         )
 
         set text(font: fonts.mono, tracking: outline-config.entry-tracking)

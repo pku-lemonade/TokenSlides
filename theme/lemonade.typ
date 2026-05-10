@@ -3,7 +3,7 @@
 
 #import "base.typ": (
     aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-imgs-config, cur-title-align,
-    font-sizes, fonts, imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes,
+    cur-font-sizes, font-size-presets, fonts, imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes,
     title-alignments,
 )
 #import "base.typ": config-colors, config-common, config-info, config-page, meanwhile, pause, touying-slides
@@ -67,6 +67,7 @@
     let spacing = page-spacing.at(aspect-ratio)
     let slide-margins = slide-layouts.at(aspect-ratio)
     let slide-page-size = slide-page-sizes.at(aspect-ratio)
+    let resolved-font-sizes = font-size-presets.at(aspect-ratio)
     let resolved-imgs-config = (
         fill-height: if imgs-fill-height == auto {
             imgs-config.at("fill-height", default: default-imgs-config.fill-height)
@@ -89,6 +90,7 @@
     cur-box-compact.update(box-compact)
     cur-box-fill.update(box-fill)
     cur-title-align.update(title-align)
+    cur-font-sizes.update(resolved-font-sizes)
     cur-artifact-badges.update(artifact-badges)
     cur-imgs-config.update(resolved-imgs-config)
 
@@ -119,7 +121,7 @@
     )
 
     set text(
-        size: font-sizes.body,
+        size: resolved-font-sizes.body,
         font: fonts.body,
         weight: "medium",
         fill: colors.fg,
@@ -132,7 +134,7 @@
         above: spacing.math-above,
         below: spacing.math-below,
     )
-    show raw: set text(font: fonts.mono, size: font-sizes.code)
+    show raw: set text(font: fonts.mono, size: resolved-font-sizes.code)
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
     // surrounding text color so progressive fading works.
     show link: it => {
