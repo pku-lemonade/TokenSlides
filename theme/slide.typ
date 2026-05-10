@@ -1,4 +1,4 @@
-#import "base.typ": bleed, cur-colors, cur-title-align, font-sizes
+#import "base.typ": bleed, cur-colors, cur-font-sizes, cur-title-align
 #import "base.typ": touying-slide, touying-slide-wrapper, utils
 #import "page-number.typ": top-page-number
 
@@ -14,6 +14,7 @@
     body,
 ) = touying-slide-wrapper(self => context {
     let colors = cur-colors.get()
+    let font-sizes = cur-font-sizes.get()
     let title-align = cur-title-align.get()
     let title-x-align = if title-align == "center" { center } else { left }
     let heading-title = utils.display-current-heading(

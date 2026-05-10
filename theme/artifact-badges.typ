@@ -11,8 +11,8 @@
 )
 
 #let artifact-badge-layouts = (
-    "16-9": (height: 0.62in, gap: 0.08in, dx: -0.6em, dy: 0.5em),
-    "4-3": (height: 0.58in, gap: 0.07in, dx: -0.55em, dy: 0.5em),
+    "16-9": (height: 92pt, gap: 0.08in, dx: 0.5em, dy: 1em),
+    "4-3": (height: 80pt, gap: 0.07in, dx: -0.55em, dy: 0.5em),
 )
 
 #let _badge-path(badge) = {

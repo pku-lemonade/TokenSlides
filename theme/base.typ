@@ -19,20 +19,39 @@
 }
 
 // CONFIG (frequently tweaked)
-#let font-sizes = (
-    small: 18pt,
-    body: 28pt,
-    body-title: 32pt,
-    title: 48pt,
-    slide-title: 40pt,
-    section: 40pt,
-    code: 20pt,
+#let font-size-presets = (
+    "16-9": (
+        small: 18pt,
+        body: 28pt,
+        body-title: 32pt,
+        title: 44pt,
+        slide-title: 40pt,
+        section: 40pt,
+        code: 20pt,
+        table: 20pt,
+        page-number: 36pt,
+    ),
+    "4-3": (
+        small: 18pt,
+        body: 24pt,
+        body-title: 28pt,
+        title: 40pt,
+        slide-title: 34pt,
+        section: 34pt,
+        code: 18pt,
+        table: 18pt,
+        page-number: 32pt,
+    ),
 )
+
+// Backwards-compatible default. Runtime rendering uses `cur-font-sizes`,
+// which `lemonade-theme(aspect-ratio: ...)` updates from `font-size-presets`.
+#let font-sizes = font-size-presets.at("16-9")
 
 #let imgs-config = (
     fill-height: true,
     fill-pad: 0.5em,
-    cap-size: 18pt,
+    cap-size: font-sizes.small,
     cap-weight: "bold",
 )
 
@@ -145,6 +164,7 @@
 #let cur-box-compact = state("lec-box-compact", false)
 #let cur-box-fill = state("lec-box-fill", false)
 #let cur-title-align = state("lec-title-align", "center")
+#let cur-font-sizes = state("lec-font-sizes", font-sizes)
 #let cur-imgs-config = state("lec-imgs-config", imgs-config)
 #let cur-artifact-badges = state("lec-artifact-badges", ())
 

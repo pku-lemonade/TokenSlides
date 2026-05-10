@@ -10,9 +10,10 @@
     imgs-config: (
         cap-size: 15pt,
     ),
+    artifact-badges: ("available", "functional", "reproduced"),
     config-info(
         title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
-        venue: [ISCA 2026 confidential draft],
+        venue: [ISCA 2026],
         author: [Anonymous authors],
         institution: [Paper reading deck],
         short-title: [Graph.hls],

@@ -1,4 +1,4 @@
-#import "base.typ": cur-box, cur-box-compact, cur-box-fill, cur-colors, font-sizes
+#import "base.typ": cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes
 
 // CONFIG
 #let box-config = (
@@ -96,11 +96,14 @@
     title: none,
     compact: auto,
     breakable: false,
-    title-size: font-sizes.body,
-    body-size: font-sizes.small,
+    title-size: auto,
+    body-size: auto,
     title-gap: 0.35em,
 ) = {
     context {
+        let font-sizes = cur-font-sizes.get()
+        let title-size = if title-size == auto { font-sizes.body } else { title-size }
+        let body-size = if body-size == auto { font-sizes.small } else { body-size }
         let compact = if compact == auto { cur-box-compact.get() } else { compact }
         let colors = cur-colors.get()
         let spacing-config = if compact { box-config.compact } else { box-config.normal }
@@ -157,13 +160,17 @@
 // Small title-ish text helper.
 #let tbox(
     body,
-    size: font-sizes.body-title,
+    size: auto,
     weight: "bold",
     alignment: left,
     leading: 1em,
 ) = {
-    set par(leading: leading)
-    align(alignment)[
-        #text(size: size, weight: weight)[#body]
-    ]
+    context {
+        let font-sizes = cur-font-sizes.get()
+        let size = if size == auto { font-sizes.body-title } else { size }
+        set par(leading: leading)
+        align(alignment)[
+            #text(size: size, weight: weight)[#body]
+        ]
+    }
 }
