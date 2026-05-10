@@ -212,3 +212,14 @@ Use this for the default theme logo in the top-right corner.
 ```
 
 Use this on thank-you or contact slides when you want a QR code plus a short mono caption.
+
+### 10. Add ACM Artifact Badges
+
+```typst
+#show: lemonade-theme.with(
+  artifact-badges: ("available", "functional", "reusable"),
+  config-info(...),
+)
+```
+
+Use this to show ACM artifact badges automatically in the top-right corner of the title and thank-you slides. Built-in names are `available`, `functional`, `reusable`, `reproduced`, and `replicated`.

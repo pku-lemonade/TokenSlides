@@ -1,5 +1,6 @@
 #import "base.typ": fonts, font-sizes, is-zh-lang, cur-ar, cur-colors
 #import "base.typ": touying-slide-wrapper, touying-slide, utils, config-page
+#import "artifact-badges.typ": artifact-badges
 
 // CONFIG
 #let title-layouts = (
@@ -51,6 +52,7 @@
 
     let body = {
         v(2em)
+        artifact-badges(config: (aspect-ratio: aspect-ratio))
         if display-venue != none {
             align(top + center)[
                 #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[

@@ -146,6 +146,7 @@
 #let cur-box-fill = state("lec-box-fill", false)
 #let cur-title-align = state("lec-title-align", "center")
 #let cur-imgs-config = state("lec-imgs-config", imgs-config)
+#let cur-artifact-badges = state("lec-artifact-badges", ())
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {
