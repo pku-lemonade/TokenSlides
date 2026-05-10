@@ -1,5 +1,6 @@
 #import "base.typ": fonts, font-sizes, cur-ar
 #import "base.typ": touying-slide-wrapper, touying-slide, utils, config-page
+#import "artifact-badges.typ": artifact-badges
 
 // CONFIG
 #let thank-you-layouts = (
@@ -24,7 +25,8 @@
     ..extras,
 ) = touying-slide-wrapper(self => context {
     let extra = extras.pos().sum(default: none)
-    let margins = thank-you-layouts.at(cur-ar.get())
+    let aspect-ratio = cur-ar.get()
+    let margins = thank-you-layouts.at(aspect-ratio)
 
     let default-config = config-page(
         margin: margins,
@@ -59,6 +61,7 @@
     }
 
     let body = {
+        artifact-badges(config: (aspect-ratio: aspect-ratio))
         place(horizon + center)[
             #text(size: font-sizes.title + 8pt, weight: "bold")[#title]
         ]

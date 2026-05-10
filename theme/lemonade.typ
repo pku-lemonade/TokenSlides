@@ -2,12 +2,13 @@
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": (
-    aspect-ratios, bleed, cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-imgs-config, cur-title-align,
+    aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-imgs-config, cur-title-align,
     font-sizes, fonts, imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes,
     title-alignments,
 )
 #import "base.typ": config-colors, config-common, config-info, config-page, meanwhile, pause, touying-slides
 
+#import "artifact-badges.typ": *
 #import "boxes.typ": *
 #import "images.typ": *
 
@@ -36,6 +37,9 @@
     box-fill: false,
     // Alignment for content slide titles (`== ...`), not the title/thank-you slides.
     title-align: "center",
+    // ACM artifact badges shown on title and thank-you slides. Use names such as
+    // ("available", "functional", "reusable", "reproduced", "replicated").
+    artifact-badges: (),
     imgs-config: (:),
     // Backwards-compat shims; prefer `imgs-config: (...)`.
     imgs-fill-height: auto,
@@ -85,6 +89,7 @@
     cur-box-compact.update(box-compact)
     cur-box-fill.update(box-fill)
     cur-title-align.update(title-align)
+    cur-artifact-badges.update(artifact-badges)
     cur-imgs-config.update(resolved-imgs-config)
 
     show: apply-grid-style
