@@ -14,8 +14,8 @@
     height: auto,
     fit: "contain",
     position: top + right,
-    dx: 0.5em,
-    dy: 1em,
+    dx: 0em,
+    dy: 0em,
 ) = place(position, dx: dx, dy: dy)[
     #align(center)[
         #if caption != none [
