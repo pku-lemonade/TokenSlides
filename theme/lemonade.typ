@@ -25,6 +25,10 @@
 // Re-export footer under a stable name (avoid clashing with `lemonade-theme(footer: ...)`).
 #let footer = footer-fn
 
+// Explicit LaTeX-style text helpers. Normal `_emph_` / `#emph[...]` is themed as bold.
+#let textbf(body) = text(weight: "bold")[#body]
+#let textit(body) = text(style: "italic")[#body]
+
 // Main theme entry.
 #let lemonade-theme(
     aspect-ratio: "16-9",
@@ -135,6 +139,7 @@
         below: spacing.math-below,
     )
     show raw: set text(font: fonts.mono, size: resolved-font-sizes.code)
+    show emph: it => textbf[#it.body]
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
     // surrounding text color so progressive fading works.
     show link: it => {
