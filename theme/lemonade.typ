@@ -2,9 +2,9 @@
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": (
-    aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-imgs-config, cur-title-align,
-    cur-font-sizes, font-size-presets, fonts, imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes,
-    title-alignments,
+    aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill, cur-colors,
+    cur-font-sizes, cur-imgs-config, cur-title-align, font-size-presets, fonts, imgs-config as default-imgs-config,
+    modes, page-spacing, slide-layouts, slide-page-sizes, title-alignments,
 )
 #import "base.typ": config-colors, config-common, config-info, config-page, meanwhile, pause, touying-slides
 
@@ -26,7 +26,7 @@
 #let footer = footer-fn
 
 // Explicit LaTeX-style text helpers. Normal `_emph_` / `#emph[...]` is themed as bold.
-#let textbf(body) = text(weight: "bold")[#body]
+#let textbf(body) = text(weight: "black")[#body]
 #let textit(body) = text(style: "italic")[#body]
 
 // Main theme entry.
@@ -140,6 +140,7 @@
     )
     show raw: set text(font: fonts.mono, size: resolved-font-sizes.code)
     show emph: it => textbf[#it.body]
+    show strong: it => text(fill: colors.primary, weight: "black")[#it.body]
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
     // surrounding text color so progressive fading works.
     show link: it => {
