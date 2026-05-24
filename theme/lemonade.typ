@@ -15,7 +15,7 @@
 #import "footer.typ": footer as footer-fn
 #import "grid.typ": apply-grid-style
 #import "slide.typ": slide
-#import "table.typ": apply-table-style
+#import "table.typ": apply-table-style, banded-table
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide
 #import "outline.typ": outline-slide
