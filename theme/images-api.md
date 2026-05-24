@@ -45,7 +45,7 @@ Captions are shown automatically if at least one item provides a caption.
 - `img-height`: Explicit image height. Default: `auto`
 - `img-fit`: Image fit mode when height is constrained. Default: `"contain"`
 - `fill-height`: Whether to fill the remaining slide height below the current text. Default: `auto`, which resolves through the theme's `imgs-config`
-- `fill-pad`: Extra bottom padding kept when fill-height mode is active. Default: `auto`, which resolves through the theme's `imgs-config`
+- `fill-pad`: Bottom space reserved when fill-height mode is active. Increase this when later slide content, such as a callout, should appear below the image block. Default: `auto`, which resolves through the theme's `imgs-config`
 
 ### Caption Styling
 
@@ -180,6 +180,7 @@ Use this for right-column evidence stacks such as overview-plus-zoom or result-p
 
 - `fill-height: true` is intended for content slides where the image block appears after the main text.
 - In fill-height mode, captions stay directly under the rendered image row; spare height is kept above the image instead of between the image and caption.
+- When content follows a fill-height image block, set `fill-pad` large enough for that content so it flows below the image instead of occupying the image area.
 - Do not build a vertical evidence column by chaining multiple `#imgs(...)` blocks when the deck default is `fill-height: true`; use `#imgs(..., dir: ttb)` so the stacked items divide the available height predictably.
 - Very wide composite figures may still look small in vertical layouts because width becomes the limiting dimension. In those cases, splitting or cropping the figure is still the better choice.
 - `img-height` and `fill-height` are different modes:

@@ -160,7 +160,10 @@
 
         let has-captions = ordered.any(it => it.caption != none)
 
-        context {
+        // Keep `imgs` tight against surrounding slide content; otherwise Typst's
+        // default block spacing adds an extra body-line gap before image blocks.
+        block(width: 100%, spacing: 0pt, above: 0pt, below: 0pt)[
+            #context {
             let imgs-config = cur-imgs-config.get()
             let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
             let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
@@ -253,6 +256,7 @@
                         }
                         let pad-height = measure(v(resolved-fill-pad)).height
                         let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
+                        let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
                         let resolved-height = (
                             calc.max(
                                 0pt,
@@ -269,7 +273,7 @@
                                     size.width,
                                 )
                             ]
-                            #v(remaining-height, weak: true)
+                            #v(reserved-height)
                         ]
                     })
                 } else {
@@ -361,23 +365,24 @@
                         }
                         let pad-height = measure(v(resolved-fill-pad)).height
                         let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
+                        let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
                         let resolved-height = calc.max(
                             0pt,
                             remaining-height - caption-height - footer-height - pad-height,
                         )
-                        let natural-grid-height = if has-captions {
-                            measure(
-                                box(width: width)[#images-grid(auto)],
-                                width: size.width,
-                            ).height
-                        } else {
-                            none
-                        }
+                        let natural-grid-height = measure(
+                            box(width: width)[#images-grid(auto)],
+                            width: size.width,
+                        ).height
                         let resolved-images-body = if (
-                            has-captions and natural-grid-height != none and natural-grid-height < resolved-height
+                            natural-grid-height < resolved-height
                         ) {
                             block(width: 100%, height: resolved-height)[
-                                #align(bottom + center)[#images-grid(auto)]
+                                #if has-captions {
+                                    align(bottom + center)[#images-grid(auto)]
+                                } else {
+                                    align(top + center)[#images-grid(auto)]
+                                }
                             ]
                         } else {
                             images-grid(resolved-height)
@@ -394,7 +399,7 @@
                                     size.width,
                                 )
                             ]
-                            #v(remaining-height, weak: true)
+                            #v(reserved-height)
                         ]
                     })
                 } else {
@@ -409,6 +414,7 @@
                     ))
                 }
             }
-        }
+            }
+        ]
     }
 }
