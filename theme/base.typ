@@ -23,7 +23,7 @@
     "16-9": (
         small: 18pt,
         body: 28pt,
-        body-title: 32pt,
+        body-title: 30pt,
         title: 44pt,
         slide-title: 40pt,
         section: 44pt,
@@ -93,9 +93,11 @@
 #let light-colors = (
     bg: white,
     fg: black,
-    primary: rgb("#94070a"),
+    // primary: rgb("#94070a"),
+    primary: rgb("#990000"),
     // primary: rgb("#002676"),
-    secondary: rgb("#FDB515"),
+    // secondary: rgb("#FDB515"),
+    secondary: rgb("#FFCC00"),
     neutral: rgb("#737373"),
     neutral-lightest: white,
     neutral-darkest: black,

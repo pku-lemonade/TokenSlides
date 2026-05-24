@@ -75,7 +75,7 @@
         artifact-badges(config: (aspect-ratio: aspect-ratio))
         if display-venue != none {
             place(top + center, dy: thank-you-placement.venue-dy)[
-                #text(size: font-sizes.slide-title, font: fonts.body, weight: "bold")[
+                #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
                     #display-venue
                 ]
             ]
@@ -87,7 +87,7 @@
         place(bottom + center, dy: thank-you-placement.contact-dy)[
             #set par(leading: thank-you-config.leading)
             #show regex("[\p{Han}]+"): set text(
-                size: font-sizes.body + 8pt,
+                size: font-sizes.body + 6pt,
                 font: thanks-han.font,
             )
             #text(size: font-sizes.body, font: fonts.body, weight: "bold")[

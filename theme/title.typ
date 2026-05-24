@@ -16,7 +16,7 @@
 
 #let title-han = (
     font: "FZFW ZhuZi GuDianS LH",
-    size-delta: 8pt,
+    size-delta: 6pt,
 )
 
 #let _title-date-format(lang) = {
@@ -61,7 +61,7 @@
         artifact-badges(config: (aspect-ratio: aspect-ratio))
         if display-venue != none {
             place(top + center, dy: title-placement.venue-dy)[
-                #text(size: font-sizes.slide-title, font: fonts.body, weight: "bold")[
+                #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
                     #display-venue
                 ]
             ]
