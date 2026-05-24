@@ -160,10 +160,7 @@
 
         let has-captions = ordered.any(it => it.caption != none)
 
-        // Keep `imgs` tight against surrounding slide content; otherwise Typst's
-        // default block spacing adds an extra body-line gap before image blocks.
-        block(width: 100%, spacing: 0pt, above: 0pt, below: 0pt)[
-            #context {
+        context {
             let imgs-config = cur-imgs-config.get()
             let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
             let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
@@ -414,7 +411,6 @@
                     ))
                 }
             }
-            }
-        ]
+        }
     }
 }
