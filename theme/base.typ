@@ -58,12 +58,12 @@
 // Global text/math spacing per aspect ratio.
 #let page-spacing = (
     "16-9": (
-        par: 1em,
+        par: 0.3em,
         math-above: 0.8em,
         math-below: 0.6em,
     ),
     "4-3": (
-        par: 1em,
+        par: 0.3em,
         math-above: 1em,
         math-below: auto,
     ),
