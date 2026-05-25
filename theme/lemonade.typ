@@ -3,8 +3,8 @@
 
 #import "base.typ": (
     aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill, cur-colors,
-    cur-font-sizes, cur-imgs-config, cur-title-align, font-size-presets, fonts, imgs-config as default-imgs-config,
-    modes, page-spacing, slide-layouts, slide-page-sizes, title-alignments,
+    cur-font-sizes, cur-footer-style, cur-imgs-config, cur-title-align, font-size-presets, fonts,
+    imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes, title-alignments,
 )
 #import "base.typ": config-colors, config-common, config-info, config-page, meanwhile, pause, touying-slides
 
@@ -15,7 +15,7 @@
 #import "footer.typ": footer as footer-fn
 #import "grid.typ": apply-grid-style
 #import "slide.typ": slide
-#import "table.typ": apply-table-style, banded-table
+#import "table.typ": apply-table-style, vtable
 #import "title.typ": title-slide
 #import "thank-you.typ": thank-you-slide
 #import "outline.typ": outline-slide
@@ -95,6 +95,7 @@
     cur-box-fill.update(box-fill)
     cur-title-align.update(title-align)
     cur-font-sizes.update(resolved-font-sizes)
+    cur-footer-style.update(footer)
     cur-artifact-badges.update(artifact-badges)
     cur-imgs-config.update(resolved-imgs-config)
 

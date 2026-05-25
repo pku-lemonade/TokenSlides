@@ -168,6 +168,7 @@
 #let cur-title-align = state("lec-title-align", "center")
 #let cur-font-sizes = state("lec-font-sizes", font-sizes)
 #let cur-imgs-config = state("lec-imgs-config", imgs-config)
+#let cur-footer-style = state("lec-footer-style", "bar")
 #let cur-artifact-badges = state("lec-artifact-badges", ())
 
 // Full-bleed helper: ignore slide left/right margins.
