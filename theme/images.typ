@@ -1,4 +1,4 @@
-#import "base.typ": bleed, cur-ar, cur-imgs-config, fonts, slide-layouts
+#import "base.typ": bleed, cur-ar, cur-footer-style, cur-imgs-config, fonts, slide-layouts
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -168,11 +168,17 @@
             let resolved-left-margin = measure(h(slide-margins.left)).width
             let resolved-right-margin = measure(h(slide-margins.right)).width
 
-            let wrap-body = (body, available-width) => {
+            let uses-bleed = available-width => {
                 let full-slide-width = page.width - resolved-left-margin - resolved-right-margin
-                let use-bleed = available-width >= full-slide-width
+                available-width >= full-slide-width
+            }
 
-                if use-bleed {
+            let body-measure-width = available-width => {
+                if uses-bleed(available-width) { page.width } else { available-width }
+            }
+
+            let wrap-body = (body, available-width) => {
+                if uses-bleed(available-width) {
                     bleed(align(center)[#body])
                 } else {
                     block(width: 100%)[
@@ -190,9 +196,10 @@
                         target-height,
                     )
                     if resolved-height != auto and available-width != auto {
+                        let measured-width = body-measure-width(available-width)
                         let natural-item-height = measure(
                             box(width: width)[#render-cell(item.source, img-width, auto)],
-                            width: available-width,
+                            width: measured-width,
                         ).height
                         if natural-item-height < target-height {
                             block(width: 100%, height: target-height)[
@@ -229,11 +236,15 @@
                     layout(size => context {
                         let pos = here().position()
                         let top-margin = measure(v(slide-margins.top)).height
-                        let footer-layout = footer-layouts.at(cur-ar.get())
-                        let footer-height = measure({
-                            set text(size: footer-layout.text-size)
-                            v(footer-layout.height)
-                        }).height
+                        let footer-height = if cur-footer-style.get() == none {
+                            0pt
+                        } else {
+                            let footer-layout = footer-layouts.at(cur-ar.get())
+                            measure({
+                                set text(size: footer-layout.text-size)
+                                v(footer-layout.height)
+                            }).height
+                        }
                         let caption-height = ordered
                             .map(item => {
                                 if item.caption == none {
@@ -261,16 +272,13 @@
                             )
                                 / count
                         )
-                        [
-                            #place(left)[
-                                #wrap-body(
-                                    box(width: width)[
-                                        #vertical-stack(resolved-height, available-width: size.width)
-                                    ],
-                                    size.width,
-                                )
-                            ]
-                            #v(reserved-height)
+                        block(width: 100%, height: reserved-height)[
+                            #wrap-body(
+                                box(width: width)[
+                                    #vertical-stack(resolved-height, available-width: size.width)
+                                ],
+                                size.width,
+                            )
                         ]
                     })
                 } else {
@@ -350,11 +358,15 @@
                     layout(size => context {
                         let pos = here().position()
                         let top-margin = measure(v(slide-margins.top)).height
-                        let footer-layout = footer-layouts.at(cur-ar.get())
-                        let footer-height = measure({
-                            set text(size: footer-layout.text-size)
-                            v(footer-layout.height)
-                        }).height
+                        let footer-height = if cur-footer-style.get() == none {
+                            0pt
+                        } else {
+                            let footer-layout = footer-layouts.at(cur-ar.get())
+                            measure({
+                                set text(size: footer-layout.text-size)
+                                v(footer-layout.height)
+                            }).height
+                        }
                         let caption-height = if has-captions {
                             measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
                         } else {
@@ -367,9 +379,10 @@
                             0pt,
                             remaining-height - caption-height - footer-height - pad-height,
                         )
+                        let measured-width = body-measure-width(size.width)
                         let natural-grid-height = measure(
                             box(width: width)[#images-grid(auto)],
-                            width: size.width,
+                            width: measured-width,
                         ).height
                         let resolved-images-body = if (
                             natural-grid-height < resolved-height
@@ -384,19 +397,16 @@
                         } else {
                             images-grid(resolved-height)
                         }
-                        [
-                            #place(left)[
-                                #wrap-body(
-                                    box(width: width)[
-                                        #block(spacing: 0pt, below: cap-gap)[#resolved-images-body]
-                                        #if has-captions [
-                                            #block(spacing: 0pt, above: 0pt)[#captions-grid]
-                                        ]
-                                    ],
-                                    size.width,
-                                )
-                            ]
-                            #v(reserved-height)
+                        block(width: 100%, height: reserved-height)[
+                            #wrap-body(
+                                box(width: width)[
+                                    #block(spacing: 0pt, below: cap-gap)[#resolved-images-body]
+                                    #if has-captions [
+                                        #block(spacing: 0pt, above: 0pt)[#captions-grid]
+                                    ]
+                                ],
+                                size.width,
+                            )
                         ]
                     })
                 } else {
