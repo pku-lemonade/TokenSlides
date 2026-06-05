@@ -37,3 +37,26 @@
     widths: (0.8fr, 1fr, 1.2fr),
     fill-height: false,
 )
+
+== Mixed box styles
+
+#vboxs(
+    vbox([客户])[智谱],
+    ibox[关键风险],
+    pbox[合作机会],
+    fill-height: false,
+)
+
+== Fill-height mixed styles
+
+#vboxs(
+    vbox([默认])[
+        顶部标题样式保持不变，内容仍然顶部对齐。
+    ],
+    ibox[
+        信息框在同一行内保留蓝色左边框。
+    ],
+    pbox[
+        合作机会这一列保留紫色强调样式。
+    ],
+)
