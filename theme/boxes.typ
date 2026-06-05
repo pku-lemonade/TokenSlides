@@ -1,6 +1,7 @@
 #import "@preview/shadowed:0.3.0": shadow as draw-shadow
 
-#import "base.typ": cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes
+#import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-footer-style, cur-font-sizes, cur-imgs-config
+#import "footer.typ": footer-layouts
 
 // CONFIG
 #let box-config = (
@@ -30,6 +31,12 @@
     inset: 10pt,
     radius: 0pt,
     border-width: 0.8pt,
+)
+
+#let topbar-box-config = (
+    top-bar-width: 4pt,
+    gap: 0.4em,
+    title-gap: 0.1em,
 )
 
 #let callout-config = (
@@ -127,6 +134,223 @@
 #let sbox(body, compact: auto, breakable: false) = make-box("success", body, compact: compact, breakable: breakable)
 #let nbox(body, compact: auto, breakable: false) = make-box("neutral", body, compact: compact, breakable: breakable)
 #let pbox(body, compact: auto, breakable: false) = make-box("purple", body, compact: compact, breakable: breakable)
+
+#let mbox(
+    body,
+    title: none,
+    compact: auto,
+    breakable: false,
+    title-size: auto,
+    body-size: auto,
+    title-gap: auto,
+    height: auto,
+    above: auto,
+    below: auto,
+    valign: top,
+) = context {
+    let compact = if compact == auto { cur-box-compact.get() } else { compact }
+    let colors = cur-colors.get()
+    let font-sizes = cur-font-sizes.get()
+    let spacing-config = if compact { box-config.compact } else { box-config.normal }
+    let frame-width = box-config.frame-width
+    let title-size = if title-size == auto { font-sizes.body-title } else { title-size }
+    let body-size = if body-size == auto { font-sizes.body } else { body-size }
+    let title-gap = if title-gap == auto { topbar-box-config.title-gap } else { title-gap }
+    let above = if above == auto { spacing-config.box-spacing-above } else { above }
+    let below = if below == auto { spacing-config.box-spacing-below } else { below }
+    let content = [
+        #if title != none [
+            #align(center)[
+                #text(size: title-size, weight: "bold", fill: colors.primary)[#title]
+            ]
+            #v(title-gap)
+        ]
+        #set text(size: body-size)
+        #body
+    ]
+
+    block(
+        breakable: breakable,
+        fill: none,
+        width: 100%,
+        height: height,
+        inset: (
+            left: spacing-config.inset-left,
+            right: spacing-config.inset-right,
+            top: spacing-config.inset-top,
+            bottom: spacing-config.inset-bottom,
+        ),
+        radius: box-config.radius,
+        above: above,
+        below: below,
+        stroke: (
+            top: topbar-box-config.top-bar-width + colors.primary,
+            left: frame-width + colors.table-stroke,
+            right: frame-width + colors.table-stroke,
+            bottom: frame-width + colors.table-stroke,
+        ),
+    )[
+        #if height == auto {
+            content
+        } else {
+            align(left + valign)[#content]
+        }
+    ]
+}
+
+#let vbox(..args) = {
+    let pos = args.pos()
+    let named = args.named()
+    assert(pos.len() <= 2, message: "vbox: use #vbox[body] or #vbox([title])[body]")
+    assert(
+        not ("title" in named) or pos.len() <= 1,
+        message: "vbox: `title:` cannot be combined with two positional content blocks",
+    )
+
+    let title = named.at("title", default: none)
+    let body = if pos.len() == 0 {
+        named.at("body", default: [])
+    } else if pos.len() == 1 {
+        pos.at(0)
+    } else {
+        title = pos.at(0)
+        pos.at(1)
+    }
+
+    mbox(
+        title: title,
+        compact: named.at("compact", default: auto),
+        breakable: named.at("breakable", default: false),
+        title-size: named.at("title-size", default: auto),
+        body-size: named.at("body-size", default: auto),
+        title-gap: named.at("title-gap", default: auto),
+        height: named.at("height", default: auto),
+        above: named.at("above", default: auto),
+        below: named.at("below", default: auto),
+        valign: named.at("valign", default: top),
+    )[#body]
+}
+
+#let _footer-height() = {
+    if cur-footer-style.get() == none {
+        0pt
+    } else {
+        let footer-layout = footer-layouts.at(cur-ar.get())
+        measure({
+            set text(size: footer-layout.text-size)
+            v(footer-layout.height)
+        }).height
+    }
+}
+
+#let vboxs(
+    ..items,
+    dir: ltr,
+    width: 100%,
+    widths: auto,
+    gap: auto,
+    fill-height: auto,
+    fill-pad: auto,
+    compact: auto,
+    breakable: false,
+    title-size: auto,
+    body-size: auto,
+    title-gap: auto,
+    valign: top,
+    halign: center,
+) = {
+    let items = items.pos()
+    let count = items.len()
+    if count == 0 {
+        []
+    } else {
+        let ordered = if dir == rtl { items.rev() } else { items }
+        let gap = if gap == auto { topbar-box-config.gap } else { gap }
+        let col-widths = if widths == auto {
+            range(count).map(_ => 1fr)
+        } else { widths }
+        let cols = ()
+        for (i, w) in col-widths.enumerate() {
+            cols.push(w)
+            if i < count - 1 { cols.push(gap) }
+        }
+
+        let parse-item = item => {
+            if type(item) == dictionary {
+                item
+            } else if type(item) == array {
+                let parsed = (
+                    title: item.at(0, default: none),
+                    body: item.at(1, default: []),
+                )
+                if item.len() > 2 and type(item.at(2)) == dictionary {
+                    for (key, value) in item.at(2).pairs() {
+                        parsed.insert(key, value)
+                    }
+                }
+                parsed
+            } else {
+                (title: none, body: item)
+            }
+        }
+
+        let render-item = (item, resolved-height) => {
+            let parsed = parse-item(item)
+            vbox(
+                title: parsed.at("title", default: none),
+                compact: parsed.at("compact", default: compact),
+                breakable: parsed.at("breakable", default: breakable),
+                title-size: parsed.at("title-size", default: title-size),
+                body-size: parsed.at("body-size", default: body-size),
+                title-gap: parsed.at("title-gap", default: title-gap),
+                height: resolved-height,
+                above: 0pt,
+                below: 0pt,
+                valign: parsed.at("valign", default: valign),
+            )[#parsed.at("body", default: [])]
+        }
+
+        let row = resolved-height => block(width: 100%, spacing: 0pt, above: 0pt, below: 0pt)[
+            #grid(
+                columns: cols,
+                align: (center + valign,) * (count * 2 - 1),
+                rows: (auto,),
+                ..ordered
+                    .enumerate()
+                    .map(((i, item)) => {
+                        let cell = render-item(item, resolved-height)
+                        if i < count - 1 { (cell, []) } else { (cell,) }
+                    })
+                    .flatten()
+            )
+        ]
+
+        context {
+            let imgs-config = cur-imgs-config.get()
+            let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
+            let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
+
+            if resolved-fill-height {
+                block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
+                    #layout(size => {
+                        let footer-height = _footer-height()
+                        let pad-height = measure(v(resolved-fill-pad)).height
+                        let reserved-height = calc.max(0pt, size.height - footer-height - pad-height)
+                        block(width: 100%, height: reserved-height)[
+                            #align(halign)[
+                                #box(width: width)[#row(reserved-height)]
+                            ]
+                        ]
+                    })
+                ]
+            } else {
+                align(halign)[
+                    #box(width: width)[#row(auto)]
+                ]
+            }
+        }
+    }
+}
 
 // High-emphasis banner/callout.
 // Inside the box, `_emph_` and `*strong*` text use the emphasis color.

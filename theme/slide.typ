@@ -47,7 +47,9 @@
     let main-body = {
         title-block
         v(slide-config.title-body-gap)
-        body
+        block(above: 0pt, below: 0pt)[
+            #body
+        ]
         top-page-number()
     }
 
