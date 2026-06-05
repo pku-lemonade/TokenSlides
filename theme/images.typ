@@ -86,13 +86,35 @@
     if count == 0 {
         []
     } else {
-        let parsed = items.map(item => {
+        let is-image-content = item => type(item) == content and item.func() == image
+        let is-image-source = item => type(item) == str or type(item) == bytes or is-image-content(item)
+
+        let parsed = ()
+        let pending-source = none
+        for item in items {
             if type(item) == array {
-                (source: item.at(0), caption: item.at(1, default: none))
+                if pending-source != none {
+                    parsed.push((source: pending-source, caption: none))
+                    pending-source = none
+                }
+                parsed.push((source: item.at(0), caption: item.at(1, default: none)))
+            } else if is-image-source(item) {
+                if pending-source != none {
+                    parsed.push((source: pending-source, caption: none))
+                }
+                pending-source = item
+            } else if pending-source != none {
+                parsed.push((source: pending-source, caption: item))
+                pending-source = none
             } else {
-                (source: item, caption: none)
+                pending-source = item
             }
-        })
+        }
+        if pending-source != none {
+            parsed.push((source: pending-source, caption: none))
+        }
+
+        let count = parsed.len()
         let is-vertical = dir == ttb or dir == btt
         let ordered = if dir == rtl or dir == btt { parsed.rev() } else { parsed }
 
@@ -233,54 +255,54 @@
                 ]
 
                 if resolved-fill-height {
-                    layout(size => context {
-                        let pos = here().position()
-                        let top-margin = measure(v(slide-margins.top)).height
-                        let footer-height = if cur-footer-style.get() == none {
-                            0pt
-                        } else {
-                            let footer-layout = footer-layouts.at(cur-ar.get())
-                            measure({
-                                set text(size: footer-layout.text-size)
-                                v(footer-layout.height)
-                            }).height
-                        }
-                        let caption-height = ordered
-                            .map(item => {
-                                if item.caption == none {
-                                    0pt
-                                } else {
-                                    (
-                                        measure(render-caption(item.caption), width: size.width).height
-                                            + measure(v(cap-gap)).height
-                                    )
-                                }
-                            })
-                            .sum(default: 0pt)
-                        let stack-gap-height = if count > 1 {
-                            measure(v(gap)).height * (count - 1)
-                        } else {
-                            0pt
-                        }
-                        let pad-height = measure(v(resolved-fill-pad)).height
-                        let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
-                        let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
-                        let resolved-height = (
-                            calc.max(
-                                0pt,
-                                remaining-height - footer-height - pad-height - caption-height - stack-gap-height,
+                    block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
+                        #layout(size => context {
+                            let footer-height = if cur-footer-style.get() == none {
+                                0pt
+                            } else {
+                                let footer-layout = footer-layouts.at(cur-ar.get())
+                                measure({
+                                    set text(size: footer-layout.text-size)
+                                    v(footer-layout.height)
+                                }).height
+                            }
+                            let caption-height = ordered
+                                .map(item => {
+                                    if item.caption == none {
+                                        0pt
+                                    } else {
+                                        (
+                                            measure(render-caption(item.caption), width: size.width).height
+                                                + measure(v(cap-gap)).height
+                                        )
+                                    }
+                                })
+                                .sum(default: 0pt)
+                            let stack-gap-height = if count > 1 {
+                                measure(v(gap)).height * (count - 1)
+                            } else {
+                                0pt
+                            }
+                            let pad-height = measure(v(resolved-fill-pad)).height
+                            let remaining-height = size.height
+                            let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
+                            let resolved-height = (
+                                calc.max(
+                                    0pt,
+                                    remaining-height - footer-height - pad-height - caption-height - stack-gap-height,
+                                )
+                                    / count
                             )
-                                / count
-                        )
-                        block(width: 100%, height: reserved-height)[
-                            #wrap-body(
-                                box(width: width)[
-                                    #vertical-stack(resolved-height, available-width: size.width)
-                                ],
-                                size.width,
-                            )
-                        ]
-                    })
+                            block(width: 100%, height: reserved-height)[
+                                #wrap-body(
+                                    box(width: width)[
+                                        #vertical-stack(resolved-height, available-width: size.width)
+                                    ],
+                                    size.width,
+                                )
+                            ]
+                        })
+                    ]
                 } else {
                     layout(size => wrap-body(
                         box(width: width)[
@@ -355,60 +377,60 @@
                 let captions-grid = block(width: 100%)[#captions-body]
 
                 if resolved-fill-height {
-                    layout(size => context {
-                        let pos = here().position()
-                        let top-margin = measure(v(slide-margins.top)).height
-                        let footer-height = if cur-footer-style.get() == none {
-                            0pt
-                        } else {
-                            let footer-layout = footer-layouts.at(cur-ar.get())
-                            measure({
-                                set text(size: footer-layout.text-size)
-                                v(footer-layout.height)
-                            }).height
-                        }
-                        let caption-height = if has-captions {
-                            measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
-                        } else {
-                            0pt
-                        }
-                        let pad-height = measure(v(resolved-fill-pad)).height
-                        let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
-                        let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
-                        let resolved-height = calc.max(
-                            0pt,
-                            remaining-height - caption-height - footer-height - pad-height,
-                        )
-                        let measured-width = body-measure-width(size.width)
-                        let natural-grid-height = measure(
-                            box(width: width)[#images-grid(auto)],
-                            width: measured-width,
-                        ).height
-                        let resolved-images-body = if (
-                            natural-grid-height < resolved-height
-                        ) {
-                            block(width: 100%, height: resolved-height)[
-                                #if has-captions {
-                                    align(bottom + center)[#images-grid(auto)]
-                                } else {
-                                    align(top + center)[#images-grid(auto)]
-                                }
-                            ]
-                        } else {
-                            images-grid(resolved-height)
-                        }
-                        block(width: 100%, height: reserved-height)[
-                            #wrap-body(
-                                box(width: width)[
-                                    #block(spacing: 0pt, below: cap-gap)[#resolved-images-body]
-                                    #if has-captions [
-                                        #block(spacing: 0pt, above: 0pt)[#captions-grid]
-                                    ]
-                                ],
-                                size.width,
+                    block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
+                        #layout(size => context {
+                            let footer-height = if cur-footer-style.get() == none {
+                                0pt
+                            } else {
+                                let footer-layout = footer-layouts.at(cur-ar.get())
+                                measure({
+                                    set text(size: footer-layout.text-size)
+                                    v(footer-layout.height)
+                                }).height
+                            }
+                            let caption-height = if has-captions {
+                                measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
+                            } else {
+                                0pt
+                            }
+                            let pad-height = measure(v(resolved-fill-pad)).height
+                            let remaining-height = size.height
+                            let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
+                            let resolved-height = calc.max(
+                                0pt,
+                                remaining-height - caption-height - footer-height - pad-height,
                             )
-                        ]
-                    })
+                            let measured-width = body-measure-width(size.width)
+                            let natural-grid-height = measure(
+                                box(width: width)[#images-grid(auto)],
+                                width: measured-width,
+                            ).height
+                            let resolved-images-body = if (
+                                natural-grid-height < resolved-height
+                            ) {
+                                block(width: 100%, height: resolved-height)[
+                                    #if has-captions {
+                                        align(bottom + center)[#images-grid(auto)]
+                                    } else {
+                                        align(top + center)[#images-grid(auto)]
+                                    }
+                                ]
+                            } else {
+                                images-grid(resolved-height)
+                            }
+                            block(width: 100%, height: reserved-height)[
+                                #wrap-body(
+                                    box(width: width)[
+                                        #block(spacing: 0pt, below: cap-gap)[#resolved-images-body]
+                                        #if has-captions [
+                                            #block(spacing: 0pt, above: 0pt)[#captions-grid]
+                                        ]
+                                    ],
+                                    size.width,
+                                )
+                            ]
+                        })
+                    ]
                 } else {
                     layout(size => wrap-body(
                         box(width: width)[

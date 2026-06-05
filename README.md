@@ -201,7 +201,8 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
 ]
 
 #imgs(
-  (image("assets/figure.png"), [Short caption]),
+  image("assets/figure.png"),
+  [Short caption],
   width: 80%,
 )
 ```

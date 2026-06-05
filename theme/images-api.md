@@ -1,16 +1,38 @@
 # `imgs` API
 
-`imgs` is the theme's common image layout helper for single images, side-by-side image groups, vertical stacks, captions, and auto-filling the remaining slide height.
+`imgs` is the theme's common image layout helper for single images, side-by-side image groups, vertical stacks, captions, and auto-filling the remaining height in the current slide flow or container.
 
 Source: [images.typ](./images.typ)
 
 ## Input Forms
 
-`imgs` accepts positional image items in two forms:
+`imgs` accepts positional image items in three forms.
 
 ```typst
 #imgs("/path/to/image.png")
 ```
+
+The preferred caption form is flat: put caption content immediately after the
+image source.
+
+```typst
+#imgs(
+  "/path/to/image.png",
+  [Caption text],
+)
+```
+
+Bare image sources still compile with no caption:
+
+```typst
+#imgs(
+  image("assets/a.png"),
+  [Caption for A],
+  image("assets/b.png"),
+)
+```
+
+The older tuple form remains supported for compatibility:
 
 ```typst
 #imgs(
@@ -22,8 +44,10 @@ You can mix multiple items:
 
 ```typst
 #imgs(
-  ("/path/a.png", [Left caption]),
-  ("/path/b.png", [Right caption]),
+  "/path/a.png",
+  [Left caption],
+  "/path/b.png",
+  [Right caption],
 )
 ```
 
@@ -44,7 +68,7 @@ Captions are shown automatically if at least one item provides a caption.
 - `img-width`: Width passed to each image in normal mode. Default: `100%`
 - `img-height`: Explicit image height. Default: `auto`
 - `img-fit`: Image fit mode when height is constrained. Default: `"contain"`
-- `fill-height`: Whether to fill the remaining slide height below the current text. Default: `auto`, which resolves through the theme's `imgs-config`
+- `fill-height`: Whether to fill the remaining available height below the current text/container content. Default: `auto`, which resolves through the theme's `imgs-config`
 - `fill-pad`: Bottom space reserved when fill-height mode is active. Increase this when later slide content, such as a callout, should appear below the image block. Default: `auto`, which resolves through the theme's `imgs-config`
 
 ### Caption Styling
@@ -102,7 +126,8 @@ Use this for ordinary centered figures when you want explicit width control.
 
 ```typst
 #imgs(
-  ("/examples/assets/image.png", [Figure caption]),
+  "/examples/assets/image.png",
+  [Figure caption],
   width: 70%,
 )
 ```
@@ -113,8 +138,10 @@ Use this when the slide needs a standard figure caption under the image.
 
 ```typst
 #imgs(
-  ("/examples/assets/image-1.png", [Left]),
-  ("/examples/assets/image-2.png", [Right]),
+  "/examples/assets/image-1.png",
+  [Left],
+  "/examples/assets/image-2.png",
+  [Right],
   width: 100%,
   gap: 1em,
 )
@@ -126,8 +153,10 @@ Use this for direct visual comparison.
 
 ```typst
 #imgs(
-  ("/examples/assets/image-1.png", [Main figure]),
-  ("/examples/assets/image-2.png", [Secondary figure]),
+  "/examples/assets/image-1.png",
+  [Main figure],
+  "/examples/assets/image-2.png",
+  [Secondary figure],
   width: 100%,
   widths: (1.4fr, 1fr),
   gap: 1em,
@@ -140,7 +169,8 @@ Use this when one figure should dominate.
 
 ```typst
 #imgs(
-  ("/examples/assets/image.png", [Fixed height]),
+  "/examples/assets/image.png",
+  [Fixed height],
   width: 80%,
   img-height: 220pt,
 )
@@ -152,13 +182,14 @@ Use this when you want stable, manual figure sizing.
 
 ```typst
 #imgs(
-  ("/examples/assets/image.png", [Auto fill]),
+  "/examples/assets/image.png",
+  [Auto fill],
   width: 78%,
   fill-height: true,
 )
 ```
 
-Use this on slides where text comes first and the figure should expand to use the rest of the page.
+Use this when text comes first and the figure should expand to use the rest of the current slide flow or container.
 If your whole deck mostly uses this mode, prefer the theme-level `imgs-config: (fill-height: true, ...)`.
 When the image is width-limited rather than height-limited, the helper now keeps spare vertical slack above the image row so the caption stays visually attached under the image.
 
@@ -166,8 +197,10 @@ When the image is width-limited rather than height-limited, the helper now keeps
 
 ```typst
 #imgs(
-  ("/examples/assets/overview.png", [Overview]),
-  ("/examples/assets/detail.png", [Detail]),
+  "/examples/assets/overview.png",
+  [Overview],
+  "/examples/assets/detail.png",
+  [Detail],
   dir: ttb,
   width: 100%,
   gap: 0.6em,
@@ -178,14 +211,18 @@ Use this for right-column evidence stacks such as overview-plus-zoom or result-p
 
 ## Behavior Notes
 
-- `fill-height: true` is intended for content slides where the image block appears after the main text.
+- `fill-height: true` is intended for content slides or constrained containers where the image block appears after the main text.
+- Fill-height sizing is based on the remaining height in the image block's current parent flow, so `#imgs(...)` inside a grid cell fills the cell's remaining vertical budget instead of reserving a whole slide.
 - In fill-height mode, captions stay directly under the rendered image row; spare height is kept above the image instead of between the image and caption.
 - When content follows a fill-height image block, set `fill-pad` large enough for that content so it flows below the image instead of occupying the image area.
+- Flat captions bind to the immediately preceding image source. For arbitrary
+  non-image content used as an image cell, keep using the tuple form to avoid
+  ambiguity.
 - Do not build a vertical evidence column by chaining multiple `#imgs(...)` blocks when the deck default is `fill-height: true`; use `#imgs(..., dir: ttb)` so the stacked items divide the available height predictably.
 - Very wide composite figures may still look small in vertical layouts because width becomes the limiting dimension. In those cases, splitting or cropping the figure is still the better choice.
 - `img-height` and `fill-height` are different modes:
   - `img-height` is manual and fixed.
-  - `fill-height` is dynamic and depends on current slide position.
+  - `fill-height` is dynamic and depends on current flow position.
 
 ## Floating Placement Helpers
 
