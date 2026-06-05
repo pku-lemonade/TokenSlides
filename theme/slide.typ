@@ -17,19 +17,21 @@
     let font-sizes = cur-font-sizes.get()
     let title-align = cur-title-align.get()
     let title-x-align = if title-align == "center" { center } else { left }
-    let heading-title = utils.display-current-heading(
-        level: 2,
-        numbered: slide-config.show-numbered-heading,
-    )
-    let display-title = if title != auto { title } else { heading-title }
-    let title-text = text(
+    let title-text = body => text(
         size: font-sizes.slide-title,
         weight: "bold",
         tracking: slide-config.title-tracking,
+        bottom-edge: "bounds",
         fill: colors.primary,
     )[
-        #display-title
+        #body
     ]
+    let heading-title = utils.display-current-heading(
+        level: 2,
+        numbered: slide-config.show-numbered-heading,
+        setting: title-text,
+    )
+    let display-title = if title != auto { title-text(title) } else { heading-title }
     let title-wrap = if title-align == "center" {
         // Full-bleed title: center across the whole page width (ignore page margins).
         body => bleed(align(center)[#body])
@@ -40,13 +42,12 @@
         ]
     }
 
-    let title-block = title-wrap(title-text)
+    let title-block = title-wrap(display-title)
 
     let main-body = {
         title-block
-        block(spacing: slide-config.title-body-gap, below: 0pt)[
-            #body
-        ]
+        v(slide-config.title-body-gap)
+        body
         top-page-number()
     }
 
