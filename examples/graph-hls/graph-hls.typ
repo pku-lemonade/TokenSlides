@@ -14,10 +14,10 @@
     config-info(
         title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
         venue: [ISCA 2026],
-        author: [Anonymous authors],
-        institution: [Paper reading deck],
+        author: [吴飞扬],
+        institution: [Peking University],
         short-title: [Graph.hls],
-        date: [April 2026],
+        // date: [April 2026],
     ),
 )
 
