@@ -1,4 +1,5 @@
-#import "base.typ": bleed, cur-ar, cur-footer-style, cur-imgs-config, fonts, slide-layouts
+#import "base.typ": bleed as bleed-block, cur-ar, cur-footer-style, cur-imgs-config, fonts, slide-layouts
+#import "boxes.typ": topbar-box-config
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -65,8 +66,9 @@
     ..images,
     dir: ltr,
     width: 100%,
+    bleed: false,
     widths: auto,
-    gap: 0em,
+    gap: auto,
     valign: horizon,
     img-width: 100%,
     img-height: auto,
@@ -186,13 +188,16 @@
             let imgs-config = cur-imgs-config.get()
             let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
             let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
+            let resolved-gap = if gap == auto { topbar-box-config.gap } else { gap }
             let slide-margins = slide-layouts.at(cur-ar.get())
             let resolved-left-margin = measure(h(slide-margins.left)).width
             let resolved-right-margin = measure(h(slide-margins.right)).width
 
             let uses-bleed = available-width => {
-                let full-slide-width = page.width - resolved-left-margin - resolved-right-margin
-                available-width >= full-slide-width
+                if bleed {
+                    let full-slide-width = page.width - resolved-left-margin - resolved-right-margin
+                    available-width >= full-slide-width
+                } else { false }
             }
 
             let body-measure-width = available-width => {
@@ -201,7 +206,7 @@
 
             let wrap-body = (body, available-width) => {
                 if uses-bleed(available-width) {
-                    bleed(align(center)[#body])
+                    bleed-block(align(center)[#body])
                 } else {
                     block(width: 100%)[
                         #align(center)[#body]
@@ -249,7 +254,7 @@
                             ]
                         ]
                         #if index < count - 1 [
-                            #v(gap)
+                            #v(resolved-gap)
                         ]
                     ]
                 ]
@@ -279,7 +284,7 @@
                                 })
                                 .sum(default: 0pt)
                             let stack-gap-height = if count > 1 {
-                                measure(v(gap)).height * (count - 1)
+                                measure(v(resolved-gap)).height * (count - 1)
                             } else {
                                 0pt
                             }
@@ -319,7 +324,7 @@
                 let cols = ()
                 for (i, w) in col-widths.enumerate() {
                     cols.push(w)
-                    if i < count - 1 { cols.push(gap) }
+                    if i < count - 1 { cols.push(resolved-gap) }
                 }
 
                 let single-image = resolved-height => {
@@ -410,9 +415,9 @@
                             ) {
                                 block(width: 100%, height: resolved-height)[
                                     #if has-captions {
-                                        align(bottom + center)[#images-grid(auto)]
+                                        align(bottom + center)[#images-grid(resolved-height)]
                                     } else {
-                                        align(top + center)[#images-grid(auto)]
+                                        align(top + center)[#images-grid(resolved-height)]
                                     }
                                 ]
                             } else {

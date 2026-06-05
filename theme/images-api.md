@@ -59,8 +59,9 @@ Captions are shown automatically if at least one item provides a caption.
 
 - `dir`: Layout direction. Use `ltr` or `rtl` for horizontal rows and `ttb` or `btt` for vertical stacks. Default: `ltr`
 - `width`: Overall width of the image block. Default: `100%`
+- `bleed`: Whether a full-width image block may extend through the slide's left/right margins. Default: `false`
 - `widths`: Per-image column widths for horizontal multi-image layouts. Default: `auto`
-- `gap`: Gap between items. Horizontal rows use it as column gap; vertical stacks use it as row gap. Default: `0em`
+- `gap`: Gap between items. Horizontal rows use it as column gap; vertical stacks use it as row gap. Default: `auto`, matching `vboxs`
 - `valign`: Vertical alignment inside horizontal multi-image grid cells. Default: `horizon`
 
 ### Image Sizing
@@ -212,6 +213,7 @@ Use this for right-column evidence stacks such as overview-plus-zoom or result-p
 ## Behavior Notes
 
 - `fill-height: true` is intended for content slides or constrained containers where the image block appears after the main text.
+- By default, `imgs` respects the slide body's left/right margins. Use `bleed: true` when a figure should intentionally extend edge-to-edge across those margins.
 - Fill-height sizing is based on the remaining height in the image block's current parent flow, so `#imgs(...)` inside a grid cell fills the cell's remaining vertical budget instead of reserving a whole slide.
 - In fill-height mode, captions stay directly under the rendered image row; spare height is kept above the image instead of between the image and caption.
 - When content follows a fill-height image block, set `fill-pad` large enough for that content so it flows below the image instead of occupying the image area.
