@@ -7,6 +7,3 @@ __pycache__/
 out/
 **/review/
 third_party/
-examples/graph-hls/assets/midterm-crops/
-examples/graph-hls/notes/midterm-pdf-text.txt
-examples/graph-hls/notes/midterm-slide-map.json
