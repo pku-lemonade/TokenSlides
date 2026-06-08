@@ -19,6 +19,10 @@
     智谱
 ]
 
+#vbox([Custom inset], title-inset: (left: 1em, right: 1em, top: 0.1em, bottom: 0.1em))[
+    Title inset can be customized per box.
+]
+
 == Fill-height vboxs
 
 #vboxs(
@@ -42,10 +46,20 @@
 
 #vboxs(
     vbox([客户])[智谱],
-    ibox[关键风险],
-    pbox[合作机会],
+    ibox([关键风险])[供应商锁定、数据合规、交付排期],
+    pbox(title: [合作机会])[联合优化推理成本],
     fill-height: false,
 )
+
+== Titled horizontal boxes
+
+#hbox([Highlight])[
+    标题应与正文处在同一水平行，正文仍保留左侧强调边。
+]
+
+#ibox(title: [Info])[
+    命名参数标题也应使用同一套水平实心标题块。
+]
 
 == Fill-height mixed styles
 
@@ -53,10 +67,10 @@
     vbox([默认])[
         顶部标题样式保持不变，内容仍然顶部对齐。
     ],
-    ibox[
+    ibox([信息框])[
         信息框在同一行内保留蓝色左边框。
     ],
-    pbox[
+    pbox([合作机会])[
         合作机会这一列保留紫色强调样式。
     ],
 )

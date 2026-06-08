@@ -36,7 +36,8 @@
 #let topbar-box-config = (
     top-bar-width: 4pt,
     gap: 0.4em,
-    title-gap: 0.1em,
+    title-gap: 0pt,
+    title-inset: (left: 0.5em, right: 0.5em, top: 0.3em, bottom: 0.35em),
 )
 
 #let callout-config = (
@@ -88,6 +89,7 @@
     compact: auto,
     breakable: false,
     title-size: auto,
+    title-inset: auto,
     body-size: auto,
     title-gap: auto,
     height: auto,
@@ -102,6 +104,7 @@
     compact: compact,
     breakable: breakable,
     title-size: title-size,
+    title-inset: title-inset,
     body-size: body-size,
     title-gap: title-gap,
     height: height,
@@ -123,6 +126,13 @@
 }
 
 #let _box-spacing(compact) = if compact { box-config.compact } else { box-config.normal }
+
+#let _has-title(spec) = spec.at("title", default: none) != none
+
+#let _resolve-title-inset(spec) = {
+    let title-inset = spec.at("title-inset", default: auto)
+    if title-inset == auto { topbar-box-config.title-inset } else { title-inset }
+}
 
 #let _plain-box-layout(spec, spacing-config, colors) = {
     let style = cur-box.get().at(spec.style)
@@ -149,6 +159,8 @@
     (
         fill: fill,
         stroke: stroke,
+        titled-body-stroke: stroke,
+        title-fill: border,
         inset: (
             left: inset-left,
             right: spacing-config.inset-right,
@@ -168,6 +180,13 @@
             right: frame-width + colors.table-stroke,
             bottom: frame-width + colors.table-stroke,
         ),
+        titled-body-stroke: (
+            top: frame-width + colors.table-stroke,
+            left: frame-width + colors.table-stroke,
+            right: frame-width + colors.table-stroke,
+            bottom: frame-width + colors.table-stroke,
+        ),
+        title-fill: colors.primary,
         inset: (
             left: spacing-config.inset-left,
             right: spacing-config.inset-right,
@@ -189,33 +208,242 @@
     layout
 }
 
-#let _box-content(
+#let _box-body-content(
     spec,
-    colors,
     font-sizes,
-    default-title-size: auto,
     default-body-size: auto,
-    default-title-gap: auto,
 ) = {
-    let resolved-title-size = spec.at("title-size", default: default-title-size)
     let resolved-body-size = spec.at("body-size", default: default-body-size)
-    let resolved-title-gap = spec.at("title-gap", default: default-title-gap)
-    let resolved-title-size = if resolved-title-size == auto { font-sizes.body-title } else { resolved-title-size }
     let resolved-body-size = if resolved-body-size == auto { font-sizes.body } else { resolved-body-size }
-    let resolved-title-gap = if resolved-title-gap == auto { topbar-box-config.title-gap } else { resolved-title-gap }
-    let title = spec.at("title", default: none)
     let body = spec.at("body", default: [])
 
     block(width: 100%)[
-        #if title != none [
-            #align(center)[
-                #text(size: resolved-title-size, weight: "bold", fill: colors.primary)[#title]
-            ]
-            #v(resolved-title-gap)
-        ]
         #set text(size: resolved-body-size)
         #body
     ]
+}
+
+#let _box-title-bar(
+    spec,
+    layout,
+    font-sizes,
+    default-title-size: auto,
+) = {
+    let resolved-title-size = spec.at("title-size", default: default-title-size)
+    let resolved-title-size = if resolved-title-size == auto { font-sizes.body-title } else { resolved-title-size }
+    let resolved-title-inset = _resolve-title-inset(spec)
+    let title = spec.at("title", default: none)
+    block(
+        width: 100%,
+        fill: layout.title-fill,
+        inset: resolved-title-inset,
+        radius: box-config.radius,
+    )[
+        #align(center)[
+            #text(size: resolved-title-size, weight: "bold", fill: white)[#title]
+        ]
+    ]
+}
+
+#let _box-title-cell(
+    spec,
+    layout,
+    font-sizes,
+    default-title-size: auto,
+) = {
+    let resolved-title-size = spec.at("title-size", default: default-title-size)
+    let resolved-title-size = if resolved-title-size == auto { font-sizes.body-title } else { resolved-title-size }
+    let title = spec.at("title", default: none)
+    align(center + horizon)[
+        #text(size: resolved-title-size, weight: "bold", fill: white)[#title]
+    ]
+}
+
+#let _box-body-frame(
+    spec,
+    layout,
+    font-sizes,
+    body-height: auto,
+    default-body-size: auto,
+    valign: top,
+    stroke: auto,
+) = {
+    let content = _box-body-content(spec, font-sizes, default-body-size: default-body-size)
+    let stroke = if stroke == auto { layout.stroke } else { stroke }
+
+    block(
+        breakable: spec.at("breakable", default: false),
+        fill: layout.fill,
+        width: 100%,
+        height: body-height,
+        inset: layout.inset,
+        radius: box-config.radius,
+        stroke: stroke,
+    )[
+        #if body-height == auto {
+            content
+        } else {
+            align(valign)[
+                #block(width: 100%)[#content]
+            ]
+        }
+    ]
+}
+
+#let _box-frame-vertical-title(
+    spec,
+    layout,
+    font-sizes,
+    height: auto,
+    above: 0pt,
+    below: 0pt,
+    default-title-size: auto,
+    default-body-size: auto,
+    default-title-gap: auto,
+    valign: top,
+) = {
+    let resolved-title-gap = spec.at("title-gap", default: default-title-gap)
+    let resolved-title-gap = if resolved-title-gap == auto { topbar-box-config.title-gap } else { resolved-title-gap }
+    let body-height = if height == auto { auto } else { 100% }
+
+    block(
+        breakable: spec.at("breakable", default: false),
+        width: 100%,
+        height: height,
+        above: above,
+        below: below,
+        spacing: 0pt,
+    )[
+        #grid(
+            columns: (1fr,),
+            rows: if height == auto { (auto, auto) } else { (auto, 1fr) },
+            row-gutter: resolved-title-gap,
+            inset: 0pt,
+            _box-title-bar(spec, layout, font-sizes, default-title-size: default-title-size),
+            _box-body-frame(
+                spec,
+                layout,
+                font-sizes,
+                body-height: body-height,
+                default-body-size: default-body-size,
+                valign: valign,
+                stroke: layout.at("titled-body-stroke", default: layout.stroke),
+            ),
+        )
+    ]
+}
+
+#let _box-frame-horizontal-title(
+    spec,
+    layout,
+    font-sizes,
+    height: auto,
+    above: 0pt,
+    below: 0pt,
+    default-title-size: auto,
+    default-body-size: auto,
+    default-title-gap: auto,
+    valign: top,
+) = {
+    let resolved-title-gap = spec.at("title-gap", default: default-title-gap)
+    let resolved-title-gap = if resolved-title-gap == auto { topbar-box-config.title-gap } else { resolved-title-gap }
+
+    block(
+        breakable: spec.at("breakable", default: false),
+        width: 100%,
+        height: height,
+        above: above,
+        below: below,
+        spacing: 0pt,
+    )[
+        #grid(
+            columns: (auto, 1fr),
+            rows: if height == auto { (auto,) } else { (1fr,) },
+            column-gutter: resolved-title-gap,
+            inset: (x, y) => if x == 0 { _resolve-title-inset(spec) } else { 0pt },
+            fill: (x, y) => if x == 0 { layout.title-fill } else { none },
+            align: (x, y) => if x == 0 { center + horizon } else { left + top },
+            _box-title-cell(
+                spec,
+                layout,
+                font-sizes,
+                default-title-size: default-title-size,
+            ),
+            _box-body-frame(
+                spec,
+                layout,
+                font-sizes,
+                body-height: if height == auto { auto } else { 100% },
+                default-body-size: default-body-size,
+                valign: valign,
+                stroke: layout.at("titled-body-stroke", default: layout.stroke),
+            ),
+        )
+    ]
+}
+
+#let _box-frame(
+    spec,
+    layout,
+    font-sizes,
+    height: auto,
+    above: 0pt,
+    below: 0pt,
+    default-title-size: auto,
+    default-body-size: auto,
+    default-title-gap: auto,
+    valign: top,
+) = {
+    if _has-title(spec) {
+        if spec.kind == "topbar" {
+            _box-frame-vertical-title(
+                spec,
+                layout,
+                font-sizes,
+                height: height,
+                above: above,
+                below: below,
+                default-title-size: default-title-size,
+                default-body-size: default-body-size,
+                default-title-gap: default-title-gap,
+                valign: valign,
+            )
+        } else {
+            _box-frame-horizontal-title(
+                spec,
+                layout,
+                font-sizes,
+                height: height,
+                above: above,
+                below: below,
+                default-title-size: default-title-size,
+                default-body-size: default-body-size,
+                default-title-gap: default-title-gap,
+                valign: valign,
+            )
+        }
+    } else {
+        let content = _box-body-content(spec, font-sizes, default-body-size: default-body-size)
+        block(
+            breakable: spec.at("breakable", default: false),
+            fill: layout.fill,
+            width: 100%,
+            height: height,
+            inset: layout.inset,
+            radius: box-config.radius,
+            above: above,
+            below: below,
+            stroke: layout.stroke,
+        )[
+            #if height == auto {
+                content
+            } else {
+                align(valign)[
+                    #block(width: 100%)[#content]
+                ]
+            }
+        ]
+    }
 }
 
 #let _render-box-spec(spec) = context {
@@ -228,27 +456,16 @@
     let below = spec.at("below", default: auto)
     let above = if above == auto { spacing-config.box-spacing-above } else { above }
     let below = if below == auto { spacing-config.box-spacing-below } else { below }
-    let content = _box-content(spec, colors, font-sizes)
 
-    block(
-        breakable: spec.at("breakable", default: false),
-        fill: layout.fill,
-        width: 100%,
+    _box-frame(
+        spec,
+        layout,
+        font-sizes,
         height: height,
-        inset: layout.inset,
-        radius: box-config.radius,
         above: above,
         below: below,
-        stroke: layout.stroke,
-    )[
-        #if height == auto {
-            content
-        } else {
-            align(spec.at("valign", default: top))[
-                #block(width: 100%)[#content]
-            ]
-        }
-    ]
+        valign: spec.at("valign", default: top),
+    )
 }
 
 #let _content-box-spec(item) = {
@@ -268,60 +485,13 @@
     found
 }
 
-#let make-box(
-    style-name,
-    body,
-    compact: auto,
-    breakable: false,
-) = {
-    let spec = _box-spec("plain", body, style: style-name, compact: compact, breakable: breakable)
-    _mark-box(spec, _render-box-spec(spec))
-}
-
-#let hbox(body, compact: auto, breakable: false) = make-box("highlight", body, compact: compact, breakable: breakable)
-#let ibox(body, compact: auto, breakable: false) = make-box("info", body, compact: compact, breakable: breakable)
-#let ebox(body, compact: auto, breakable: false) = make-box("error", body, compact: compact, breakable: breakable)
-#let sbox(body, compact: auto, breakable: false) = make-box("success", body, compact: compact, breakable: breakable)
-#let nbox(body, compact: auto, breakable: false) = make-box("neutral", body, compact: compact, breakable: breakable)
-#let pbox(body, compact: auto, breakable: false) = make-box("purple", body, compact: compact, breakable: breakable)
-
-#let mbox(
-    body,
-    title: none,
-    compact: auto,
-    breakable: false,
-    title-size: auto,
-    body-size: auto,
-    title-gap: auto,
-    height: auto,
-    above: auto,
-    below: auto,
-    valign: top,
-) = context {
-    let spec = _box-spec(
-        "topbar",
-        body,
-        title: title,
-        compact: compact,
-        breakable: breakable,
-        title-size: title-size,
-        body-size: body-size,
-        title-gap: title-gap,
-        height: height,
-        above: above,
-        below: below,
-        valign: valign,
-    )
-    _render-box-spec(spec)
-}
-
-#let vbox(..args) = {
+#let _parse-titled-box-args(args, name) = {
     let pos = args.pos()
     let named = args.named()
-    assert(pos.len() <= 2, message: "vbox: use #vbox[body] or #vbox([title])[body]")
+    assert(pos.len() <= 2, message: name + ": use #" + name + "[body] or #" + name + "([title])[body]")
     assert(
         not ("title" in named) or pos.len() <= 1,
-        message: "vbox: `title:` cannot be combined with two positional content blocks",
+        message: name + ": `title:` cannot be combined with two positional content blocks",
     )
 
     let title = named.at("title", default: none)
@@ -334,13 +504,82 @@
         pos.at(1)
     }
 
+    (body: body, title: title, named: named)
+}
+
+#let make-box(
+    style-name,
+    body,
+    compact: auto,
+    breakable: false,
+    title: none,
+    title-size: auto,
+    title-inset: auto,
+    body-size: auto,
+    title-gap: auto,
+    height: auto,
+    above: auto,
+    below: auto,
+    valign: top,
+) = {
     let spec = _box-spec(
-        "topbar",
+        "plain",
         body,
+        style: style-name,
         title: title,
+        compact: compact,
+        breakable: breakable,
+        title-size: title-size,
+        title-inset: title-inset,
+        body-size: body-size,
+        title-gap: title-gap,
+        height: height,
+        above: above,
+        below: below,
+        valign: valign,
+    )
+    _mark-box(spec, _render-box-spec(spec))
+}
+
+#let _make-named-box(style-name, name, ..args) = {
+    let parsed = _parse-titled-box-args(args, name)
+    let named = parsed.named
+    make-box(
+        style-name,
+        parsed.body,
+        title: parsed.title,
         compact: named.at("compact", default: auto),
         breakable: named.at("breakable", default: false),
         title-size: named.at("title-size", default: auto),
+        title-inset: named.at("title-inset", default: auto),
+        body-size: named.at("body-size", default: auto),
+        title-gap: named.at("title-gap", default: auto),
+        height: named.at("height", default: auto),
+        above: named.at("above", default: auto),
+        below: named.at("below", default: auto),
+        valign: named.at("valign", default: top),
+    )
+}
+
+#let hbox(..args) = _make-named-box("highlight", "hbox", ..args)
+#let ibox(..args) = _make-named-box("info", "ibox", ..args)
+#let ebox(..args) = _make-named-box("error", "ebox", ..args)
+#let sbox(..args) = _make-named-box("success", "sbox", ..args)
+#let nbox(..args) = _make-named-box("neutral", "nbox", ..args)
+#let pbox(..args) = _make-named-box("purple", "pbox", ..args)
+
+#let vbox(..args) = {
+    let parsed = _parse-titled-box-args(args, "vbox")
+    let named = parsed.named
+
+    let spec = _box-spec(
+        "topbar",
+        parsed.body,
+        title: parsed.title,
+        compact: named.at("compact", default: auto),
+        breakable: named.at("breakable", default: false),
+        title-size: named.at("title-size", default: auto),
+        title-inset: named.at("title-inset", default: auto),
         body-size: named.at("body-size", default: auto),
         title-gap: named.at("title-gap", default: auto),
         height: named.at("height", default: auto),
@@ -403,6 +642,7 @@
                     compact: item.at("compact", default: auto),
                     breakable: item.at("breakable", default: breakable),
                     title-size: item.at("title-size", default: auto),
+                    title-inset: item.at("title-inset", default: auto),
                     body-size: item.at("body-size", default: auto),
                     title-gap: item.at("title-gap", default: auto),
                     height: item.at("height", default: auto),
@@ -445,19 +685,19 @@
                     columns: col-widths,
                     column-gutter: gap,
                     rows: resolved-rows,
-                    inset: (x, y) => {
-                        layouts.at(x).inset
-                    },
-                    fill: (x, y) => layouts.at(x).fill,
-                    stroke: (x, y) => layouts.at(x).stroke,
-                    align: (x, y) => left + cell-valign(x, y),
-                    ..specs.map(spec => _box-content(
+                    inset: 0pt,
+                    align: (x, y) => left + top,
+                    ..specs.enumerate().map(((i, spec)) => _box-frame(
                         spec,
-                        colors,
+                        layouts.at(i),
                         font-sizes,
+                        height: if resolved-height == auto { auto } else { 100% },
+                        above: 0pt,
+                        below: 0pt,
                         default-title-size: title-size,
                         default-body-size: body-size,
                         default-title-gap: title-gap,
+                        valign: cell-valign(i, 0),
                     )),
                 )
             ]
