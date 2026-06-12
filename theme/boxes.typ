@@ -37,7 +37,8 @@
     top-bar-width: 4pt,
     gap: 0.4em,
     title-gap: 0pt,
-    title-inset: (left: 0.5em, right: 0.5em, top: 0.3em, bottom: 0.35em),
+    // `auto` follows the active box padding so vertical and horizontal title blocks match.
+    title-inset: auto,
 )
 
 #let callout-config = (
@@ -129,15 +130,61 @@
 
 #let _has-title(spec) = spec.at("title", default: none) != none
 
-#let _resolve-title-inset(spec) = {
+#let _frame-stroke(colors, left: true, top: true, right: true, bottom: true) = {
+    let rule = box-config.frame-width + colors.table-stroke
+    let stroke = (:)
+    if left { stroke.insert("left", rule) }
+    if top { stroke.insert("top", rule) }
+    if right { stroke.insert("right", rule) }
+    if bottom { stroke.insert("bottom", rule) }
+    stroke
+}
+
+#let _inset-from-spacing(spacing-config) = (
+    left: spacing-config.inset-left,
+    right: spacing-config.inset-right,
+    top: spacing-config.inset-top,
+    bottom: spacing-config.inset-bottom,
+)
+
+#let _resolve-title-inset(spec, spacing-config: auto) = {
     let title-inset = spec.at("title-inset", default: auto)
-    if title-inset == auto { topbar-box-config.title-inset } else { title-inset }
+    if title-inset == auto {
+        let default-title-inset = topbar-box-config.title-inset
+        if default-title-inset == auto {
+            let spacing-config = if spacing-config == auto { box-config.normal } else { spacing-config }
+            _inset-from-spacing(spacing-config)
+        } else {
+            default-title-inset
+        }
+    } else { title-inset }
+}
+
+#let _resolve-title-size(spec, font-sizes, default-title-size: auto) = {
+    let title-size = spec.at("title-size", default: default-title-size)
+    if title-size == auto { font-sizes.body-title } else { title-size }
+}
+
+#let _resolve-title-gap(spec, default-title-gap: auto) = {
+    let title-gap = spec.at("title-gap", default: default-title-gap)
+    if title-gap == auto { topbar-box-config.title-gap } else { title-gap }
+}
+
+#let _box-title-content(
+    spec,
+    font-sizes,
+    default-title-size: auto,
+) = {
+    let title = spec.at("title", default: none)
+    let title-size = _resolve-title-size(spec, font-sizes, default-title-size: default-title-size)
+    text(size: title-size, weight: "bold", fill: white)[#title]
 }
 
 #let _plain-box-layout(spec, spacing-config, colors) = {
-    let style = cur-box.get().at(spec.style)
+    let styles = cur-box.get()
+    assert(spec.style in styles.keys(), message: "box: unknown box style")
+    let style = styles.at(spec.style)
     let border-width = box-config.border-width
-    let frame-width = box-config.frame-width
     let use-border = box-config.left-border
     let fill = if cur-box-fill.get() { style.at("fill", default: none) } else { none }
     let border = style.border
@@ -147,20 +194,20 @@
         if has-fill {
             (left: border-width + border)
         } else {
-            (
-                left: border-width + border,
-                top: frame-width + colors.table-stroke,
-                right: frame-width + colors.table-stroke,
-                bottom: frame-width + colors.table-stroke,
-            )
+            let stroke = _frame-stroke(colors)
+            stroke.insert("left", border-width + border)
+            stroke
         }
     } else { none }
 
     (
         fill: fill,
         stroke: stroke,
-        titled-body-stroke: stroke,
+        titled-body-stroke: if use-border { _frame-stroke(colors) } else { stroke },
         title-fill: border,
+        horizontal-title-stroke: if use-border { _frame-stroke(colors, right: false) } else { none },
+        vertical-title-stroke: if use-border { _frame-stroke(colors, bottom: false) } else { none },
+        titled-body-inset: _inset-from-spacing(spacing-config),
         inset: (
             left: inset-left,
             right: spacing-config.inset-right,
@@ -171,22 +218,17 @@
 }
 
 #let _topbar-box-layout(spacing-config, colors) = {
-    let frame-width = box-config.frame-width
+    let stroke = _frame-stroke(colors)
+    stroke.insert("top", topbar-box-config.top-bar-width + colors.primary)
+
     (
         fill: none,
-        stroke: (
-            top: topbar-box-config.top-bar-width + colors.primary,
-            left: frame-width + colors.table-stroke,
-            right: frame-width + colors.table-stroke,
-            bottom: frame-width + colors.table-stroke,
-        ),
-        titled-body-stroke: (
-            top: frame-width + colors.table-stroke,
-            left: frame-width + colors.table-stroke,
-            right: frame-width + colors.table-stroke,
-            bottom: frame-width + colors.table-stroke,
-        ),
+        stroke: stroke,
+        titled-body-stroke: _frame-stroke(colors),
         title-fill: colors.primary,
+        horizontal-title-stroke: _frame-stroke(colors, right: false),
+        vertical-title-stroke: _frame-stroke(colors, bottom: false),
+        titled-body-inset: _inset-from-spacing(spacing-config),
         inset: (
             left: spacing-config.inset-left,
             right: spacing-config.inset-right,
@@ -229,33 +271,27 @@
     font-sizes,
     default-title-size: auto,
 ) = {
-    let resolved-title-size = spec.at("title-size", default: default-title-size)
-    let resolved-title-size = if resolved-title-size == auto { font-sizes.body-title } else { resolved-title-size }
-    let resolved-title-inset = _resolve-title-inset(spec)
-    let title = spec.at("title", default: none)
+    let resolved-title-inset = _resolve-title-inset(spec, spacing-config: layout.spacing)
     block(
         width: 100%,
         fill: layout.title-fill,
         inset: resolved-title-inset,
         radius: box-config.radius,
+        stroke: layout.at("vertical-title-stroke", default: none),
     )[
         #align(center)[
-            #text(size: resolved-title-size, weight: "bold", fill: white)[#title]
+            #_box-title-content(spec, font-sizes, default-title-size: default-title-size)
         ]
     ]
 }
 
 #let _box-title-cell(
     spec,
-    layout,
     font-sizes,
     default-title-size: auto,
 ) = {
-    let resolved-title-size = spec.at("title-size", default: default-title-size)
-    let resolved-title-size = if resolved-title-size == auto { font-sizes.body-title } else { resolved-title-size }
-    let title = spec.at("title", default: none)
     align(center + horizon)[
-        #text(size: resolved-title-size, weight: "bold", fill: white)[#title]
+        #_box-title-content(spec, font-sizes, default-title-size: default-title-size)
     ]
 }
 
@@ -267,16 +303,18 @@
     default-body-size: auto,
     valign: top,
     stroke: auto,
+    inset: auto,
 ) = {
     let content = _box-body-content(spec, font-sizes, default-body-size: default-body-size)
     let stroke = if stroke == auto { layout.stroke } else { stroke }
+    let inset = if inset == auto { layout.inset } else { inset }
 
     block(
         breakable: spec.at("breakable", default: false),
         fill: layout.fill,
         width: 100%,
         height: body-height,
-        inset: layout.inset,
+        inset: inset,
         radius: box-config.radius,
         stroke: stroke,
     )[
@@ -302,9 +340,10 @@
     default-title-gap: auto,
     valign: top,
 ) = {
-    let resolved-title-gap = spec.at("title-gap", default: default-title-gap)
-    let resolved-title-gap = if resolved-title-gap == auto { topbar-box-config.title-gap } else { resolved-title-gap }
+    let resolved-title-gap = _resolve-title-gap(spec, default-title-gap: default-title-gap)
     let body-height = if height == auto { auto } else { 100% }
+    let body-stroke = layout.at("titled-body-stroke", default: layout.stroke)
+    let body-inset = layout.at("titled-body-inset", default: layout.inset)
 
     block(
         breakable: spec.at("breakable", default: false),
@@ -327,7 +366,8 @@
                 body-height: body-height,
                 default-body-size: default-body-size,
                 valign: valign,
-                stroke: layout.at("titled-body-stroke", default: layout.stroke),
+                stroke: body-stroke,
+                inset: body-inset,
             ),
         )
     ]
@@ -345,8 +385,11 @@
     default-title-gap: auto,
     valign: top,
 ) = {
-    let resolved-title-gap = spec.at("title-gap", default: default-title-gap)
-    let resolved-title-gap = if resolved-title-gap == auto { topbar-box-config.title-gap } else { resolved-title-gap }
+    let resolved-title-gap = _resolve-title-gap(spec, default-title-gap: default-title-gap)
+    let title-inset = _resolve-title-inset(spec, spacing-config: layout.spacing)
+    let title-stroke = layout.at("horizontal-title-stroke", default: none)
+    let body-stroke = layout.at("titled-body-stroke", default: layout.stroke)
+    let body-inset = layout.at("titled-body-inset", default: layout.inset)
 
     block(
         breakable: spec.at("breakable", default: false),
@@ -360,24 +403,20 @@
             columns: (auto, 1fr),
             rows: if height == auto { (auto,) } else { (1fr,) },
             column-gutter: resolved-title-gap,
-            inset: (x, y) => if x == 0 { _resolve-title-inset(spec) } else { 0pt },
-            fill: (x, y) => if x == 0 { layout.title-fill } else { none },
-            align: (x, y) => if x == 0 { center + horizon } else { left + top },
+            inset: (x, y) => {
+                if x == 0 { title-inset } else { body-inset }
+            },
+            fill: (x, y) => if x == 0 { layout.title-fill } else { layout.fill },
+            stroke: (x, y) => {
+                if x == 0 { title-stroke } else { body-stroke }
+            },
+            align: (x, y) => if x == 0 { center + horizon } else { left + valign },
             _box-title-cell(
                 spec,
-                layout,
                 font-sizes,
                 default-title-size: default-title-size,
             ),
-            _box-body-frame(
-                spec,
-                layout,
-                font-sizes,
-                body-height: if height == auto { auto } else { 100% },
-                default-body-size: default-body-size,
-                valign: valign,
-                stroke: layout.at("titled-body-stroke", default: layout.stroke),
-            ),
+            _box-body-content(spec, font-sizes, default-body-size: default-body-size),
         )
     ]
 }
@@ -627,7 +666,11 @@
         let gap = if gap == auto { topbar-box-config.gap } else { gap }
         let col-widths = if widths == auto {
             range(count).map(_ => 1fr)
-        } else { widths }
+        } else {
+            assert(type(widths) == array, message: "vboxs: widths must be an array")
+            assert(widths.len() == count, message: "vboxs: widths length must match item count")
+            widths
+        }
 
         let parse-item = item => {
             let marked = _content-box-spec(item)

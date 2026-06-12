@@ -54,7 +54,7 @@
 == Titled horizontal boxes
 
 #hbox([Highlight])[
-    标题应与正文处在同一水平行，正文仍保留左侧强调边。
+    标题应与正文处在同一水平行，正文改用中性边框。
 ]
 
 #ibox(title: [Info])[
