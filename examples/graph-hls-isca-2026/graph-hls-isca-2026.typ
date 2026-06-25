@@ -109,62 +109,11 @@ $ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $
 
 == Graph.hls Overview
 
-#import "@preview/cetz:0.3.4"
-#align(center, cetz.canvas(length: 1.6cm, {
-    import cetz.draw: *
+#text(fill: rgb("#444444"), size: 22pt)[→ Three challenges (red), each solved by a Graph.hls stage below.]
 
-    let dkblue = rgb("#1B3A5C")
-    let chal-fill = rgb("#E8F0F8")
-    let sol-fill = rgb("#D6E4F0")
-
-    let bw = 7.6
-    let bh = 1.56
-    let cx = 0
-    let sx = 9.0
-
-    let ys = (4.4, 2.2, 0.0)
-
-    let chals = (
-        ([*Challenge 1*], [Manual HLS]),
-        ([*Challenge 2*], [Parameter cascade]),
-        ([*Challenge 3*], [Debugging bottleneck]),
-    )
-    let sols = (
-        ([*DSL*], [19 LoC replaces 4,818]),
-        ([*GH-Architect*], [hierarchical abstraction + propagation]),
-        ([*GH-Scope*], [sub-second IR simulation]),
-    )
-
-    for i in range(3) {
-        let y = ys.at(i)
-        rect(
-            (cx - bw/2, y - bh/2), (cx + bw/2, y + bh/2),
-            fill: chal-fill, stroke: black + 1.5pt,
-        )
-        content((cx, y + 0.22), text(size: 22pt, fill: rgb("#94070a"))[#chals.at(i).at(0)])
-        content((cx, y - 0.22), text(size: 16pt)[#chals.at(i).at(1)])
-
-        rect(
-            (sx - bw/2, y - bh/2), (sx + bw/2, y + bh/2),
-            fill: sol-fill, stroke: black + 1.5pt,
-        )
-        content((sx, y + 0.22), text(size: 20pt, fill: rgb("#94070a"), weight: "bold")[#sols.at(i).at(0)])
-        content((sx, y - 0.22), text(size: 14pt)[#sols.at(i).at(1)])
-
-        line(
-            (cx + bw/2 + 0.15, y), (sx - bw/2 - 0.15, y),
-            stroke: dkblue + 1.8pt,
-            mark: (end: "stealth", fill: dkblue, scale: 1.0),
-        )
-    }
-
-    // Dashed separator between C2 and C3
-    line(
-        (cx - bw/2 - 0.3, (ys.at(1) + ys.at(2)) / 2),
-        (sx + bw/2 + 1.2, (ys.at(1) + ys.at(2)) / 2),
-        stroke: (paint: rgb("#aaaaaa"), thickness: 1pt, dash: "dashed"),
-    )
-}))
+#v(0.7fr)
+#align(center, image("assets/fig06-overview.svg", width: 88%))
+#v(1.3fr)
 
 // ============================================================
 = Graph.hls DSL
@@ -398,25 +347,17 @@ Compiler backend: DSL + config → synthesizable accelerator.
 
     [== Cross-Level Dependency
 
-    Recall Challenge 2: changing one parameter can cascade across levels.
+    Recall PageRank — each vertex sums its in-neighbors' normalized ranks:
 
-    Example: hub vertex with rank = 0.85, out-degree = 5000.
+    #align(center, text(size: 0.9em)[$ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $])
 
-    #align(center, table(
-        columns: (auto, 1fr, 1fr),
-        inset: 16pt,
-        align: center,
-        stroke: rgb("#1B3A5C") + 0.8pt,
-        [], [*rank*], [*per edge (÷ 5000)*],
-        [*32-bit*],
-        table.cell(fill: rgb("#E8F5E8"))[#text(fill: rgb("#2D6A2D"))[0.850]],
-        table.cell(fill: rgb("#E8F5E8"))[#text(fill: rgb("#2D6A2D"))[0.000170]],
-        [*16-bit*],
-        table.cell(fill: rgb("#E8F5E8"))[#text(fill: rgb("#2D6A2D"))[0.850]],
-        table.cell(fill: rgb("#FEE8E8"))[#text(fill: rgb("#94070a"), weight: "bold")[0.000]],
-    ))
+    A hub (rank 0.9, out-degree 5000) gives each out-edge $0.9 \/ 5000 = 0.00018$, which underflows at 16-bit and breaks L1 convergence:
 
-    #hbox[Hub contributions vanish in 16-bit (L2) → wrong ranks → convergence (L1) breaks. Need automatic constraint propagation.]
+    #align(center, image("assets/fig12-cross-level-dep.svg", width: 90%))
+
+    #v(0.9em)
+
+    #hbox[*Graph.hls auto-propagates such cross-level constraints.*]
     ]
 
     [== Dependency Propagation
