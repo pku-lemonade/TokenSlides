@@ -80,6 +80,7 @@
     ),
 )
 
+#let _box-figure-kind = "lemonade-box"
 #let _box-spec-label = <lemonade-box-spec>
 
 #let _box-spec(
@@ -114,10 +115,22 @@
     valign: valign,
 )
 
-#let _mark-box(spec, rendered) = [
-    #metadata(spec)<lemonade-box-spec>
-    #rendered
-]
+#let _marker-spec(spec) = {
+    let marker = (:)
+    for (key, value) in spec.pairs() {
+        if key != "body" {
+            marker.insert(key, value)
+        }
+    }
+    marker
+}
+
+#let _box-figure(spec, body) = figure(
+    kind: _box-figure-kind,
+    caption: none,
+    supplement: none,
+    outlined: false,
+)[#metadata(_marker-spec(spec))<lemonade-box-spec>#body]
 
 #let _resolve-compact(spec, default-compact: auto) = {
     let compact = spec.at("compact", default: default-compact)
@@ -507,6 +520,21 @@
     )
 }
 
+#let _figure-marker-spec(it) = {
+    let spec = none
+    if type(it.body) == content {
+        for child in it.body.fields().at("children", default: ()) {
+            if spec == none and type(child) == content {
+                let fields = child.fields()
+                if child.func() == metadata and fields.at("label", default: none) == _box-spec-label {
+                    spec = fields.value
+                }
+            }
+        }
+    }
+    spec
+}
+
 #let _content-box-spec(item) = {
     let found = none
     if type(item) == content {
@@ -577,7 +605,7 @@
         below: below,
         valign: valign,
     )
-    _mark-box(spec, _render-box-spec(spec))
+    _box-figure(spec, body)
 }
 
 #let _make-named-box(style-name, name, ..args) = {
@@ -626,7 +654,7 @@
         below: named.at("below", default: auto),
         valign: named.at("valign", default: top),
     )
-    _mark-box(spec, _render-box-spec(spec))
+    _box-figure(spec, parsed.body)
 }
 
 #let _footer-height() = {
@@ -639,6 +667,34 @@
             v(footer-layout.height)
         }).height
     }
+}
+
+#let apply-box-style(
+    body,
+) = {
+    show figure.where(kind: _box-figure-kind): set align(left)
+    show figure.where(kind: _box-figure-kind): it => {
+        let spec = _figure-marker-spec(it)
+        if spec == none {
+            it
+        } else if spec.kind == "tbox" {
+            context {
+                let font-sizes = cur-font-sizes.get()
+                let size = if spec.size == auto { font-sizes.body-title } else { spec.size }
+                set par(leading: spec.leading)
+                align(spec.alignment)[
+                    #text(size: size, weight: spec.weight)[
+                        #it.body
+                    ]
+                ]
+            }
+        } else {
+            spec.insert("body", it.body)
+            _render-box-spec(spec)
+        }
+    }
+
+    body
 }
 
 #let vboxs(
@@ -885,12 +941,11 @@
     alignment: left,
     leading: 1em,
 ) = {
-    context {
-        let font-sizes = cur-font-sizes.get()
-        let size = if size == auto { font-sizes.body-title } else { size }
-        set par(leading: leading)
-        align(alignment)[
-            #text(size: size, weight: weight)[#body]
-        ]
-    }
+    _box-figure((
+        kind: "tbox",
+        size: size,
+        weight: weight,
+        alignment: alignment,
+        leading: leading,
+    ), body)
 }

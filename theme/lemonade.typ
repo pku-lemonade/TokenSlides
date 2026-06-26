@@ -100,6 +100,7 @@
     cur-imgs-config.update(resolved-imgs-config)
 
     show: apply-grid-style
+    show: apply-box-style
     show: apply-table-style.with(theme.colors)
     show: touying-slides.with(
         config-page(
