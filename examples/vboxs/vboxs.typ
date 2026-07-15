@@ -39,14 +39,13 @@
 // A per-box size takes precedence over the row-level size above.
 #vibox([Per-box title size], title-size: 24pt)[正文仍使用默认字号。]
 
-#make-vbox("info", [Factory body], title: [Factory API])
-
-== Fill-height vboxs
+== Fill-height vboxs with trailing content
 
 #vboxs(
     vbox([大模型])[智谱],
     vbox([超算中心])[],
     vbox([云服务提供商])[中国电信，阿里云],
+    after: callout[后续内容保留在拉伸行之外],
 )
 
 == Natural vboxs with widths

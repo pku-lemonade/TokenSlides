@@ -10,6 +10,7 @@
 
 #import "artifact-badges.typ": *
 #import "boxes.typ": *
+#import "callout.typ": *
 #import "images.typ": *
 
 #import "footer.typ": footer as footer-fn
