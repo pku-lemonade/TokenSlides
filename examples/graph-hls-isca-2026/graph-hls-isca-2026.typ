@@ -11,16 +11,10 @@
     config-info(
         title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
         venue: [ISCA 2026],
-        author: [Feiyang Wu],
+        author: [*Feiyang Wu*, Xuxiao Yang, Zhuohang Bian, Jing Wang, \ Ruifan Xu, Guangyu Sun, Yun Liang, Youwei Zhuo],
         institution: [Peking University],
-        short-title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
+        short-title: [Graph.hls],
         date: [June 29, 2026],
-    ),
-)
-
-#title-slide(
-    config: config-info(
-        author: [Feiyang Wu, Xuxiao Yang, Zhuohang Bian, Jing Wang, \ Ruifan Xu, Guangyu Sun, Yun Liang, Youwei Zhuo],
     ),
 )
 
@@ -62,24 +56,19 @@
 
 $ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $
 
-#align(center, image("assets/page3.png", width: 45%))
-
-#nbox[
-    Running example throughout this talk. 3 lines of math --- but how hard is the FPGA implementation?
-]
+#imgs(image("assets/page3.png"), width: 45%)
 
 == Challenge 1: Manual HLS
 
-#text(fill: rgb("#444444"), size: 22pt)[→ 3 lines of math, but FPGA needs hand-written HLS:]
 
 #imgs(
     (image("assets/page4.png"),),
-    width: 90%,
+    width: 100%,
 )
 
 == Challenge 2: Parameter Cascade
 
-#text(fill: rgb("#444444"), size: 22pt)[→ What if we want to optimize — e.g., reduce bit width 32→16?]
+What if we want to optimize — e.g., reduce bit width 32→16?
 
 #v(0.5em)
 
@@ -109,11 +98,67 @@ $ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $
 
 == Graph.hls Overview
 
-#text(fill: rgb("#444444"), size: 22pt)[→ Three challenges (red), each solved by a Graph.hls stage below.]
+#import "@preview/cetz:0.3.4"
+#align(center, cetz.canvas(length: 1.6cm, {
+    import cetz.draw: *
 
-#v(0.7fr)
-#align(center, image("assets/fig06-overview.svg", width: 88%))
-#v(1.3fr)
+    let dkblue = rgb("#1B3A5C")
+    let chal-fill = rgb("#E8F0F8")
+    let sol-fill = rgb("#D6E4F0")
+
+    let bw = 7.6
+    let bh = 1.56
+    let cx = 0
+    let sx = 9.0
+
+    let ys = (4.4, 2.2, 0.0)
+
+    let chals = (
+        ([*Challenge 1*], [Manual HLS]),
+        ([*Challenge 2*], [Parameter cascade]),
+        ([*Challenge 3*], [Debugging bottleneck]),
+    )
+    let sols = (
+        ([*DSL*], [19 LoC replaces 4,818]),
+        ([*GH-Architect*], [hierarchical abstraction + propagation]),
+        ([*GH-Scope*], [sub-second IR simulation]),
+    )
+
+    for i in range(3) {
+        let y = ys.at(i)
+        rect(
+            (cx - bw / 2, y - bh / 2),
+            (cx + bw / 2, y + bh / 2),
+            fill: chal-fill,
+            stroke: black + 1.5pt,
+        )
+        content((cx, y + 0.22), text(size: 22pt, fill: rgb("#94070a"))[#chals.at(i).at(0)])
+        content((cx, y - 0.22), text(size: 16pt)[#chals.at(i).at(1)])
+
+        rect(
+            (sx - bw / 2, y - bh / 2),
+            (sx + bw / 2, y + bh / 2),
+            fill: sol-fill,
+            stroke: black + 1.5pt,
+        )
+        content((sx, y + 0.22), text(size: 20pt, fill: rgb("#94070a"), weight: "bold")[#sols.at(i).at(0)])
+        content((sx, y - 0.22), text(size: 14pt)[#sols.at(i).at(1)])
+
+        line(
+            (cx + bw / 2 + 0.15, y),
+            (sx - bw / 2 - 0.15, y),
+            stroke: dkblue + 1.8pt,
+            mark: (end: "stealth", fill: dkblue, scale: 1.0),
+        )
+    }
+
+    // Dashed separator between C2 and C3
+    line(
+        (cx - bw / 2 - 0.3, (ys.at(1) + ys.at(2)) / 2),
+        (sx + bw / 2 + 1.2, (ys.at(1) + ys.at(2)) / 2),
+        stroke: (paint: rgb("#aaaaaa"), thickness: 1pt, dash: "dashed"),
+    )
+}))
 
 // ============================================================
 = Graph.hls DSL
@@ -127,19 +172,19 @@ $ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $
     align: horizon,
     [
         #block(text(size: 9pt)[
-```python
-Iteration {
-  edges = iteration_input(G.EDGES)
-  dst = map([edges], e: e.dst)
-  val = map([edges], e: e.src.rank)
-  sum = reduce(key=dst, val=[val],
-       fn=lambda x,y: x+y)
-  rank = map([sum], r:
-       0.15+0.85*(r/self.out_deg))
-  return rank as
-       result_node_prop.rank
-}
-```
+            ```python
+            Iteration {
+              edges = iteration_input(G.EDGES)
+              dst = map([edges], e: e.dst)
+              val = map([edges], e: e.src.rank)
+              sum = reduce(key=dst, val=[val],
+                   fn=lambda x,y: x+y)
+              rank = map([sum], r:
+                   0.15+0.85*(r/self.out_deg))
+              return rank as
+                   result_node_prop.rank
+            }
+            ```
         ])
     ],
     [
@@ -196,15 +241,22 @@ These concerns naturally separate into three abstraction levels:
 
     for i in range(3) {
         let y = (y0, y1, y2).at(i)
-        let br = lx + lbase-w/2 - i * inset
-        let tr = lx + lbase-w/2 - (i + 1) * inset
-        let bl = lx - lbase-w/2
-        let tl = lx - lbase-w/2
-        line((bl, y), (br, y), (tr, y + rh), (tl, y + rh),
-            close: true, fill: fills.at(i), stroke: black + 1.8pt)
-        let label-x = lx - lbase-w/2 + 1.0
-        content((label-x, y + rh/2 + 0.45), anchor: "west", text(size: 26pt, weight: "bold", fill: dkblue)[#l-labels.at(i)])
-        content((label-x, y + rh/2 - 0.45), anchor: "west", text(size: 18pt, fill: dkgray, font: "Inconsolata")[#l-params.at(i)])
+        let br = lx + lbase-w / 2 - i * inset
+        let tr = lx + lbase-w / 2 - (i + 1) * inset
+        let bl = lx - lbase-w / 2
+        let tl = lx - lbase-w / 2
+        line((bl, y), (br, y), (tr, y + rh), (tl, y + rh), close: true, fill: fills.at(i), stroke: black + 1.8pt)
+        let label-x = lx - lbase-w / 2 + 1.0
+        content((label-x, y + rh / 2 + 0.45), anchor: "west", text(
+            size: 26pt,
+            weight: "bold",
+            fill: dkblue,
+        )[#l-labels.at(i)])
+        content((label-x, y + rh / 2 - 0.45), anchor: "west", text(
+            size: 18pt,
+            fill: dkgray,
+            font: "Inconsolata",
+        )[#l-params.at(i)])
     }
 
     // Right pyramid: Modification Cost (narrow bottom, wide top)
@@ -214,27 +266,38 @@ These concerns naturally separate into three abstraction levels:
 
     for i in range(3) {
         let y = (y0, y1, y2).at(i)
-        let bl = rx - rbase-w/2 + (2 - i) * inset
-        let tl = rx - rbase-w/2 + (2 - i - 1) * inset
-        let br = rx + rbase-w/2
-        let tr = rx + rbase-w/2
-        line((bl, y), (br, y), (tr, y + rh), (tl, y + rh),
-            close: true, fill: fills.at(i), stroke: black + 1.8pt)
-        let rlabel-x = rx + rbase-w/2 - 1.0
-        content((rlabel-x, y + rh/2 + 0.45), anchor: "east", text(size: 26pt, weight: "bold", fill: dkblue)[#r-labels.at(i)])
-        content((rlabel-x, y + rh/2 - 0.45), anchor: "east", text(size: 18pt, fill: dkgray)[#r-params.at(i)])
+        let bl = rx - rbase-w / 2 + (2 - i) * inset
+        let tl = rx - rbase-w / 2 + (2 - i - 1) * inset
+        let br = rx + rbase-w / 2
+        let tr = rx + rbase-w / 2
+        line((bl, y), (br, y), (tr, y + rh), (tl, y + rh), close: true, fill: fills.at(i), stroke: black + 1.8pt)
+        let rlabel-x = rx + rbase-w / 2 - 1.0
+        content((rlabel-x, y + rh / 2 + 0.45), anchor: "east", text(
+            size: 26pt,
+            weight: "bold",
+            fill: dkblue,
+        )[#r-labels.at(i)])
+        content((rlabel-x, y + rh / 2 - 0.45), anchor: "east", text(size: 18pt, fill: dkgray)[#r-params.at(i)])
     }
 
     // Left axis
-    let ax-l = lx - lbase-w/2 - 0.7
-    line((ax-l, y0 - 0.2), (ax-l, total-h + 0.2), stroke: dkblue + 2.2pt, mark: (end: "stealth", fill: dkblue, scale: 0.9))
+    let ax-l = lx - lbase-w / 2 - 0.7
+    line((ax-l, y0 - 0.2), (ax-l, total-h + 0.2), stroke: dkblue + 2.2pt, mark: (
+        end: "stealth",
+        fill: dkblue,
+        scale: 0.9,
+    ))
     content((ax-l, total-h + 0.6), anchor: "south", text(size: 16pt, fill: dkblue)[High])
     content((ax-l, y0 - 0.6), anchor: "north", text(size: 16pt, fill: dkblue)[Low])
     content((ax-l - 1.0, total-h / 2), angle: 90deg, text(size: 17pt, weight: "bold", fill: dkblue)[Abstraction Level])
 
     // Right axis
-    let ax-r = rx + rbase-w/2 + 0.7
-    line((ax-r, y0 - 0.2), (ax-r, total-h + 0.2), stroke: dkblue + 2.2pt, mark: (end: "stealth", fill: dkblue, scale: 0.9))
+    let ax-r = rx + rbase-w / 2 + 0.7
+    line((ax-r, y0 - 0.2), (ax-r, total-h + 0.2), stroke: dkblue + 2.2pt, mark: (
+        end: "stealth",
+        fill: dkblue,
+        scale: 0.9,
+    ))
     content((ax-r, total-h + 0.6), anchor: "south", text(size: 16pt, fill: dkblue)[High])
     content((ax-r, y0 - 0.6), anchor: "north", text(size: 16pt, fill: dkblue)[Low])
     content((ax-r + 1.0, total-h / 2), angle: -90deg, text(size: 17pt, weight: "bold", fill: dkblue)[Modification Cost])
@@ -242,15 +305,14 @@ These concerns naturally separate into three abstraction levels:
     // Connecting arrows (interpolate at midpoint of trapezoid edges)
     for i in range(3) {
         let y = (y0, y1, y2).at(i)
-        let ly = y + rh/2
-        let lr-bot = lx + lbase-w/2 - i * inset
-        let lr-top = lx + lbase-w/2 - (i + 1) * inset
+        let ly = y + rh / 2
+        let lr-bot = lx + lbase-w / 2 - i * inset
+        let lr-top = lx + lbase-w / 2 - (i + 1) * inset
         let lr = (lr-bot + lr-top) / 2
-        let rl-bot = rx - rbase-w/2 + (2 - i) * inset
-        let rl-top = rx - rbase-w/2 + (2 - i - 1) * inset
+        let rl-bot = rx - rbase-w / 2 + (2 - i) * inset
+        let rl-top = rx - rbase-w / 2 + (2 - i - 1) * inset
         let rl = (rl-bot + rl-top) / 2
-        line((lr + 0.2, ly), (rl - 0.2, ly),
-            stroke: dkblue + 2pt, mark: (end: "stealth", fill: dkblue, scale: 1.2))
+        line((lr + 0.2, ly), (rl - 0.2, ly), stroke: dkblue + 2pt, mark: (end: "stealth", fill: dkblue, scale: 1.2))
     }
 }))
 
@@ -333,7 +395,9 @@ Compiler backend: DSL + config → synthesizable accelerator.
             (elim-bg, elim-fg, 0.6pt, rgb("#CCCCCC"))
         }
         draw.rect((x - bw / 2, y - bh), (x + bw / 2, y + bh), stroke: bdr + sw, fill: bg)
-        draw.content((x, y), text(font: "Inter", size: 22pt, fill: fg, weight: if style == "chosen" { "bold" } else { "regular" })[#label])
+        draw.content((x, y), text(font: "Inter", size: 22pt, fill: fg, weight: if style == "chosen" { "bold" } else {
+            "regular"
+        })[#label])
         if style == "dead" {
             draw.line((x - bw / 2, y - bh), (x + bw / 2, y + bh), stroke: dkred + 1.2pt)
         }
@@ -347,22 +411,30 @@ Compiler backend: DSL + config → synthesizable accelerator.
 
     [== Cross-Level Dependency
 
-    Recall PageRank — each vertex sums its in-neighbors' normalized ranks:
+        Recall Challenge 2: changing one parameter can cascade across levels.
 
-    #align(center, text(size: 0.9em)[$ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $])
+        Example: hub vertex with rank = 0.85, out-degree = 5000.
 
-    A hub (rank 0.9, out-degree 5000) gives each out-edge $0.9 \/ 5000 = 0.00018$, which underflows at 16-bit and breaks L1 convergence:
+        #align(center, table(
+            columns: (auto, 1fr, 1fr),
+            inset: 16pt,
+            align: center,
+            stroke: rgb("#1B3A5C") + 0.8pt,
+            [], [*rank*], [*per edge (÷ 5000)*],
+            [*32-bit*],
+            table.cell(fill: rgb("#E8F5E8"))[#text(fill: rgb("#2D6A2D"))[0.850]],
+            table.cell(fill: rgb("#E8F5E8"))[#text(fill: rgb("#2D6A2D"))[0.000170]],
+            [*16-bit*],
+            table.cell(fill: rgb("#E8F5E8"))[#text(fill: rgb("#2D6A2D"))[0.850]],
+            table.cell(fill: rgb("#FEE8E8"))[#text(fill: rgb("#94070a"), weight: "bold")[0.000]],
+        ))
 
-    #align(center, image("assets/fig12-cross-level-dep.svg", width: 90%))
-
-    #v(0.9em)
-
-    #hbox[*Graph.hls auto-propagates such cross-level constraints.*]
+        #hbox[Hub contributions vanish in 16-bit (L2) → wrong ranks → convergence (L1) breaks. Need automatic constraint propagation.]
     ]
 
     [== Dependency Propagation
 
-    Propagate user choices through the parameter graph to resolve all cross-level constraints:
+        Propagate user choices through the parameter graph to resolve all cross-level constraints:
     ]
 
     v(1.2em)
@@ -389,7 +461,9 @@ Compiler backend: DSL + config → synthesizable accelerator.
             (elim-bg, elim-fg, 0.5pt, rgb("#CCCCCC"))
         }
         draw.rect((x - sbw / 2, y - sbh), (x + sbw / 2, y + sbh), stroke: bdr + sw, fill: bg)
-        draw.content((x, y), text(font: "Inter", size: 14pt, fill: fg, weight: if style == "chosen" { "bold" } else { "regular" })[#label])
+        draw.content((x, y), text(font: "Inter", size: 14pt, fill: fg, weight: if style == "chosen" { "bold" } else {
+            "regular"
+        })[#label])
         if style == "dead" {
             draw.line((x - sbw / 2, y - sbh), (x + sbw / 2, y + sbh), stroke: dkred + 0.8pt)
         }
@@ -401,7 +475,10 @@ Compiler backend: DSL + config → synthesizable accelerator.
         draw.content((sx2 + sbw / 2 + sgap / 2, y), text(font: "Inter", size: 13pt, fill: fg)[or])
     }
 
-    grid(columns: (1fr, 1fr, 1fr), column-gutter: 0.3em, row-gutter: 0.6em,
+    grid(
+        columns: (1fr, 1fr, 1fr),
+        column-gutter: 0.3em,
+        row-gutter: 0.6em,
         align(center, text(size: 18pt, weight: "bold", fill: dkblue)[1. Enumerate]),
         align(center, text(size: 18pt, weight: "bold", fill: dkblue)[2. Forward]),
         align(center, text(size: 18pt, weight: "bold", fill: dkred)[3. Backward]),
@@ -442,8 +519,16 @@ Compiler backend: DSL + config → synthesizable accelerator.
             sdraw-box(sx2, y2, $ epsilon = 10^(-6) $)
             sdraw-box(sx3, y2, $ epsilon = 10^(-9) $)
             sdraw-ors(y2)
-            draw.line((sx1, y0 - sbh - 0.03), (sx1, y1 + sbh + 0.03), stroke: dkblue + 0.6pt, mark: (end: ">", fill: dkblue))
-            draw.content((sx1 + 0.7, (y0 - sbh + y1 + sbh) / 2), text(font: "Inter", size: 14pt, weight: "bold", fill: dkblue)[fwd])
+            draw.line((sx1, y0 - sbh - 0.03), (sx1, y1 + sbh + 0.03), stroke: dkblue + 0.6pt, mark: (
+                end: ">",
+                fill: dkblue,
+            ))
+            draw.content((sx1 + 0.7, (y0 - sbh + y1 + sbh) / 2), text(
+                font: "Inter",
+                size: 14pt,
+                weight: "bold",
+                fill: dkblue,
+            )[fwd])
         })),
         // Step 3: Backward
         align(center, canvas(length: sc, {
@@ -465,8 +550,16 @@ Compiler backend: DSL + config → synthesizable accelerator.
             sdraw-box(sx2, y2, $ epsilon = 10^(-6) $, style: "dead")
             sdraw-box(sx3, y2, $ epsilon = 10^(-9) $, style: "dead")
             sdraw-ors(y2, style: "faded")
-            draw.line((sx3, y1 - sbh - 0.03), (sx3, y2 + sbh + 0.03), stroke: dkred + 0.6pt, mark: (start: ">", fill: dkred))
-            draw.content((sx3 - 0.7, (y1 - sbh + y2 + sbh) / 2), text(font: "Inter", size: 14pt, weight: "bold", fill: dkred)[bwd])
+            draw.line((sx3, y1 - sbh - 0.03), (sx3, y2 + sbh + 0.03), stroke: dkred + 0.6pt, mark: (
+                start: ">",
+                fill: dkred,
+            ))
+            draw.content((sx3 - 0.7, (y1 - sbh + y2 + sbh) / 2), text(
+                font: "Inter",
+                size: 14pt,
+                weight: "bold",
+                fill: dkred,
+            )[bwd])
         })),
     )
 
@@ -496,69 +589,81 @@ Compiler backend: DSL + config → synthesizable accelerator.
 
     // Input box (left)
     let ix = -7.0
-    rect((ix - bw/2, 0), (ix + bw/2, bh), fill: ltblue, stroke: black + 1.8pt, radius: 0.15)
+    rect((ix - bw / 2, 0), (ix + bw / 2, bh), fill: ltblue, stroke: black + 1.8pt, radius: 0.15)
     content((ix, bh - 0.6), text(size: 24pt, weight: "bold", fill: dkblue)[Input])
 
     let dy = bh - 1.4
-    rect((ix - bw/2 + pad, dy - inner-h), (ix + bw/2 - pad, dy), fill: white, stroke: black + 1pt, radius: 0.1)
+    rect((ix - bw / 2 + pad, dy - inner-h), (ix + bw / 2 - pad, dy), fill: white, stroke: black + 1pt, radius: 0.1)
     content((ix, dy - 0.35), text(size: 18pt, weight: "bold", fill: dkblue)[PageRank DSL])
     content((ix, dy - 0.75), text(size: 16pt, fill: dkgray)[19 LoC])
 
     let dy2 = dy - inner-h - 0.3
-    rect((ix - bw/2 + pad, dy2 - inner-h * 1.8), (ix + bw/2 - pad, dy2), fill: white, stroke: black + 1pt, radius: 0.1)
+    rect(
+        (ix - bw / 2 + pad, dy2 - inner-h * 1.8),
+        (ix + bw / 2 - pad, dy2),
+        fill: white,
+        stroke: black + 1pt,
+        radius: 0.1,
+    )
     content((ix, dy2 - 0.35), text(size: 18pt, weight: "bold", fill: dkblue)[Resolved Config])
     content((ix, dy2 - 0.85), text(size: 15pt, fill: dkgray, font: "Inconsolata")[L3: 2-class])
     content((ix, dy2 - 1.25), text(size: 15pt, fill: dkgray, font: "Inconsolata")[L2: 32-bit])
     content((ix, dy2 - 1.65), text(size: 15pt, fill: dkgray, font: "Inconsolata")[L1: ε=10⁻³, VF=0.5])
 
     // Arrow 1
-    line((ix + bw/2 + 0.15, bh/2), (ix + bw/2 + arr-gap - 0.15, bh/2),
-        stroke: black + 2.5pt, mark: (end: "stealth", fill: black, scale: 1.2))
+    line((ix + bw / 2 + 0.15, bh / 2), (ix + bw / 2 + arr-gap - 0.15, bh / 2), stroke: black + 2.5pt, mark: (
+        end: "stealth",
+        fill: black,
+        scale: 1.2,
+    ))
 
     // Compiler box (center)
     let cx = 0
-    rect((cx - bw/2, 0), (cx + bw/2, bh), fill: ltblue2, stroke: black + 1.8pt, radius: 0.15)
+    rect((cx - bw / 2, 0), (cx + bw / 2, bh), fill: ltblue2, stroke: black + 1.8pt, radius: 0.15)
     content((cx, bh - 0.6), text(size: 24pt, weight: "bold", fill: rgb("#94070a"))[Compiler])
 
     let cy1 = bh - 1.4
-    rect((cx - bw/2 + pad, cy1 - inner-h), (cx + bw/2 - pad, cy1), fill: white, stroke: black + 1pt, radius: 0.1)
-    content((cx, cy1 - inner-h/2), text(size: 17pt, fill: dkblue)[Template selection])
+    rect((cx - bw / 2 + pad, cy1 - inner-h), (cx + bw / 2 - pad, cy1), fill: white, stroke: black + 1pt, radius: 0.1)
+    content((cx, cy1 - inner-h / 2), text(size: 17pt, fill: dkblue)[Template selection])
 
     let cy2 = cy1 - inner-h - 0.6
     line((cx, cy1 - inner-h), (cx, cy2), stroke: black + 1.2pt, mark: (end: "stealth", fill: black, scale: 0.7))
-    rect((cx - bw/2 + pad, cy2 - inner-h), (cx + bw/2 - pad, cy2), fill: white, stroke: black + 1pt, radius: 0.1)
-    content((cx, cy2 - inner-h/2), text(size: 17pt, fill: dkblue)[Param substitution])
+    rect((cx - bw / 2 + pad, cy2 - inner-h), (cx + bw / 2 - pad, cy2), fill: white, stroke: black + 1pt, radius: 0.1)
+    content((cx, cy2 - inner-h / 2), text(size: 17pt, fill: dkblue)[Param substitution])
 
     let cy3 = cy2 - inner-h - 0.6
     line((cx, cy2 - inner-h), (cx, cy3), stroke: black + 1.2pt, mark: (end: "stealth", fill: black, scale: 0.7))
-    rect((cx - bw/2 + pad, cy3 - inner-h), (cx + bw/2 - pad, cy3), fill: white, stroke: black + 1pt, radius: 0.1)
+    rect((cx - bw / 2 + pad, cy3 - inner-h), (cx + bw / 2 - pad, cy3), fill: white, stroke: black + 1pt, radius: 0.1)
     content((cx, cy3 - 0.35), text(size: 17pt, fill: dkblue)[HW spec injection])
     content((cx, cy3 - 0.75), text(size: 14pt, fill: dkgray)[SLR · HBM · buffers])
 
     // Arrow 2
-    line((cx + bw/2 + 0.15, bh/2), (cx + bw/2 + arr-gap - 0.15, bh/2),
-        stroke: black + 2.5pt, mark: (end: "stealth", fill: black, scale: 1.2))
+    line((cx + bw / 2 + 0.15, bh / 2), (cx + bw / 2 + arr-gap - 0.15, bh / 2), stroke: black + 2.5pt, mark: (
+        end: "stealth",
+        fill: black,
+        scale: 1.2,
+    ))
 
     // Output box (right)
     let ox = 7.0
-    rect((ox - bw/2, 0), (ox + bw/2, bh), fill: ltblue3, stroke: black + 1.8pt, radius: 0.15)
+    rect((ox - bw / 2, 0), (ox + bw / 2, bh), fill: ltblue3, stroke: black + 1.8pt, radius: 0.15)
     content((ox, bh - 0.6), text(size: 24pt, weight: "bold", fill: dkblue)[Output])
 
     let oy1 = bh - 1.4
-    rect((ox - bw/2 + pad, oy1 - inner-h), (ox + bw/2 - pad, oy1), fill: white, stroke: black + 1pt, radius: 0.1)
-    content((ox, oy1 - inner-h/2), text(size: 17pt, fill: dkblue)[Kernel sources])
+    rect((ox - bw / 2 + pad, oy1 - inner-h), (ox + bw / 2 - pad, oy1), fill: white, stroke: black + 1pt, radius: 0.1)
+    content((ox, oy1 - inner-h / 2), text(size: 17pt, fill: dkblue)[Kernel sources])
 
     let oy2 = oy1 - inner-h - 0.3
-    rect((ox - bw/2 + pad, oy2 - inner-h), (ox + bw/2 - pad, oy2), fill: white, stroke: black + 1pt, radius: 0.1)
-    content((ox, oy2 - inner-h/2), text(size: 17pt, fill: dkblue)[Host sources])
+    rect((ox - bw / 2 + pad, oy2 - inner-h), (ox + bw / 2 - pad, oy2), fill: white, stroke: black + 1pt, radius: 0.1)
+    content((ox, oy2 - inner-h / 2), text(size: 17pt, fill: dkblue)[Host sources])
 
     let oy3 = oy2 - inner-h - 0.3
-    rect((ox - bw/2 + pad, oy3 - inner-h), (ox + bw/2 - pad, oy3), fill: white, stroke: black + 1pt, radius: 0.1)
-    content((ox, oy3 - inner-h/2), text(size: 17pt, fill: dkblue)[Vitis config])
+    rect((ox - bw / 2 + pad, oy3 - inner-h), (ox + bw / 2 - pad, oy3), fill: white, stroke: black + 1pt, radius: 0.1)
+    content((ox, oy3 - inner-h / 2), text(size: 17pt, fill: dkblue)[Vitis config])
 
     let oy4 = oy3 - inner-h - 0.3
-    rect((ox - bw/2 + pad, oy4 - inner-h), (ox + bw/2 - pad, oy4), fill: white, stroke: black + 1pt, radius: 0.1)
-    content((ox, oy4 - inner-h/2), text(size: 17pt, fill: dkblue)[Makefile])
+    rect((ox - bw / 2 + pad, oy4 - inner-h), (ox + bw / 2 - pad, oy4), fill: white, stroke: black + 1pt, radius: 0.1)
+    content((ox, oy4 - inner-h / 2), text(size: 17pt, fill: dkblue)[Makefile])
 
     content((ox, 0.4), text(size: 18pt, weight: "bold", fill: rgb("#94070a"))[Ready to compile])
 }))
@@ -584,7 +689,7 @@ Compiler backend: DSL + config → synthesizable accelerator.
 
         #v(0.3em)
 
-#nbox[
+        #nbox[
             Hours-long cycles. Failures often surface as deadlocks --- *no graph context*.
         ]
     ],
