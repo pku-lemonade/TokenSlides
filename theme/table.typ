@@ -54,7 +54,7 @@
     header-text-size: 24pt,
     column-styles: (),
     fill-height: false,
-    fill-pad: 0.3em,
+    fill-pad: 0.25em,
     row-stretch: "content",
     row-weights: auto,
     header-row: true,

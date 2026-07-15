@@ -1,6 +1,4 @@
-#import "base.typ": (
-    cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style,
-)
+#import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style
 #import "footer.typ": footer-layouts
 
 // USER CONFIG
@@ -28,14 +26,14 @@
     title-weight: "bold",
     title-text-fill: white,
     title-align: center,
-    frame-width: 0.5pt,
+    frame-width: 1pt,
 )
 
 #let vboxs-config = (
     gap: 0.4em,
     after-gap: 0pt,
     fill-height: true,
-    fill-pad: 0.5em,
+    fill-pad: 0.25em,
 )
 
 #let code-box-config = (
@@ -351,6 +349,12 @@
                 )),
             )
         ]
+        // Measure and render the same block so paragraph spacing cannot change its flow height.
+        let after-block = if after == none {
+            none
+        } else {
+            block(width: 100%, spacing: 0pt, above: 0pt, below: 0pt)[#after]
+        }
 
         context {
             if fill-height {
@@ -358,7 +362,9 @@
                     #layout(size => {
                         let footer-height = _footer-height()
                         let pad-height = measure(v(fill-pad)).height
-                        let after-height = if after == none { 0pt } else { measure(after, width: size.width).height }
+                        let after-height = if after == none { 0pt } else {
+                            measure(after-block, width: size.width).height
+                        }
                         let gap-height = if after == none { 0pt } else { measure(v(after-gap)).height }
                         let available-height = calc.max(0pt, size.height - footer-height - pad-height)
                         let row-height = calc.max(0pt, available-height - after-height - gap-height)
@@ -366,7 +372,7 @@
                             #align(center)[#box(width: width)[#row(row-height)]]
                             #if after != none {
                                 v(after-gap)
-                                after
+                                after-block
                             }
                         ]
                     })
@@ -383,7 +389,7 @@
                     ]
                     #if after != none {
                         v(after-gap)
-                        after
+                        after-block
                     }
                 ]
             }
@@ -402,13 +408,15 @@
     fill-pad: vboxs-config.fill-pad,
     title-size: none,
 ) = {
-    let specs = items.pos().map(item => {
-        assert(
-            type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
-            message: "vboxs: items must be Lemonade box helpers",
-        )
-        _with-body(_figure-spec(item), item.body)
-    })
+    let specs = items
+        .pos()
+        .map(item => {
+            assert(
+                type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
+                message: "vboxs: items must be Lemonade box helpers",
+            )
+            _with-body(_figure-spec(item), item.body)
+        })
     _render-vboxs(
         specs,
         width: width,

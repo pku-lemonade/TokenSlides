@@ -6,7 +6,9 @@
     cur-font-sizes, cur-footer-style, cur-imgs-config, cur-title-align, font-size-presets, fonts,
     imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes, title-alignments,
 )
-#import "base.typ": config-colors, config-common, config-info, config-page, meanwhile, pause, touying-slides
+#import "base.typ": (
+    config-colors, config-common, config-info, config-page, meanwhile, pause, speaker-note, touying-slides,
+)
 
 #import "artifact-badges.typ": *
 #import "boxes.typ": *
