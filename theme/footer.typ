@@ -23,18 +23,21 @@
 
 // Footer renderer. Set as `config-page(footer: footer.with(style: ...))` in the theme.
 #let footer(self, style: "bar") = context {
-    assert(style in ("bar", "page", none))
+    assert(style in ("bar", "plain", "page", none))
 
     let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
     let footer-layout = footer-layouts.at(aspect-ratio)
+    let show-full-footer = style in ("bar", "plain")
     let footer-fill = if footer-config.fill == auto {
-        if style == "bar" { colors.footer-bg } else { none }
+        if style == "bar" {
+            if colors.footer-bg == auto { colors.primary } else { colors.footer-bg }
+        } else { none }
     } else { footer-config.fill }
     let footer-text-fill = if footer-config.text-fill == auto {
         if style == "bar" { colors.footer-fg } else { colors.fg }
     } else { footer-config.text-fill }
-    let footer-weight = if style == "bar" { "bold" } else { "black" }
+    let footer-weight = if show-full-footer { "bold" } else { "black" }
     let counter = text(size: 1em, weight: footer-weight)[
         #if footer-config.show-total {
             [#utils.slide-counter.display() / #utils.last-slide-number]

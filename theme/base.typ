@@ -27,17 +27,19 @@
         title: 40pt,
         slide-title: 38pt,
         section: 44pt,
+        callout: 36pt,
         code: 20pt,
         table: 20pt,
         page-number: 36pt,
     ),
     "4-3": (
-        small: 18pt,
-        body: 24pt,
-        body-title: 28pt,
+        small: 14pt,
+        body: 22pt,
+        body-title: 24pt,
         title: 40pt,
-        slide-title: 34pt,
+        slide-title: 32pt,
         section: 34pt,
+        callout: 30pt,
         code: 18pt,
         table: 18pt,
         page-number: 32pt,
@@ -72,7 +74,7 @@
 // Default slide margins per aspect ratio.
 #let slide-layouts = (
     "16-9": (top: 0.5em, bottom: 0em, left: 1.5em, right: 1em),
-    "4-3": (top: 0.75em, bottom: 0em, left: 1.25em, right: 1em),
+    "4-3": (top: 0.75em, bottom: 0em, left: 1em, right: 0.75em),
 )
 
 // Match PowerPoint's standard slide canvases instead of Typst/Touying's smaller presentation papers.
@@ -83,7 +85,7 @@
 
 #let fonts = (
     body: ("Inter", "Arial", "Source Han Sans SC"),
-    math: "New Computer Modern Math",
+    math: ("Inter", "New Computer Modern Math"),
     mono: ("Inconsolata", "Source Han Sans SC"),
 )
 
@@ -94,8 +96,9 @@
     bg: white,
     fg: black,
     // primary: rgb("#94070a"),
-    primary: rgb("#990000"),
-    // primary: rgb("#002676"),
+    // primary: rgb("#990000"),
+    primary: rgb("#002676"),
+    // primary: rgb("#660874"), // Tsinghua purple
     // secondary: rgb("#FDB515"),
     secondary: rgb("#FFCC00"),
     neutral: rgb("#737373"),
@@ -104,7 +107,7 @@
     table-stroke: rgb("#d4d4d4"),
     link: rgb("#2563eb"),
     // footer-bg: rgb("#002676"),
-    footer-bg: rgb("#94070a"),
+    footer-bg: auto,
     footer-fg: white,
     code-bg: rgb("#f5f5f5"),
     code-border: rgb("#d4d4d4"),
@@ -122,7 +125,7 @@
     neutral-darkest: rgb("#0D0D0D"),
     table-stroke: rgb("#5D5D5D"),
     link: rgb("#38BDF8"),
-    footer-bg: rgb("#002676"),
+    footer-bg: auto,
     footer-fg: rgb("#EDEDED"),
     code-bg: rgb("#0B1220"),
     code-border: rgb("#334155"),

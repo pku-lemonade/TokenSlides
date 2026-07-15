@@ -55,7 +55,7 @@
 ) = {
     assert(aspect-ratio in aspect-ratios)
     assert(mode in modes.keys())
-    assert(footer in ("bar", "page", none))
+    assert(footer in ("bar", "plain", "page", none))
     assert(title-align in title-alignments)
 
     let theme = modes.at(mode)

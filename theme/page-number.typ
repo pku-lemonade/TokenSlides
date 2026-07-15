@@ -4,7 +4,7 @@
 // CONFIG
 #let top-page-number-layouts = (
     "16-9": (dx: 0.75em, dy: 0.1em, text-size: auto),
-    "4-3": (dx: 1em, dy: 0.1em, text-size: auto),
+    "4-3": (dx: 0.75em, dy: 0em, text-size: auto),
 )
 
 #let top-page-number-config = (

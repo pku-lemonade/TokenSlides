@@ -176,6 +176,7 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
 #show: lemonade-theme.with(
   aspect-ratio: "16-9",
   title-align: "left",
+  // "bar": full footer with primary fill; "plain": full footer without fill.
   footer: "bar",
   imgs-config: (
     fill-height: true,
