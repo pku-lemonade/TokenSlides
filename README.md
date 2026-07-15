@@ -219,6 +219,8 @@ The repo ships shared VS Code workspace settings in `.vscode/`:
 
 For local edits, use relative paths such as `image("assets/figure.png")`. The shared `#imgs(...)` helper accepts preloaded `image(...)` content so the file still resolves relative to the deck file instead of the theme package.
 
+See [`examples/images/images.typ`](examples/images/images.typ) for the compilable image API reference and layout examples.
+
 ## Where To Edit
 
 - Generated deck content: `out/<paper>/<paper>.typ`

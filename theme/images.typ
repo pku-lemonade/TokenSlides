@@ -1,5 +1,4 @@
 #import "base.typ": bleed as bleed-block, cur-ar, cur-footer-style, cur-imgs-config, fonts, slide-layouts
-#import "boxes.typ": topbar-box-config
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -68,7 +67,7 @@
     width: 100%,
     bleed: false,
     widths: auto,
-    gap: auto,
+    gap: 0.4em,
     valign: horizon,
     img-width: 100%,
     img-height: auto,
@@ -188,7 +187,6 @@
             let imgs-config = cur-imgs-config.get()
             let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
             let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
-            let resolved-gap = if gap == auto { topbar-box-config.gap } else { gap }
             let slide-margins = slide-layouts.at(cur-ar.get())
             let resolved-left-margin = measure(h(slide-margins.left)).width
             let resolved-right-margin = measure(h(slide-margins.right)).width
@@ -254,7 +252,7 @@
                             ]
                         ]
                         #if index < count - 1 [
-                            #v(resolved-gap)
+                            #v(gap)
                         ]
                     ]
                 ]
@@ -284,7 +282,7 @@
                                 })
                                 .sum(default: 0pt)
                             let stack-gap-height = if count > 1 {
-                                measure(v(resolved-gap)).height * (count - 1)
+                                measure(v(gap)).height * (count - 1)
                             } else {
                                 0pt
                             }
@@ -324,7 +322,7 @@
                 let cols = ()
                 for (i, w) in col-widths.enumerate() {
                     cols.push(w)
-                    if i < count - 1 { cols.push(resolved-gap) }
+                    if i < count - 1 { cols.push(gap) }
                 }
 
                 let single-image = resolved-height => {
