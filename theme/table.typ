@@ -35,11 +35,11 @@
 #let vtable-colors(base, accent) = (
     header-fill: base,
     header-text-fill: white,
-    row-odd-fill: base.lighten(78%),
-    row-even-fill: base.lighten(90%),
-    column-odd-fill: base.lighten(82%),
-    column-even-fill: base.lighten(94%),
-    total-fill: accent.lighten(55%),
+    row-odd-fill: base.lighten(88%),
+    row-even-fill: base.lighten(95%),
+    column-odd-fill: base.lighten(90%),
+    column-even-fill: base.lighten(96%),
+    total-fill: accent.lighten(78%),
     total-text-fill: black,
 )
 
@@ -50,7 +50,7 @@
     style: "banded",
     palette: "red",
     center-cols: (),
-    text-size: 24pt,
+    text-size: 20pt,
     header-text-size: 24pt,
     column-styles: (),
     fill-height: false,
@@ -89,7 +89,7 @@
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
     let palettes = (
         red: vtable-colors(colors.primary, colors.secondary),
-        blue: vtable-colors(rgb("#003262"), rgb("#FDB515")),
+        blue: vtable-colors(rgb("#2F6F9F"), rgb("#FDB515")),
     )
     assert(palette in palettes.keys(), message: "vtable: unknown palette `" + palette + "`")
     let palette-colors = palettes.at(palette)
@@ -228,7 +228,13 @@
         let is-last-column = last-column and not is-header and col == column-count - 1
         let is-emphasis = is-header or is-total or is-first-column or is-last-column
         let default-size = if is-header { header-text-size } else { text-size }
-        let default-weight = if is-emphasis { "black" } else { "medium" }
+        let default-weight = if is-header {
+            "bold"
+        } else if is-emphasis {
+            "black"
+        } else {
+            "medium"
+        }
         let default-fill = if is-header {
             header-text-fill
         } else if is-total {
@@ -316,9 +322,11 @@
     let render-measure-row = global-row => {
         let start = global-row * column-count
         let row-cells = all-cells.slice(start, start + column-count)
-        let rendered-row-cells = row-cells.enumerate().map(((col, cell)) => {
-            render-cell-at(col, 0, global-row, cell)
-        })
+        let rendered-row-cells = row-cells
+            .enumerate()
+            .map(((col, cell)) => {
+                render-cell-at(col, 0, global-row, cell)
+            })
         table(
             columns: columns,
             rows: (auto,),
@@ -330,10 +338,15 @@
         )
     }
 
-    let measure-clean = (body, width) => measure({
-        show table: it => it
-        body
-    }, width: width).height
+    let measure-clean = (body, width) => {
+        measure(
+            {
+                show table: it => it
+                body
+            },
+            width: width,
+        ).height
+    }
 
     let stretch-row-tracks = (target-height, available-width) => {
         let natural-row-heights = range(row-count).map(row => measure-clean(render-measure-row(row), available-width))
@@ -363,10 +376,12 @@
                 let equal-height = body-target-height / body-row-count
                 range(body-row-count).map(_ => equal-height)
             } else {
-                weights.enumerate().map(((i, weight)) => {
-                    let natural-height = body-heights.at(i, default: 0pt)
-                    calc.max(natural-height, body-target-height * (weight / weight-sum))
-                })
+                weights
+                    .enumerate()
+                    .map(((i, weight)) => {
+                        let natural-height = body-heights.at(i, default: 0pt)
+                        calc.max(natural-height, body-target-height * (weight / weight-sum))
+                    })
             }
             if header-row {
                 (header-height,) + body-tracks
