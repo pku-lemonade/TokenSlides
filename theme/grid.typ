@@ -2,8 +2,8 @@
 
 // CONFIG
 #let grid-config = (
-    spacing-above: 0.25em,
-    spacing-below: 0.25em,
+    spacing-above: 1em,
+    spacing-below: 1em,
 )
 
 #let apply-grid-style(body) = {

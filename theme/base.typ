@@ -22,10 +22,10 @@
 #let font-size-presets = (
     "16-9": (
         small: 18pt,
-        body: 28pt,
-        body-title: 30pt,
-        title: 44pt,
-        slide-title: 40pt,
+        body: 26pt,
+        body-title: 28pt,
+        title: 40pt,
+        slide-title: 38pt,
         section: 44pt,
         code: 20pt,
         table: 20pt,
@@ -35,7 +35,7 @@
         small: 18pt,
         body: 24pt,
         body-title: 28pt,
-        title: 44pt,
+        title: 40pt,
         slide-title: 34pt,
         section: 34pt,
         code: 18pt,
@@ -58,7 +58,7 @@
 // Global text/math spacing per aspect ratio.
 #let page-spacing = (
     "16-9": (
-        par: 0.3em,
+        par: 1.2em,
         math-above: 0.8em,
         math-below: 0.6em,
     ),
@@ -129,24 +129,23 @@
     code-fg: rgb("#EDEDED"),
 )
 
-// Box styles define the accent border and the optional soft fill once.
-// `lemonade-theme(box-fill: ...)` decides whether the fill is rendered.
+// Airtable-inspired Dark1 accents with Light2 body fills.
 #let light-box-styles = (
-    highlight: (border: rgb("#f59e0b"), fill: rgb("#fffbeb")),
-    info: (border: rgb("#3b82f6"), fill: rgb("#eff6ff")),
-    error: (border: rgb("#ef4444"), fill: rgb("#fef2f2")),
-    success: (border: rgb("#22c55e"), fill: rgb("#f0fdf4")),
-    neutral: (border: rgb("#737373"), fill: rgb("#f5f5f5")),
-    purple: (border: rgb("#8b5cf6"), fill: rgb("#f5f3ff")),
+    highlight: (border: rgb("#b87503"), fill: rgb("#ffeab6")),
+    info: (border: rgb("#2750ae"), fill: rgb("#cfdfff")),
+    error: (border: rgb("#ba1e45"), fill: rgb("#ffdce5")),
+    success: (border: rgb("#338a17"), fill: rgb("#d1f7c4")),
+    neutral: (border: rgb("#444444"), fill: rgb("#eeeeee")),
+    purple: (border: rgb("#6b1cb0"), fill: rgb("#ede2fe")),
 )
 
 #let dark-box-styles = (
-    highlight: (border: rgb("#F59E0B"), fill: rgb("#2f2412")),
-    info: (border: dark-colors.link, fill: rgb("#0b2a3a")),
-    error: (border: rgb("#ef4444"), fill: rgb("#3a1616")),
-    success: (border: rgb("#22c55e"), fill: rgb("#11331f")),
-    neutral: (border: dark-colors.neutral, fill: rgb("#1f1f1f")),
-    purple: (border: rgb("#8b5cf6"), fill: rgb("#241b3a")),
+    highlight: (border: rgb("#b87503"), fill: rgb("#2f2412")),
+    info: (border: rgb("#2750ae"), fill: rgb("#151c38")),
+    error: (border: rgb("#ba1e45"), fill: rgb("#3a161f")),
+    success: (border: rgb("#338a17"), fill: rgb("#183411")),
+    neutral: (border: rgb("#444444"), fill: rgb("#1f1f1f")),
+    purple: (border: rgb("#6b1cb0"), fill: rgb("#241b3a")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.

@@ -90,9 +90,9 @@
                 size: font-sizes.body + 6pt,
                 font: thanks-han.font,
             )
-            #text(size: font-sizes.body, font: fonts.body, weight: "bold")[
-                #self.info.title
-            ]\
+            // #text(size: font-sizes.body, font: fonts.body, weight: "bold")[
+            //     #self.info.title
+            // ]\
             #text(size: font-sizes.body, font: fonts.mono, weight: "medium")[
                 #if display-author != none [#display-author]
             ]\
