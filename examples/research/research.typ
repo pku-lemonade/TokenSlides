@@ -10,7 +10,7 @@
     config-info(
         title: [异构芯片与计算系统的设计与优化],
         author: [卓有为],
-        // date: none,
+        date: none,
         institution: [北京大学],
         email: "youwei@pku.edu.cn",
         github: "pku-lemonade",
