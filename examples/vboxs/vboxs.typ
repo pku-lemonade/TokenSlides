@@ -23,20 +23,38 @@
     Title inset can be customized per box.
 ]
 
+== Colored vbox family
+
+#vboxs(
+    vhbox([Highlight])[重点],
+    vibox([Info])[信息],
+    vebox([Error])[错误],
+    vsbox([Success])[成功],
+    vnbox([Neutral])[中性],
+    vpbox([Purple])[扩展],
+    title-size: 20pt,
+    fill-height: false,
+)
+
+// A per-box size takes precedence over the row-level size above.
+#vibox([Per-box title size], title-size: 24pt)[正文仍使用默认字号。]
+
+#make-vbox("info", [Factory body], title: [Factory API])
+
 == Fill-height vboxs
 
 #vboxs(
-    ([大模型], [智谱]),
-    ([超算中心], []),
-    ([云服务提供商], [中国电信，阿里云]),
+    vbox([大模型])[智谱],
+    vbox([超算中心])[],
+    vbox([云服务提供商])[中国电信，阿里云],
 )
 
 == Natural vboxs with widths
 
 #vboxs(
-    ([阶段一], [FPGA 仿真与编译器测试。]),
-    ([阶段二], [芯片 V1 流片并完成 bring-up。]),
-    ([阶段三], [围绕客户模型打磨软件栈与性能分析工具。]),
+    vbox([阶段一])[FPGA 仿真与编译器测试。],
+    vbox([阶段二])[芯片 V1 流片并完成 bring-up。],
+    vbox([阶段三])[围绕客户模型打磨软件栈与性能分析工具。],
     width: 70%,
     widths: (0.8fr, 1fr, 1.2fr),
     fill-height: false,

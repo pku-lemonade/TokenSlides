@@ -1,6 +1,9 @@
 #import "@preview/shadowed:0.3.0": shadow as draw-shadow
 
-#import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-footer-style, cur-font-sizes, cur-imgs-config
+#import "base.typ": (
+    cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style, cur-imgs-config,
+    pause, touying-reducer,
+)
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -10,8 +13,8 @@
         inset-right: 0.5em,
         inset-top: 0.75em,
         inset-bottom: 0.75em,
-        box-spacing-above: 0.25em,
-        box-spacing-below: 0.25em,
+        box-spacing-above: 0.5em,
+        box-spacing-below: 0.5em,
     ),
     compact: (
         inset-left: 10pt,
@@ -173,14 +176,34 @@
     } else { title-inset }
 }
 
+#let _resolve-box-option(spec, key, inherited: auto, fallback: auto) = {
+    let value = spec.at(key, default: auto)
+    if value != auto {
+        value
+    } else if inherited != auto {
+        inherited
+    } else {
+        fallback
+    }
+}
+
 #let _resolve-title-size(spec, font-sizes, default-title-size: auto) = {
-    let title-size = spec.at("title-size", default: default-title-size)
-    if title-size == auto { font-sizes.body-title } else { title-size }
+    // Per-box override -> vboxs override -> aspect-ratio body-title preset.
+    _resolve-box-option(
+        spec,
+        "title-size",
+        inherited: default-title-size,
+        fallback: font-sizes.body-title,
+    )
 }
 
 #let _resolve-title-gap(spec, default-title-gap: auto) = {
-    let title-gap = spec.at("title-gap", default: default-title-gap)
-    if title-gap == auto { topbar-box-config.title-gap } else { title-gap }
+    _resolve-box-option(
+        spec,
+        "title-gap",
+        inherited: default-title-gap,
+        fallback: topbar-box-config.title-gap,
+    )
 }
 
 #let _box-title-content(
@@ -230,15 +253,23 @@
     )
 }
 
-#let _topbar-box-layout(spacing-config, colors) = {
+#let _topbar-box-layout(spec, spacing-config, colors) = {
+    let styles = cur-box.get()
+    let has-style = spec.style != none
+    if has-style {
+        assert(spec.style in styles.keys(), message: "vbox: unknown box style")
+    }
+    let style = if has-style { styles.at(spec.style) } else { none }
+    let accent = if has-style { style.border } else { colors.primary }
+    let fill = if has-style and cur-box-fill.get() { style.at("fill", default: none) } else { none }
     let stroke = _frame-stroke(colors)
-    stroke.insert("top", topbar-box-config.top-bar-width + colors.primary)
+    stroke.insert("top", topbar-box-config.top-bar-width + accent)
 
     (
-        fill: none,
+        fill: fill,
         stroke: stroke,
         titled-body-stroke: _frame-stroke(colors),
-        title-fill: colors.primary,
+        title-fill: accent,
         horizontal-title-stroke: _frame-stroke(colors, right: false),
         vertical-title-stroke: _frame-stroke(colors, bottom: false),
         titled-body-inset: _inset-from-spacing(spacing-config),
@@ -255,7 +286,7 @@
     let compact = _resolve-compact(spec, default-compact: default-compact)
     let spacing-config = _box-spacing(compact)
     let layout = if spec.kind == "topbar" {
-        _topbar-box-layout(spacing-config, colors)
+        _topbar-box-layout(spec, spacing-config, colors)
     } else {
         _plain-box-layout(spec, spacing-config, colors)
     }
@@ -268,8 +299,12 @@
     font-sizes,
     default-body-size: auto,
 ) = {
-    let resolved-body-size = spec.at("body-size", default: default-body-size)
-    let resolved-body-size = if resolved-body-size == auto { font-sizes.body } else { resolved-body-size }
+    let resolved-body-size = _resolve-box-option(
+        spec,
+        "body-size",
+        inherited: default-body-size,
+        fallback: font-sizes.body,
+    )
     let body = spec.at("body", default: [])
 
     block(width: 100%)[
@@ -535,21 +570,39 @@
     spec
 }
 
-#let _content-box-spec(item) = {
-    let found = none
-    if type(item) == content {
-        let fields = item.fields()
-        if item.func() == metadata and fields.at("label", default: none) == _box-spec-label {
-            found = fields.value
-        } else {
-            for child in fields.at("children", default: ()) {
-                if found == none {
-                    found = _content-box-spec(child)
-                }
-            }
-        }
+#let _copy-dict(source) = {
+    let copy = (:)
+    for (key, value) in source.pairs() {
+        copy.insert(key, value)
     }
-    found
+    copy
+}
+
+#let _spec-with-body(spec, body, breakable: auto) = {
+    let copied = _copy-dict(spec)
+    copied.insert("body", body)
+    if breakable != auto {
+        copied.insert("breakable", breakable)
+    }
+    copied
+}
+
+#let _vboxs-item-spec(item, breakable: auto) = {
+    assert(
+        type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
+        message: "vboxs: items must be Lemonade box helpers such as `vbox[...]`, `sbox[...]`, `ebox[...]`, or `nbox[...]`; use top-level `pause` between items for staged reveal",
+    )
+    let spec = _figure-marker-spec(item)
+    assert(spec != none, message: "vboxs: box item is missing internal Lemonade metadata")
+    _spec-with-body(spec, item.body, breakable: breakable)
+}
+
+#let _hide-vboxs-items(items) = {
+    items.map(spec => {
+        let hidden = _copy-dict(spec)
+        hidden.insert("hidden", true)
+        hidden
+    })
 }
 
 #let _parse-titled-box-args(args, name) = {
@@ -574,7 +627,8 @@
     (body: body, title: title, named: named)
 }
 
-#let make-box(
+#let _make-box(
+    kind,
     style-name,
     body,
     compact: auto,
@@ -590,7 +644,7 @@
     valign: top,
 ) = {
     let spec = _box-spec(
-        "plain",
+        kind,
         body,
         style: style-name,
         title: title,
@@ -608,10 +662,14 @@
     _box-figure(spec, body)
 }
 
-#let _make-named-box(style-name, name, ..args) = {
+#let make-box = _make-box.with("plain")
+#let make-vbox = _make-box.with("topbar")
+
+#let _make-box-helper(kind, style-name, name, ..args) = {
     let parsed = _parse-titled-box-args(args, name)
     let named = parsed.named
-    make-box(
+    _make-box(
+        kind,
         style-name,
         parsed.body,
         title: parsed.title,
@@ -628,6 +686,9 @@
     )
 }
 
+#let _make-named-box(style-name, name, ..args) = _make-box-helper("plain", style-name, name, ..args)
+#let _make-named-vbox(style-name, name, ..args) = _make-box-helper("topbar", style-name, name, ..args)
+
 #let hbox(..args) = _make-named-box("highlight", "hbox", ..args)
 #let ibox(..args) = _make-named-box("info", "ibox", ..args)
 #let ebox(..args) = _make-named-box("error", "ebox", ..args)
@@ -635,27 +696,15 @@
 #let nbox(..args) = _make-named-box("neutral", "nbox", ..args)
 #let pbox(..args) = _make-named-box("purple", "pbox", ..args)
 
-#let vbox(..args) = {
-    let parsed = _parse-titled-box-args(args, "vbox")
-    let named = parsed.named
-
-    let spec = _box-spec(
-        "topbar",
-        parsed.body,
-        title: parsed.title,
-        compact: named.at("compact", default: auto),
-        breakable: named.at("breakable", default: false),
-        title-size: named.at("title-size", default: auto),
-        title-inset: named.at("title-inset", default: auto),
-        body-size: named.at("body-size", default: auto),
-        title-gap: named.at("title-gap", default: auto),
-        height: named.at("height", default: auto),
-        above: named.at("above", default: auto),
-        below: named.at("below", default: auto),
-        valign: named.at("valign", default: top),
-    )
-    _box-figure(spec, parsed.body)
-}
+// Vertical-title counterparts to hbox/ibox/ebox/sbox/nbox/pbox.
+// The original vbox remains the theme-primary variant.
+#let vbox(..args) = _make-named-vbox(none, "vbox", ..args)
+#let vhbox(..args) = _make-named-vbox("highlight", "vhbox", ..args)
+#let vibox(..args) = _make-named-vbox("info", "vibox", ..args)
+#let vebox(..args) = _make-named-vbox("error", "vebox", ..args)
+#let vsbox(..args) = _make-named-vbox("success", "vsbox", ..args)
+#let vnbox(..args) = _make-named-vbox("neutral", "vnbox", ..args)
+#let vpbox(..args) = _make-named-vbox("purple", "vpbox", ..args)
 
 #let _footer-height() = {
     if cur-footer-style.get() == none {
@@ -689,36 +738,31 @@
                 ]
             }
         } else {
-            spec.insert("body", it.body)
-            _render-box-spec(spec)
+            _render-box-spec(_spec-with-body(spec, it.body))
         }
     }
 
     body
 }
 
-#let vboxs(
-    ..items,
-    dir: ltr,
+#let _render-vboxs(
+    specs,
     width: 100%,
     widths: auto,
     gap: auto,
     fill-height: auto,
     fill-pad: auto,
     compact: auto,
-    breakable: false,
     title-size: auto,
     body-size: auto,
     title-gap: auto,
     valign: top,
     halign: center,
 ) = {
-    let items = items.pos()
-    let count = items.len()
+    let count = specs.len()
     if count == 0 {
         []
     } else {
-        let ordered = if dir == rtl { items.rev() } else { items }
         let gap = if gap == auto { topbar-box-config.gap } else { gap }
         let col-widths = if widths == auto {
             range(count).map(_ => 1fr)
@@ -727,50 +771,6 @@
             assert(widths.len() == count, message: "vboxs: widths length must match item count")
             widths
         }
-
-        let parse-item = item => {
-            let marked = _content-box-spec(item)
-            if marked != none {
-                marked
-            } else if type(item) == dictionary {
-                let parsed = _box-spec(
-                    item.at("kind", default: "topbar"),
-                    item.at("body", default: []),
-                    style: item.at("style", default: none),
-                    title: item.at("title", default: none),
-                    compact: item.at("compact", default: auto),
-                    breakable: item.at("breakable", default: breakable),
-                    title-size: item.at("title-size", default: auto),
-                    title-inset: item.at("title-inset", default: auto),
-                    body-size: item.at("body-size", default: auto),
-                    title-gap: item.at("title-gap", default: auto),
-                    height: item.at("height", default: auto),
-                    above: item.at("above", default: auto),
-                    below: item.at("below", default: auto),
-                    valign: item.at("valign", default: top),
-                )
-                for (key, value) in item.pairs() {
-                    parsed.insert(key, value)
-                }
-                parsed
-            } else if type(item) == array {
-                let parsed = _box-spec(
-                    "topbar",
-                    item.at(1, default: []),
-                    title: item.at(0, default: none),
-                    breakable: breakable,
-                )
-                if item.len() > 2 and type(item.at(2)) == dictionary {
-                    for (key, value) in item.at(2).pairs() {
-                        parsed.insert(key, value)
-                    }
-                }
-                parsed
-            } else {
-                _box-spec("topbar", item, breakable: breakable)
-            }
-        }
-        let specs = ordered.map(parse-item)
 
         let row = resolved-height => context {
             let colors = cur-colors.get()
@@ -786,18 +786,23 @@
                     rows: resolved-rows,
                     inset: 0pt,
                     align: (x, y) => left + top,
-                    ..specs.enumerate().map(((i, spec)) => _box-frame(
-                        spec,
-                        layouts.at(i),
-                        font-sizes,
-                        height: if resolved-height == auto { auto } else { 100% },
-                        above: 0pt,
-                        below: 0pt,
-                        default-title-size: title-size,
-                        default-body-size: body-size,
-                        default-title-gap: title-gap,
-                        valign: cell-valign(i, 0),
-                    )),
+                    ..specs
+                        .enumerate()
+                        .map(((i, spec)) => {
+                            let frame = _box-frame(
+                                spec,
+                                layouts.at(i),
+                                font-sizes,
+                                height: if resolved-height == auto { spec.at("height", default: auto) } else { 100% },
+                                above: 0pt,
+                                below: 0pt,
+                                default-title-size: title-size,
+                                default-body-size: body-size,
+                                default-title-gap: title-gap,
+                                valign: cell-valign(i, 0),
+                            )
+                            if spec.at("hidden", default: false) { hide(frame) } else { frame }
+                        }),
                 )
             ]
         }
@@ -822,10 +827,61 @@
                 ]
             } else {
                 align(halign)[
-                    #box(width: width)[#row(auto)]
+                    #box(width: width)[
+                        #layout(size => {
+                            let natural-height = measure(row(auto), width: size.width).height
+                            row(natural-height)
+                        })
+                    ]
                 ]
             }
         }
+    }
+}
+
+// Strict row helper: items must be Lemonade box helper outputs, with optional
+// top-level `pause` separators for Touying staged reveal.
+#let vboxs(
+    ..items,
+    dir: ltr,
+    width: 100%,
+    widths: auto,
+    gap: auto,
+    fill-height: auto,
+    fill-pad: auto,
+    compact: auto,
+    breakable: auto,
+    title-size: auto,
+    body-size: auto,
+    title-gap: auto,
+    valign: top,
+    halign: center,
+) = {
+    let items = items.pos()
+    assert(dir in (ltr, rtl), message: "vboxs: dir must be ltr or rtl")
+    assert(breakable in (auto, true, false), message: "vboxs: breakable must be auto, true, or false")
+    let ordered = if dir == rtl { items.rev() } else { items }
+    let forced-breakable = breakable
+    let to-spec = item => _vboxs-item-spec(item, breakable: forced-breakable)
+    let render = _render-vboxs.with(
+        width: width,
+        widths: widths,
+        gap: gap,
+        fill-height: fill-height,
+        fill-pad: fill-pad,
+        compact: compact,
+        title-size: title-size,
+        body-size: body-size,
+        title-gap: title-gap,
+        valign: valign,
+        halign: halign,
+    )
+
+    if pause in ordered {
+        let parsed = ordered.map(item => if item == pause { item } else { to-spec(item) })
+        touying-reducer(reduce: render, cover: _hide-vboxs-items, ..parsed)
+    } else {
+        render(ordered.map(to-spec))
     }
 }
 
@@ -941,11 +997,14 @@
     alignment: left,
     leading: 1em,
 ) = {
-    _box-figure((
-        kind: "tbox",
-        size: size,
-        weight: weight,
-        alignment: alignment,
-        leading: leading,
-    ), body)
+    _box-figure(
+        (
+            kind: "tbox",
+            size: size,
+            weight: weight,
+            alignment: alignment,
+            leading: leading,
+        ),
+        body,
+    )
 }
