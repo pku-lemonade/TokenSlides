@@ -1,6 +1,6 @@
-#import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style
+#import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes
 #import "emph.typ": on-primary
-#import "footer.typ": footer-layouts
+#import "footer.typ": footer-height
 
 // USER CONFIG
 // - Geometry and title typography: edit `box-config` below.
@@ -300,18 +300,6 @@
     body
 }
 
-#let _footer-height() = {
-    if cur-footer-style.get() == none {
-        0pt
-    } else {
-        let footer-layout = footer-layouts.at(cur-ar.get())
-        measure({
-            set text(size: footer-layout.text-size)
-            v(footer-layout.height)
-        }).height
-    }
-}
-
 #let _render-vboxs(
     specs,
     width: 100%,
@@ -361,7 +349,7 @@
             if fill-height {
                 block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
                     #layout(size => {
-                        let footer-height = _footer-height()
+                        let footer-height = footer-height()
                         let pad-height = measure(v(fill-pad)).height
                         let after-height = if after == none { 0pt } else {
                             measure(after-block, width: size.width).height

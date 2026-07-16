@@ -1,8 +1,8 @@
 // Table styling.
 
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, cur-footer-style, fonts, slide-layouts
+#import "base.typ": cur-ar, cur-colors, cur-font-sizes, fonts, slide-layouts
 #import "emph.typ": apply-emph-style
-#import "footer.typ": footer-layouts
+#import "footer.typ": footer-height
 
 // CONFIG
 #let table-config = (
@@ -394,15 +394,7 @@
             let slide-margins = slide-layouts.at(cur-ar.get())
             let top-margin = measure(v(slide-margins.top)).height
             let pos = here().position()
-            let footer-height = if cur-footer-style.get() == none {
-                0pt
-            } else {
-                let footer-layout = footer-layouts.at(cur-ar.get())
-                measure({
-                    set text(size: footer-layout.text-size)
-                    v(footer-layout.height)
-                }).height
-            }
+            let footer-height = footer-height()
             let pad-height = measure(v(fill-pad)).height
             let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
             let target-height = calc.max(0pt, remaining-height - footer-height - pad-height)

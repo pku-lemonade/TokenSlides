@@ -1,5 +1,5 @@
-#import "base.typ": bleed as bleed-block, cur-ar, cur-footer-style, cur-imgs-config, fonts, slide-layouts
-#import "footer.typ": footer-layouts
+#import "base.typ": bleed as bleed-block, cur-ar, cur-imgs-config, fonts, slide-layouts
+#import "footer.typ": footer-height
 
 // CONFIG
 #let assets = (
@@ -260,15 +260,7 @@
                 if resolved-fill-height {
                     block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
                         #layout(size => context {
-                            let footer-height = if cur-footer-style.get() == none {
-                                0pt
-                            } else {
-                                let footer-layout = footer-layouts.at(cur-ar.get())
-                                measure({
-                                    set text(size: footer-layout.text-size)
-                                    v(footer-layout.height)
-                                }).height
-                            }
+                            let footer-height = footer-height()
                             let caption-height = ordered
                                 .map(item => {
                                     if item.caption == none {
@@ -382,15 +374,7 @@
                 if resolved-fill-height {
                     block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
                         #layout(size => context {
-                            let footer-height = if cur-footer-style.get() == none {
-                                0pt
-                            } else {
-                                let footer-layout = footer-layouts.at(cur-ar.get())
-                                measure({
-                                    set text(size: footer-layout.text-size)
-                                    v(footer-layout.height)
-                                }).height
-                            }
+                            let footer-height = footer-height()
                             let caption-height = if has-captions {
                                 measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
                             } else {

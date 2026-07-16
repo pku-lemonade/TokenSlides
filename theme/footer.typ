@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, fonts, is-zh-lang
+#import "base.typ": cur-ar, cur-colors, cur-footer-style, fonts, is-zh-lang
 #import "base.typ": utils
 
 // CONFIG
@@ -20,6 +20,20 @@
 )
 
 #let _footer-inline-title(it) = utils.markup-text(it, mode: "typ").replace(regex("\\s*[\\r\\n]+\\s*"), "")
+
+// Height the footer reserves at the bottom of a slide (0pt when disabled).
+// Requires context. Fill-height layouts subtract this from the slide height.
+#let footer-height() = {
+    if cur-footer-style.get() == none {
+        0pt
+    } else {
+        let footer-layout = footer-layouts.at(cur-ar.get())
+        measure({
+            set text(size: footer-layout.text-size)
+            v(footer-layout.height)
+        }).height
+    }
+}
 
 // Footer renderer. Set as `config-page(footer: footer.with(style: ...))` in the theme.
 #let footer(self, style: "bar") = context {
