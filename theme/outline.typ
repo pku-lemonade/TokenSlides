@@ -200,6 +200,8 @@
     let outline-width = outline-layout.width
     let numbering-style = if outline-config.numbering-style == auto {
         if is-zh-lang(text.lang) { "zh" } else { "en" }
+    } else {
+        outline-config.numbering-style
     }
     let outline-numbering = outline-config.numbering-styles.at(numbering-style)
     let highlight-current = level != none
