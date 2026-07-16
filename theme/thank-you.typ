@@ -62,10 +62,7 @@
     }
     if content != none { contact-items.push(content) }
 
-    let display-contact-items = ()
-    for item in contact-items {
-        display-contact-items.push(item)
-    }
+    let display-contact-items = contact-items
     let reserved-contact-lines = calc.max(contact-items.len(), thank-you-config.min-contact-lines)
     for _ in range(reserved-contact-lines - contact-items.len()) {
         display-contact-items.push(hide[placeholder])
@@ -90,9 +87,6 @@
                 size: font-sizes.body + 6pt,
                 font: thanks-han.font,
             )
-            // #text(size: font-sizes.body, font: fonts.body, weight: "bold")[
-            //     #self.info.title
-            // ]\
             #text(size: font-sizes.body, font: fonts.mono, weight: "medium")[
                 #if display-author != none [#display-author]
             ]\

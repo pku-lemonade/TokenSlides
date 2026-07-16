@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, cur-footer-style, fonts, is-zh-lang
+#import "base.typ": cur-ar, cur-colors, cur-footer-style, fonts
 #import "base.typ": utils
 
 // CONFIG
@@ -95,8 +95,6 @@
 
             let left-cell = if not footer-config.show-institution or inst == none {
                 []
-            } else if is-zh-lang(text.lang) {
-                [#upper(inst)]
             } else {
                 [#upper(inst)]
             }

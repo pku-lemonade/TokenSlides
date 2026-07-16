@@ -2,8 +2,8 @@
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": (
-    aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill, cur-colors,
-    cur-font-sizes, cur-footer-style, cur-imgs-config, cur-title-align, font-size-presets, fonts,
+    accent-presets, aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact, cur-box-fill,
+    cur-colors, cur-font-sizes, cur-footer-style, cur-imgs-config, cur-title-align, font-size-presets, fonts,
     imgs-config as default-imgs-config, modes, page-spacing, slide-layouts, slide-page-sizes, title-alignments,
 )
 #import "base.typ": (

@@ -92,21 +92,29 @@
 #let is-zh-lang(lang) = type(lang) == str and (lang == "zh" or lang.starts-with("zh-"))
 
 // CONFIG (colors)
+//
+// Accent presets: alternate `primary`/`secondary` choices. Use them in the
+// color dicts below, or per deck via
+// `lemonade-theme(colors-override: (primary: accent-presets.tsinghua-purple))`.
+#let accent-presets = (
+    berkeley-blue: rgb("#002676"),
+    dark-red: rgb("#94070a"),
+    crimson: rgb("#990000"),
+    tsinghua-purple: rgb("#660874"),
+    california-gold: rgb("#FDB515"),
+    golden-yellow: rgb("#FFCC00"),
+)
+
 #let light-colors = (
     bg: white,
     fg: black,
-    // primary: rgb("#94070a"),
-    // primary: rgb("#990000"),
-    primary: rgb("#002676"),
-    // primary: rgb("#660874"), // Tsinghua purple
-    // secondary: rgb("#FDB515"),
-    secondary: rgb("#FFCC00"),
+    primary: accent-presets.berkeley-blue,
+    secondary: accent-presets.golden-yellow,
     neutral: rgb("#737373"),
     neutral-lightest: white,
     neutral-darkest: black,
     table-stroke: rgb("#d4d4d4"),
     link: rgb("#2563eb"),
-    // footer-bg: rgb("#002676"),
     footer-bg: auto,
     footer-fg: white,
     code-bg: rgb("#f5f5f5"),
@@ -119,7 +127,7 @@
     bg: rgb("#0D0D0D"),
     fg: rgb("#EDEDED"),
     primary: rgb("#38BDF8"),
-    secondary: rgb("#FDB515"),
+    secondary: accent-presets.california-gold,
     neutral: rgb("#5D5D5D"),
     neutral-lightest: rgb("#EDEDED"),
     neutral-darkest: rgb("#0D0D0D"),
