@@ -63,33 +63,21 @@
     assert(title-align in title-alignments)
 
     let theme = modes.at(mode)
-    let colors = (:)
-    for (key, value) in theme.colors.pairs() {
-        colors.insert(key, value)
-    }
-    if colors-override != none {
-        for (key, value) in colors-override.pairs() {
-            colors.insert(key, value)
-        }
-    }
+    let colors = theme.colors + (if colors-override == none { (:) } else { colors-override })
     let spacing = page-spacing.at(aspect-ratio)
     let slide-margins = slide-layouts.at(aspect-ratio)
     let slide-page-size = slide-page-sizes.at(aspect-ratio)
     let resolved-font-sizes = font-size-presets.at(aspect-ratio)
-    let resolved-imgs-config = (
-        fill-height: if imgs-fill-height == auto {
-            imgs-config.at("fill-height", default: default-imgs-config.fill-height)
-        } else { imgs-fill-height },
-        fill-pad: if imgs-fill-pad == auto {
-            imgs-config.at("fill-pad", default: default-imgs-config.fill-pad)
-        } else { imgs-fill-pad },
-        cap-size: if imgs-cap-size == auto {
-            imgs-config.at("cap-size", default: default-imgs-config.cap-size)
-        } else { imgs-cap-size },
-        cap-weight: if imgs-cap-weight == auto {
-            imgs-config.at("cap-weight", default: default-imgs-config.cap-weight)
-        } else { imgs-cap-weight },
+    let legacy-imgs-config = (
+        fill-height: imgs-fill-height,
+        fill-pad: imgs-fill-pad,
+        cap-size: imgs-cap-size,
+        cap-weight: imgs-cap-weight,
     )
+    let resolved-imgs-config = default-imgs-config + imgs-config
+    for (key, value) in legacy-imgs-config.pairs() {
+        if value != auto { resolved-imgs-config.insert(key, value) }
+    }
     let section-slide-fn = body => outline-slide(level: 1)
 
     cur-ar.update(aspect-ratio)

@@ -234,12 +234,7 @@
     spec
 }
 
-#let _with-body(spec, body) = {
-    let copy = (:)
-    for (key, value) in spec.pairs() { copy.insert(key, value) }
-    copy.insert("body", body)
-    copy
-}
+#let _with-body(spec, body) = spec + (body: body)
 
 #let _parse-box-args(args, name) = {
     let pos = args.pos()
