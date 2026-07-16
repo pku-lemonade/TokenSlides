@@ -4,8 +4,8 @@ IMPORTANT: When unsure about Typst/Touying APIs, always use Context7 + web searc
 
 - Entry: `lemonade.typ` (re-exports `theme/lemonade.typ`)
 - `theme/lemonade.typ`: main theme wrapper; wires Touying config + global `set/show` rules
-- `theme/base.typ`: global knobs (font sizes, spacing, colors/fonts, mode choices) + runtime state (`cur-ar`, `cur-colors`, `cur-box`)
-- `theme/slide.typ`: default slide template + slide margins (`slide-layouts`)
+- `theme/base.typ`: global knobs (font sizes, spacing, slide margins/page sizes (`slide-layouts`), colors/fonts, mode choices) + runtime state (`cur-ar`, `cur-colors`, `cur-box`)
+- `theme/slide.typ`: default slide template
 - `theme/title.typ`: title slide template + title/thanks margins (`title-layouts`)
 - `theme/thank-you.typ`: thank-you slide template (uses `title-layouts`)
 - `theme/footer.typ`: footer layouts + footer renderer (`footer`)
@@ -14,4 +14,3 @@ IMPORTANT: When unsure about Typst/Touying APIs, always use Context7 + web searc
 - `theme/images.typ`: assets + `place-image` helpers + `imgs`
 - `theme/table.typ`: table styling (`apply-table-style`)
 - Validate: `typst compile --root . examples/<file>.typ /tmp/out.pdf`
-
