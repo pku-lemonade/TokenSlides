@@ -1,6 +1,7 @@
 // Table styling.
 
 #import "base.typ": cur-ar, cur-colors, cur-font-sizes, cur-footer-style, fonts, slide-layouts
+#import "emph.typ": apply-emph-style
 #import "footer.typ": footer-layouts
 
 // CONFIG
@@ -54,7 +55,7 @@
     header-text-size: 24pt,
     column-styles: (),
     fill-height: false,
-    fill-pad: 0.25em,
+    fill-pad: 0.3em,
     row-stretch: "content",
     row-weights: auto,
     header-row: true,
@@ -264,11 +265,8 @@
         }
         table.cell(x: col, y: local-row)[
             #block(width: 100%)[
-                #if leading != auto {
-                    set par(leading: leading)
-                }
-                #show emph: it => text(weight: "black", fill: fill)[#it.body]
-                #show strong: it => text(weight: "black", fill: fill)[#it.body]
+                #set par(leading: leading) if leading != auto
+                #show: apply-emph-style.with(emph-fill: fill, strong-fill: fill)
                 #text(size: size, weight: weight, fill: fill)[#cell]
             ]
         ]

@@ -13,6 +13,7 @@
 #import "artifact-badges.typ": *
 #import "boxes.typ": *
 #import "callout.typ": *
+#import "emph.typ": apply-emph-style, on-primary
 #import "images.typ": *
 
 #import "footer.typ": footer as footer-fn
@@ -144,8 +145,7 @@
         below: spacing.math-below,
     )
     show raw: set text(font: fonts.mono, size: resolved-font-sizes.code)
-    show emph: it => textbf[#it.body]
-    show strong: it => text(fill: colors.primary, weight: "black")[#it.body]
+    show: apply-emph-style.with(strong-fill: colors.primary)
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
     // surrounding text color so progressive fading works.
     show link: it => {

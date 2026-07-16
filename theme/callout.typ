@@ -1,6 +1,7 @@
 #import "@preview/shadowed:0.3.0": shadow as draw-shadow
 
-#import "base.typ": cur-colors, cur-font-sizes
+#import "base.typ": cur-colors, cur-font-sizes, bleed as bleed-block
+#import "emph.typ": apply-emph-style
 
 // CONFIG
 #let callout-config = (
@@ -66,6 +67,7 @@
     shadow-spread: callout-config.shadow-spread,
     shadow-dx: callout-config.shadow-dx,
     shadow-dy: callout-config.shadow-dy,
+    bleed: true,
     breakable: false,
 ) = {
     context {
@@ -89,25 +91,19 @@
             radius: callout-config.radius,
             inset: inset,
         )[
-            #show emph: it => {
-                set text(fill: emph-fill, weight: weight)
-                h(tracking)
-                it.body
-                h(tracking)
-            }
-            #show strong: it => {
-                set text(fill: emph-fill, weight: weight)
-                h(tracking)
-                it.body
-                h(tracking)
-            }
+            #show: apply-emph-style.with(
+                emph-fill: emph-fill,
+                strong-fill: emph-fill,
+                weight: weight,
+                tracking: tracking,
+            )
             #set par(leading: leading)
             #align(alignment)[
                 #text(fill: text-fill, size: size, weight: weight, tracking: tracking)[#body]
             ]
         ]
 
-        block(width: width, above: above, below: below, breakable: false)[
+        let out = block(width: width, above: above, below: below, breakable: false)[
             #if shadow != none and shadow != false {
                 draw-shadow(
                     dx: shadow-dx,
@@ -121,6 +117,8 @@
                 body-block
             }
         ]
+
+        if bleed { bleed-block(out) } else { out }
     }
 }
 

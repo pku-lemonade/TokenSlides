@@ -1,4 +1,5 @@
 #import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style
+#import "emph.typ": on-primary
 #import "footer.typ": footer-layouts
 
 // USER CONFIG
@@ -31,9 +32,9 @@
 
 #let vboxs-config = (
     gap: 0.4em,
-    after-gap: 0pt,
+    after-gap: 0.3em,
     fill-height: true,
-    fill-pad: 0.25em,
+    fill-pad: 0.3em,
 )
 
 #let code-box-config = (
@@ -73,7 +74,7 @@
 #let _title-content(spec, font-sizes, row-title-size: none) = {
     let default-size = if row-title-size == none { font-sizes.body-title } else { row-title-size }
     let title-size = spec.at("title-size", default: default-size)
-    text(size: title-size, weight: box-config.title-weight, fill: box-config.title-text-fill)[#spec.title]
+    text(size: title-size, weight: box-config.title-weight, fill: box-config.title-text-fill)[#on-primary(spec.title)]
 }
 
 #let _body-content(spec, font-sizes) = block(width: 100%)[

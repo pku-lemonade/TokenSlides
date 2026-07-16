@@ -25,7 +25,7 @@
         body: 26pt,
         body-title: 28pt,
         title: 40pt,
-        slide-title: 38pt,
+        slide-title: 40pt,
         section: 44pt,
         callout: 36pt,
         code: 20pt,
@@ -52,7 +52,7 @@
 
 #let imgs-config = (
     fill-height: true,
-    fill-pad: 0.5em,
+    fill-pad: 0.3em,
     cap-size: font-sizes.small,
     cap-weight: "bold",
 )
