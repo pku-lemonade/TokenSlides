@@ -49,7 +49,7 @@
     columns: auto,
     header: none,
     style: "banded",
-    palette: "red",
+    palette: "primary",
     center-cols: (),
     text-size: 20pt,
     header-text-size: 24pt,
@@ -88,8 +88,10 @@
     let colors = cur-colors.get()
     let column-count = columns.len()
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
+    // `red` is a historical alias from when the primary accent was red.
+    let palette = if palette == "red" { "primary" } else { palette }
     let palettes = (
-        red: vtable-colors(colors.primary, colors.secondary),
+        primary: vtable-colors(colors.primary, colors.secondary),
         blue: vtable-colors(rgb("#2F6F9F"), rgb("#FDB515")),
     )
     assert(palette in palettes.keys(), message: "vtable: unknown palette `" + palette + "`")

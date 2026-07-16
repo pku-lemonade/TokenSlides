@@ -7,6 +7,24 @@
     qr-code: "../assets/qr.png",
 )
 
+// Shared caption styling for `place-image` and `imgs`. `auto` values resolve
+// from `cur-imgs-config`; `cap-color: auto` keeps the surrounding text color.
+#let _caption-block(caption, cap-size: auto, cap-weight: auto, cap-color: auto) = context {
+    let imgs-config = cur-imgs-config.get()
+    let cap-text-args = (
+        font: fonts.mono,
+        size: if cap-size == auto { imgs-config.at("cap-size") } else { cap-size },
+        weight: if cap-weight == auto { imgs-config.at("cap-weight") } else { cap-weight },
+    )
+    if cap-color != auto { cap-text-args.insert("fill", cap-color) }
+    block(width: 100%)[
+        #set text(..cap-text-args)
+        // Keep inline code and wrapped lines on the same caption sizing path.
+        #show raw: set text(..cap-text-args)
+        #caption
+    ]
+}
+
 #let place-image(
     path,
     caption: none,
@@ -16,22 +34,11 @@
     position: top + right,
     dx: 0em,
     dy: 0em,
+    cap-gap: 0.4em,
 ) = place(position, dx: dx, dy: dy)[
     #align(center)[
         #if caption != none [
-            #context {
-                let imgs-config = cur-imgs-config.get()
-                let resolved-cap-size = imgs-config.at("cap-size")
-                let resolved-cap-weight = imgs-config.at("cap-weight")
-                [
-                    #block(width: width)[
-                        #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
-                        #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
-                        #caption
-                    ]
-                    #v(-0.8em)
-                ]
-            }
+            #block(width: width, spacing: 0pt, below: cap-gap)[#_caption-block(caption)]
         ]
         #if height == auto {
             image(path, width: width)
@@ -119,31 +126,12 @@
         let is-vertical = dir == ttb or dir == btt
         let ordered = if dir == rtl or dir == btt { parsed.rev() } else { parsed }
 
-        let render-caption = caption => context {
-            let imgs-config = cur-imgs-config.get()
-            let resolved-cap-size = if cap-size == auto { imgs-config.at("cap-size") } else { cap-size }
-            let resolved-cap-weight = if cap-weight == auto { imgs-config.at("cap-weight") } else { cap-weight }
-            if cap-color == auto {
-                block(width: 100%)[
-                    #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
-                    // Keep inline code and wrapped lines on the same caption sizing path.
-                    #show raw: set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight)
-                    #caption
-                ]
-            } else {
-                block(width: 100%)[
-                    #set text(font: fonts.mono, size: resolved-cap-size, weight: resolved-cap-weight, fill: cap-color)
-                    // Keep inline code and wrapped lines on the same caption sizing path.
-                    #show raw: set text(
-                        font: fonts.mono,
-                        size: resolved-cap-size,
-                        weight: resolved-cap-weight,
-                        fill: cap-color,
-                    )
-                    #caption
-                ]
-            }
-        }
+        let render-caption = caption => _caption-block(
+            caption,
+            cap-size: cap-size,
+            cap-weight: cap-weight,
+            cap-color: cap-color,
+        )
 
         let render-image = (source, resolved-width, resolved-height) => {
             if type(source) == str or type(source) == bytes {

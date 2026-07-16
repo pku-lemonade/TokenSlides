@@ -35,7 +35,7 @@
         emph-fill: rgb("#FDB515"),
         stroke-fill: rgb("#003262"),
     ),
-    red: (
+    primary: (
         fill: colors.primary,
         text-fill: white,
         emph-fill: colors.secondary,
@@ -75,6 +75,8 @@
         let font-sizes = cur-font-sizes.get()
         let color-options = callout-colors(colors)
         assert(type(color) == str, message: "callout: color must be a string")
+        // `red` is a historical alias from when the primary accent was red.
+        let color = if color == "red" { "primary" } else { color }
         assert(color in color-options.keys(), message: "callout: unknown color `" + color + "`")
         let color-style = color-options.at(color)
         let size = if size == auto { font-sizes.callout } else { size }
@@ -123,6 +125,8 @@
 }
 
 #let bluecallout(..args) = callout(color: "blue", ..args)
-#let redcallout(..args) = callout(color: "red", ..args)
+// Fills with the theme primary accent; the `red*` names are historical aliases.
+#let primarycallout(..args) = callout(color: "primary", ..args)
+#let redcallout(..args) = primarycallout(..args)
 #let bcallout(..args) = bluecallout(..args)
 #let rcallout(..args) = redcallout(..args)
