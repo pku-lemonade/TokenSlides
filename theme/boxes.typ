@@ -43,7 +43,7 @@
 
 #let code-box-config = (
     inset: 10pt,
-    border-width: 0.8pt,
+    border-width: 1pt,
 )
 
 #let _box-figure-kind = "lemonade-box"

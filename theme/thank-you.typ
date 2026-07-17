@@ -11,19 +11,23 @@
     ),
     min-contact-lines: 2,
     leading: 0.75em,
+    // Intentionally larger than the opening title slide.
+    title-size-delta: 12pt,
     placement: (
         venue-dy: 2em,
         title-dy: -1em,
         contact-dy: -1em,
     ),
-    // CJK title face tweaks.
-    han: (font: "FZFW ZhuZi GuDianS LH"),
+    // CJK face tweaks for the contact block. The decorative face is not
+    // vendored with the repo — without it installed, Typst falls back to the
+    // body CJK font.
+    han: (font: "FZFW ZhuZi GuDianS LH", size-delta: 6pt),
 )
 
+// Extra content (QR codes, closing images, ...) goes in the positional body:
+// `#thank-you-slide(title: ...)[ ... ]`.
 #let thank-you-slide(
     title: [Thank You],
-    content: none,
-    decoration: none,
     config: (:),
     ..extras,
 ) = touying-slide-wrapper(self => context {
@@ -57,7 +61,6 @@
     if display-github != none {
         contact-items.push(link("https://github.com/" + display-github)[github.com/#display-github])
     }
-    if content != none { contact-items.push(content) }
 
     let display-contact-items = contact-items
     let reserved-contact-lines = calc.max(contact-items.len(), thank-you-config.min-contact-lines)
@@ -76,12 +79,12 @@
         }
         place(horizon + center, dy: thank-you-config.placement.title-dy)[
             #show regex("[\p{Han}]+"): set text(font: font-config.body)
-            #text(size: font-sizes.title + 12pt, weight: "bold", fill: colors.primary)[#title]
+            #text(size: font-sizes.title + thank-you-config.title-size-delta, weight: "bold", fill: colors.primary)[#title]
         ]
         place(bottom + center, dy: thank-you-config.placement.contact-dy)[
             #set par(leading: thank-you-config.leading)
             #show regex("[\p{Han}]+"): set text(
-                size: font-sizes.body + 6pt,
+                size: font-sizes.body + thank-you-config.han.size-delta,
                 font: thank-you-config.han.font,
             )
             #text(size: font-sizes.body, font: font-config.mono, weight: "medium")[
@@ -94,7 +97,6 @@
                 #display-contact-items.join(linebreak())
             ]
         ]
-        if decoration != none { decoration }
         if extra != none { extra }
     }
 

@@ -31,17 +31,18 @@
     }
 }
 
-// Presentation table palette. Body fills are deterministic tints, and the
-// accent color is reserved for higher-emphasis rows such as totals.
-#let vtable-colors(base, accent) = (
+// Presentation table palette. Body fills are deterministic tints toward the
+// page background (so they adapt to light and dark modes), and the accent
+// color is reserved for higher-emphasis rows such as totals.
+#let vtable-colors(base, accent, colors) = (
     header-fill: base,
-    header-text-fill: white,
-    row-odd-fill: base.lighten(88%),
-    row-even-fill: base.lighten(95%),
-    column-odd-fill: base.lighten(90%),
-    column-even-fill: base.lighten(96%),
-    total-fill: accent.lighten(78%),
-    total-text-fill: black,
+    header-text-fill: colors.on-primary,
+    row-odd-fill: color.mix((base, 12%), (colors.bg, 88%)),
+    row-even-fill: color.mix((base, 5%), (colors.bg, 95%)),
+    column-odd-fill: color.mix((base, 10%), (colors.bg, 90%)),
+    column-even-fill: color.mix((base, 4%), (colors.bg, 96%)),
+    total-fill: color.mix((accent, 22%), (colors.bg, 78%)),
+    total-text-fill: colors.fg,
 )
 
 // Presentation table preset with Excel-style table options.
@@ -91,15 +92,16 @@
     // `red` is a historical alias from when the primary accent was red.
     let palette = if palette == "red" { "primary" } else { palette }
     let palettes = (
-        primary: vtable-colors(colors.primary, colors.secondary),
-        blue: vtable-colors(rgb("#2F6F9F"), rgb("#FDB515")),
+        primary: vtable-colors(colors.primary, colors.secondary, colors),
+        blue: vtable-colors(rgb("#2F6F9F"), rgb("#FDB515"), colors),
     )
     assert(palette in palettes.keys(), message: "vtable: unknown palette `" + palette + "`")
     let palette-colors = palettes.at(palette)
     let is-grid-style = style == "grid"
     let banded-rows = if banded-rows == auto { not is-grid-style } else { banded-rows }
     let banded-columns = if banded-columns == auto { false } else { banded-columns }
-    let default-stroke-paint = if is-grid-style { black } else { white }
+    // Banded separators are page-colored gaps; grid rules take the text color.
+    let default-stroke-paint = if is-grid-style { colors.fg } else { colors.bg }
     let stroke = if stroke == auto {
         1pt + default-stroke-paint
     } else if type(stroke) == length {

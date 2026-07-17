@@ -50,6 +50,8 @@
     let footer-text-fill = if footer-config.text-fill == auto {
         if style == "bar" { colors.footer-fg } else { colors.fg }
     } else { footer-config.text-fill }
+    // Full footers get "bold"; the page-only counter renders "black" so the
+    // lone number keeps presence without a footer bar behind it.
     let footer-weight = if show-full-footer { "bold" } else { "black" }
     let counter = text(size: 1em, weight: footer-weight)[
         #if footer-config.show-total {

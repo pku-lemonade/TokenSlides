@@ -9,13 +9,14 @@
     above: 0.2em,
     below: 0em,
     radius: 0pt,
-    stroke-width: 0.8pt,
+    stroke-width: 1pt,
     size: auto,
     weight: "bold",
     leading: 0em,
     tracking: 0.05em,
     shadow: true,
-    shadow-fill: black.transparentize(70%),
+    // `auto` resolves to the mode's `colors.shadow` (dark mode uses a light glow).
+    shadow-fill: auto,
     shadow-blur: 4pt,
     shadow-spread: 1pt,
     shadow-dx: 0pt,
@@ -23,12 +24,15 @@
 )
 
 #let callout-colors(colors) = (
+    // "white" is the mode's brightest surface: white in light mode, a light
+    // banner on dark pages.
     white: (
-        fill: white,
-        text-fill: black,
+        fill: colors.neutral-lightest,
+        text-fill: colors.neutral-darkest,
         emph-fill: colors.primary,
-        stroke-fill: white,
+        stroke-fill: colors.neutral-lightest,
     ),
+    // Fixed Berkeley brand banner; deliberately mode-independent.
     blue: (
         fill: rgb("#003262"),
         text-fill: white,
@@ -37,7 +41,7 @@
     ),
     primary: (
         fill: colors.primary,
-        text-fill: white,
+        text-fill: colors.on-primary,
         emph-fill: colors.secondary,
         stroke-fill: colors.primary,
     ),
@@ -84,6 +88,7 @@
         let text-fill = if text-fill == auto { color-style.text-fill } else { text-fill }
         let emph-fill = if emph-fill == auto { color-style.emph-fill } else { emph-fill }
         let stroke = if stroke == auto { callout-config.stroke-width + color-style.stroke-fill } else { stroke }
+        let shadow-fill = if shadow-fill == auto { colors.shadow } else { shadow-fill }
 
         let body-block = block(
             breakable: breakable,

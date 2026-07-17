@@ -89,7 +89,13 @@
     neutral-lightest: white,
     neutral-darkest: black,
     table-stroke: rgb("#d4d4d4"),
-    link: rgb("#2563eb"),
+    // Links wear the primary accent; dark mode already equates the two.
+    link: accent-config.berkeley-blue,
+    // Text placed on primary-filled surfaces (footer bar, vtable headers,
+    // primary callouts).
+    on-primary: white,
+    // Elevation shadow for floating surfaces (callouts).
+    shadow: black.transparentize(70%),
     footer-bg: auto,
     footer-fg: white,
     code-bg: rgb("#f5f5f5"),
@@ -108,8 +114,13 @@
     neutral-darkest: rgb("#0D0D0D"),
     table-stroke: rgb("#5D5D5D"),
     link: rgb("#38BDF8"),
+    on-primary: rgb("#0D0D0D"),
+    // Dark shadows vanish on a dark page; use a light glow instead.
+    shadow: white.transparentize(70%),
     footer-bg: auto,
-    footer-fg: rgb("#EDEDED"),
+    // The bar footer fills with `primary` (#38BDF8); near-black text keeps
+    // contrast on it, where light text would wash out.
+    footer-fg: rgb("#0D0D0D"),
     code-bg: rgb("#0B1220"),
     code-border: rgb("#334155"),
     code-fg: rgb("#EDEDED"),

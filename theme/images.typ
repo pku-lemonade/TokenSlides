@@ -1,4 +1,4 @@
-#import "base.typ": layout-config, bleed as bleed-block, cur-ar, cur-font-sizes, font-config
+#import "base.typ": layout-config, bleed as bleed-block, cur-ar, cur-colors, cur-font-sizes, font-config
 #import "footer.typ": footer-height
 
 // CONFIG
@@ -104,7 +104,8 @@
     cap-weight: auto,
     cap-color: auto,
     cap-gap: 0.2em,
-    border: 0.8pt + rgb("#d4d4d4"),
+    // `auto` resolves to a hairline in the mode's table-stroke color.
+    border: auto,
     border-radius: 0pt,
     inset: 0pt,
 ) = {
@@ -172,11 +173,13 @@
             }
         }
 
-        let render-cell = (source, resolved-width, resolved-height) => {
+        // `border` may be `auto` (mode-dependent); bind `render-cell` once the
+        // resolved stroke is known inside the context block below.
+        let render-cell-with = (resolved-border, source, resolved-width, resolved-height) => {
             let img = render-image(source, resolved-width, resolved-height)
-            let cell = if border != none {
+            let cell = if resolved-border != none {
                 box(
-                    stroke: border,
+                    stroke: resolved-border,
                     radius: border-radius,
                     clip: true,
                     inset: inset,
@@ -194,6 +197,8 @@
             let imgs-config = cur-imgs-config.get()
             let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
             let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
+            let resolved-border = if border == auto { 1pt + cur-colors.get().table-stroke } else { border }
+            let render-cell = render-cell-with.with(resolved-border)
             let slide-margins = layout-config.at(cur-ar.get()).margins
             let resolved-left-margin = measure(h(slide-margins.left)).width
             let resolved-right-margin = measure(h(slide-margins.right)).width

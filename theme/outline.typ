@@ -35,7 +35,9 @@
         "4-3": (
             width: 70%,
             variants: (
-                sections: (indent: (0em,), spacing: (1em,)),
+                // 22pt = the former 1em at the 4-3 body size; pt keeps the
+                // outline gutters unit-consistent with the 16-9 layout.
+                sections: (indent: (0em,), spacing: (22pt,)),
                 subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
             ),
         ),
@@ -68,7 +70,7 @@
 
 #let _centered-progressive-outline(
     self: none,
-    alpha: 60%,
+    alpha: outline-config.alpha,
     level: auto,
     numbered: (false,),
     numbering-patterns: (),
