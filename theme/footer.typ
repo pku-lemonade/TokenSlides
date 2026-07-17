@@ -1,15 +1,14 @@
-#import "base.typ": cur-ar, cur-colors, cur-footer-style, fonts
+#import "base.typ": cur-ar, cur-colors, cur-footer-style, font-config
 #import "base.typ": utils
 
 // CONFIG
-#let footer-layouts = (
-    // `height` uses `em` so it scales with `text-size` (set in the footer renderer).
-    // Example: `text-size: 16pt` + `height: 1.6em` => 25.6pt tall footer.
-    "16-9": (height: 1.2em, text-size: 16pt),
-    "4-3": (height: 1.2em, text-size: 16pt),
-)
-
 #let footer-config = (
+    // Footer geometry per aspect ratio. `height` uses `em` so it scales with
+    // `text-size` (e.g. `text-size: 16pt` + `height: 1.6em` => 25.6pt tall footer).
+    layouts: (
+        "16-9": (height: 1.2em, text-size: 16pt),
+        "4-3": (height: 1.2em, text-size: 16pt),
+    ),
     fill: auto,
     text-fill: auto,
     inset: 0.2em,
@@ -27,7 +26,7 @@
     if cur-footer-style.get() == none {
         0pt
     } else {
-        let footer-layout = footer-layouts.at(cur-ar.get())
+        let footer-layout = footer-config.layouts.at(cur-ar.get())
         measure({
             set text(size: footer-layout.text-size)
             v(footer-layout.height)
@@ -41,7 +40,7 @@
 
     let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
-    let footer-layout = footer-layouts.at(aspect-ratio)
+    let footer-layout = footer-config.layouts.at(aspect-ratio)
     let show-full-footer = style in ("bar", "plain")
     let footer-fill = if footer-config.fill == auto {
         if style == "bar" {
@@ -64,7 +63,7 @@
         set align(bottom)
         set text(
             size: footer-layout.text-size,
-            font: fonts.mono,
+            font: font-config.mono,
             fill: footer-text-fill,
             weight: footer-weight,
         )

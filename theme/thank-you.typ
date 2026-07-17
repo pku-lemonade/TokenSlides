@@ -1,26 +1,23 @@
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, fonts
+#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config
 #import "base.typ": config-page, touying-slide, touying-slide-wrapper, utils
 #import "artifact-badges.typ": artifact-badges
 
 // CONFIG
-#let thank-you-layouts = (
-    "16-9": (top: 0em, bottom: 0em, left: 1em, right: 1em),
-    "4-3": (top: 0em, bottom: 0em, left: 1em, right: 1em),
-)
-
 #let thank-you-config = (
+    // Thank-you-slide page margins per aspect ratio.
+    layouts: (
+        "16-9": (top: 0em, bottom: 0em, left: 1em, right: 1em),
+        "4-3": (top: 0em, bottom: 0em, left: 1em, right: 1em),
+    ),
     min-contact-lines: 2,
     leading: 0.75em,
-)
-
-#let thank-you-placement = (
-    venue-dy: 2em,
-    title-dy: -1em,
-    contact-dy: -1em,
-)
-
-#let thanks-han = (
-    font: "FZFW ZhuZi GuDianS LH",
+    placement: (
+        venue-dy: 2em,
+        title-dy: -1em,
+        contact-dy: -1em,
+    ),
+    // CJK title face tweaks.
+    han: (font: "FZFW ZhuZi GuDianS LH"),
 )
 
 #let thank-you-slide(
@@ -34,7 +31,7 @@
     let aspect-ratio = cur-ar.get()
     let colors = cur-colors.get()
     let font-sizes = cur-font-sizes.get()
-    let margins = thank-you-layouts.at(aspect-ratio)
+    let margins = thank-you-config.layouts.at(aspect-ratio)
 
     let default-config = config-page(
         footer: none,
@@ -71,29 +68,29 @@
     let body = {
         artifact-badges(config: (aspect-ratio: aspect-ratio))
         if display-venue != none {
-            place(top + center, dy: thank-you-placement.venue-dy)[
-                #text(size: font-sizes.body-title, font: fonts.body, weight: "bold")[
+            place(top + center, dy: thank-you-config.placement.venue-dy)[
+                #text(size: font-sizes.body-title, font: font-config.body, weight: "bold")[
                     #display-venue
                 ]
             ]
         }
-        place(horizon + center, dy: thank-you-placement.title-dy)[
-            #show regex("[\p{Han}]+"): set text(font: fonts.body)
+        place(horizon + center, dy: thank-you-config.placement.title-dy)[
+            #show regex("[\p{Han}]+"): set text(font: font-config.body)
             #text(size: font-sizes.title + 12pt, weight: "bold", fill: colors.primary)[#title]
         ]
-        place(bottom + center, dy: thank-you-placement.contact-dy)[
+        place(bottom + center, dy: thank-you-config.placement.contact-dy)[
             #set par(leading: thank-you-config.leading)
             #show regex("[\p{Han}]+"): set text(
                 size: font-sizes.body + 6pt,
-                font: thanks-han.font,
+                font: thank-you-config.han.font,
             )
-            #text(size: font-sizes.body, font: fonts.mono, weight: "medium")[
+            #text(size: font-sizes.body, font: font-config.mono, weight: "medium")[
                 #if display-author != none [#display-author]
             ]\
-            #text(size: font-sizes.body, font: fonts.mono, weight: "medium")[
+            #text(size: font-sizes.body, font: font-config.mono, weight: "medium")[
                 #if display-institution != none [#display-institution] else { hide[placeholder] }
             ]\
-            #text(size: font-sizes.body, font: fonts.mono, weight: "medium")[
+            #text(size: font-sizes.body, font: font-config.mono, weight: "medium")[
                 #display-contact-items.join(linebreak())
             ]
         ]

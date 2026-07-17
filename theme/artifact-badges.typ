@@ -10,9 +10,12 @@
     replicated: "../assets/acm-artifact-badges/results_replicated_dl.jpg",
 )
 
-#let artifact-badge-layouts = (
-    "16-9": (height: 92pt, gap: 0.08in, dx: 0.5em, dy: 1em),
-    "4-3": (height: 80pt, gap: 0.07in, dx: -0.55em, dy: 0.5em),
+#let artifact-badge-config = (
+    // Badge geometry per aspect ratio.
+    layouts: (
+        "16-9": (height: 92pt, gap: 0.08in, dx: 0.5em, dy: 1em),
+        "4-3": (height: 80pt, gap: 0.07in, dx: -0.55em, dy: 0.5em),
+    ),
 )
 
 #let _badge-path(badge) = {
@@ -39,7 +42,7 @@
     if items.len() == 0 {
         none
     } else {
-        let layout = artifact-badge-layouts.at(config.at("aspect-ratio", default: "16-9"))
+        let layout = artifact-badge-config.layouts.at(config.at("aspect-ratio", default: "16-9"))
         let resolved-height = if height == auto { config.at("height", default: layout.height) } else { height }
         let resolved-gap = if gap == auto { config.at("gap", default: layout.gap) } else { gap }
         let resolved-dx = if dx == auto { config.at("dx", default: layout.dx) } else { dx }

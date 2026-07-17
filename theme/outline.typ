@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, fonts, is-zh-lang
+#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, is-zh-lang
 #import "base.typ": components, touying-slide, touying-slide-wrapper, utils
 
 // CONFIG
@@ -22,24 +22,24 @@
     zh: (outline-zh-numbering,),
 )
 
-#let outline-layouts = (
-    "16-9": (
-        width: 100%,
-        variants: (
-            sections: (indent: (0em,), spacing: (6pt,)),
-            subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
-        ),
-    ),
-    "4-3": (
-        width: 70%,
-        variants: (
-            sections: (indent: (0em,), spacing: (1em,)),
-            subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
-        ),
-    ),
-)
-
 #let outline-config = (
+    // Outline geometry per aspect ratio.
+    layouts: (
+        "16-9": (
+            width: 100%,
+            variants: (
+                sections: (indent: (0em,), spacing: (6pt,)),
+                subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
+            ),
+        ),
+        "4-3": (
+            width: 70%,
+            variants: (
+                sections: (indent: (0em,), spacing: (1em,)),
+                subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
+            ),
+        ),
+    ),
     title: outline-title,
     default-variant: "sections",
     alpha: 20%,
@@ -193,7 +193,7 @@
     let variant-name = if variant == auto { outline-config.default-variant } else { variant }
 
     let aspect-ratio = cur-ar.get()
-    let outline-layout = outline-layouts.at(aspect-ratio)
+    let outline-layout = outline-config.layouts.at(aspect-ratio)
     let variant-layout = outline-layout.variants.at(variant-name)
 
     let variant-config = outline-config.variants.at(variant-name)
@@ -223,13 +223,13 @@
             text-weight: ("black",),
         )
 
-        set text(font: fonts.mono, tracking: outline-config.entry-tracking)
+        set text(font: font-config.mono, tracking: outline-config.entry-tracking)
         cont
     }
 
     let main-body = {
         align(center)[
-            #text(size: font-sizes.title, font: fonts.mono, weight: "black")[#title]
+            #text(size: font-sizes.title, font: font-config.mono, weight: "black")[#title]
         ]
         if variant-config.use-columns {
             align(center)[

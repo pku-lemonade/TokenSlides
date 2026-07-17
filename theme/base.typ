@@ -2,77 +2,63 @@
 //
 // Most module-specific configs live in their module files under `theme/`.
 // This file holds the few global knobs users tweak often.
+//
+// Naming convention (machine-exported; see AGENTS.md "Config convention"):
+// every user-tweakable style dict is a top-level `#let <feature>-config` in the
+// module it styles; aspect-ratio variants ("16-9" / "4-3") sit under a
+// `layouts:` key inside it. Unsuffixed dicts (e.g. `light-colors`) are
+// internal building blocks.
 
 // Central Touying import: theme modules can import Touying APIs from `base.typ`
 // so we only pin the package version once.
 #import "@preview/touying:0.6.1": *
 
 // CONFIG (frequently tweaked)
-#let font-size-presets = (
+//
+// Everything `lemonade-theme(aspect-ratio: ...)` controls: font sizes,
+// text/math spacing, slide margins, and page size per aspect ratio.
+#let layout-config = (
     "16-9": (
-        small: 18pt,
-        body: 26pt,
-        body-title: 28pt,
-        title: 40pt,
-        slide-title: 40pt,
-        section: 44pt,
-        callout: 36pt,
-        code: 20pt,
-        table: 20pt,
-        page-number: 36pt,
+        font-sizes: (
+            small: 18pt,
+            body: 26pt,
+            body-title: 28pt,
+            title: 40pt,
+            slide-title: 40pt,
+            section: 44pt,
+            callout: 36pt,
+            code: 20pt,
+            table: 20pt,
+            page-number: 36pt,
+        ),
+        spacing: (par: 1.2em, math-above: 0.8em, math-below: 0.6em),
+        margins: (top: 0.5em, bottom: 0em, left: 1.5em, right: 1em),
+        // Match PowerPoint's standard slide canvas instead of Typst/Touying's smaller presentation paper.
+        page-size: (width: 13.333in, height: 7.5in),
     ),
     "4-3": (
-        small: 14pt,
-        body: 22pt,
-        body-title: 24pt,
-        title: 40pt,
-        slide-title: 32pt,
-        section: 34pt,
-        callout: 30pt,
-        code: 18pt,
-        table: 18pt,
-        page-number: 32pt,
+        font-sizes: (
+            small: 14pt,
+            body: 22pt,
+            body-title: 24pt,
+            title: 40pt,
+            slide-title: 32pt,
+            section: 34pt,
+            callout: 30pt,
+            code: 18pt,
+            table: 18pt,
+            page-number: 32pt,
+        ),
+        spacing: (par: 0.3em, math-above: 1em, math-below: auto),
+        margins: (top: 0.75em, bottom: 0em, left: 1em, right: 0.75em),
+        page-size: (width: 10in, height: 7.5in),
     ),
 )
 
-// Backwards-compatible default. Runtime rendering uses `cur-font-sizes`,
-// which `lemonade-theme(aspect-ratio: ...)` updates from `font-size-presets`.
-#let font-sizes = font-size-presets.at("16-9")
+#let aspect-ratios = layout-config.keys()
 
-#let imgs-config = (
-    fill-height: true,
-    fill-pad: 0.3em,
-    cap-size: font-sizes.small,
-    cap-weight: "bold",
-)
-
-// Global text/math spacing per aspect ratio.
-#let page-spacing = (
-    "16-9": (
-        par: 1.2em,
-        math-above: 0.8em,
-        math-below: 0.6em,
-    ),
-    "4-3": (
-        par: 0.3em,
-        math-above: 1em,
-        math-below: auto,
-    ),
-)
-
-// Default slide margins per aspect ratio.
-#let slide-layouts = (
-    "16-9": (top: 0.5em, bottom: 0em, left: 1.5em, right: 1em),
-    "4-3": (top: 0.75em, bottom: 0em, left: 1em, right: 0.75em),
-)
-
-// Match PowerPoint's standard slide canvases instead of Typst/Touying's smaller presentation papers.
-#let slide-page-sizes = (
-    "16-9": (width: 13.333in, height: 7.5in),
-    "4-3": (width: 10in, height: 7.5in),
-)
-
-#let fonts = (
+// Font family stacks.
+#let font-config = (
     body: ("Inter", "Arial", "Source Han Sans SC"),
     math: ("Inter", "New Computer Modern Math"),
     mono: ("Inconsolata", "Source Han Sans SC"),
@@ -84,8 +70,8 @@
 //
 // Accent presets: alternate `primary`/`secondary` choices. Use them in the
 // color dicts below, or per deck via
-// `lemonade-theme(colors-override: (primary: accent-presets.tsinghua-purple))`.
-#let accent-presets = (
+// `lemonade-theme(colors-override: (primary: accent-config.tsinghua-purple))`.
+#let accent-config = (
     berkeley-blue: rgb("#002676"),
     dark-red: rgb("#94070a"),
     crimson: rgb("#990000"),
@@ -97,8 +83,8 @@
 #let light-colors = (
     bg: white,
     fg: black,
-    primary: accent-presets.berkeley-blue,
-    secondary: accent-presets.golden-yellow,
+    primary: accent-config.berkeley-blue,
+    secondary: accent-config.golden-yellow,
     neutral: rgb("#737373"),
     neutral-lightest: white,
     neutral-darkest: black,
@@ -116,7 +102,7 @@
     bg: rgb("#0D0D0D"),
     fg: rgb("#EDEDED"),
     primary: rgb("#38BDF8"),
-    secondary: accent-presets.california-gold,
+    secondary: accent-config.california-gold,
     neutral: rgb("#5D5D5D"),
     neutral-lightest: rgb("#EDEDED"),
     neutral-darkest: rgb("#0D0D0D"),
@@ -129,50 +115,49 @@
     code-fg: rgb("#EDEDED"),
 )
 
-// Airtable-inspired Dark1 accents with Light2 body fills.
+// Accents sit at OKLCH L 0.52 (white title text stays >= 4.5:1 on every bar);
+// fills share OKLCH L 0.955 / C 0.028 so no box reads heavier than its siblings.
 #let light-box-styles = (
-    highlight: (border: rgb("#b87503"), fill: rgb("#ffeab6")),
-    info: (border: rgb("#2750ae"), fill: rgb("#cfdfff")),
-    error: (border: rgb("#ba1e45"), fill: rgb("#ffdce5")),
-    success: (border: rgb("#338a17"), fill: rgb("#d1f7c4")),
-    neutral: (border: rgb("#444444"), fill: rgb("#eeeeee")),
-    purple: (border: rgb("#6b1cb0"), fill: rgb("#ede2fe")),
+    highlight: (border: rgb("#915c00"), fill: rgb("#faefdc")),
+    info: (border: rgb("#3a65b8"), fill: rgb("#e6f1ff")),
+    error: (border: rgb("#ae3b47"), fill: rgb("#ffe9e9")),
+    success: (border: rgb("#327b38"), fill: rgb("#e5f6e5")),
+    neutral: (border: rgb("#585858"), fill: rgb("#f2f0ec")),
+    purple: (border: rgb("#7652ac"), fill: rgb("#f3ecff")),
 )
 
+// Same accents as light mode; fills share OKLCH L 0.27 / C 0.02.
 #let dark-box-styles = (
-    highlight: (border: rgb("#b87503"), fill: rgb("#2f2412")),
-    info: (border: rgb("#2750ae"), fill: rgb("#151c38")),
-    error: (border: rgb("#ba1e45"), fill: rgb("#3a161f")),
-    success: (border: rgb("#338a17"), fill: rgb("#183411")),
-    neutral: (border: rgb("#444444"), fill: rgb("#1f1f1f")),
-    purple: (border: rgb("#6b1cb0"), fill: rgb("#241b3a")),
+    highlight: (border: rgb("#915c00"), fill: rgb("#2c251b")),
+    info: (border: rgb("#3a65b8"), fill: rgb("#212730")),
+    error: (border: rgb("#ae3b47"), fill: rgb("#302323")),
+    success: (border: rgb("#327b38"), fill: rgb("#202920")),
+    neutral: (border: rgb("#585858"), fill: rgb("#272624")),
+    purple: (border: rgb("#7652ac"), fill: rgb("#28242f")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.
-#let modes = (
+#let mode-config = (
     light: (colors: light-colors, box: light-box-styles),
     dark: (colors: dark-colors, box: dark-box-styles),
 )
 
-// Central aspect-ratio “choices”: pick one in `lemonade-theme(aspect-ratio: ...)`.
-#let aspect-ratios = ("16-9", "4-3")
 #let title-alignments = ("left", "center")
 
 // Internal runtime state (set by `lemonade-theme`; other modules read it).
 #let cur-ar = state("lec-ar", "16-9")
-#let cur-colors = state("lec-colors", modes.light.colors)
-#let cur-box = state("lec-box", modes.light.box)
+#let cur-colors = state("lec-colors", mode-config.light.colors)
+#let cur-box = state("lec-box", mode-config.light.box)
 #let cur-box-compact = state("lec-box-compact", false)
 #let cur-box-fill = state("lec-box-fill", false)
 #let cur-title-align = state("lec-title-align", "center")
-#let cur-font-sizes = state("lec-font-sizes", font-sizes)
-#let cur-imgs-config = state("lec-imgs-config", imgs-config)
+#let cur-font-sizes = state("lec-font-sizes", layout-config.at("16-9").font-sizes)
 #let cur-footer-style = state("lec-footer-style", "bar")
 #let cur-artifact-badges = state("lec-artifact-badges", ())
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {
-    let margins = slide-layouts.at(cur-ar.get())
+    let margins = layout-config.at(cur-ar.get()).margins
     move(dx: -margins.left)[
         #block(width: 100% + margins.left + margins.right)[#body]
     ]

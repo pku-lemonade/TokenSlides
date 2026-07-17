@@ -1,4 +1,4 @@
-#import "base.typ": bleed as bleed-block, cur-ar, cur-imgs-config, fonts, slide-layouts
+#import "base.typ": layout-config, bleed as bleed-block, cur-ar, cur-font-sizes, font-config
 #import "footer.typ": footer-height
 
 // CONFIG
@@ -7,13 +7,32 @@
     qr-code: "../assets/qr.png",
 )
 
+// Default image options; deck-level overrides merge in via `lemonade-theme(imgs-config: ...)`.
+// `cap-size: auto` resolves to the current aspect ratio's `small` font size.
+#let imgs-config = (
+    fill-height: true,
+    fill-pad: 0.3em,
+    cap-size: auto,
+    cap-weight: "bold",
+)
+
+// Internal runtime state (set by `lemonade-theme`).
+#let cur-imgs-config = state("lec-imgs-config", imgs-config)
+
 // Shared caption styling for `place-image` and `imgs`. `auto` values resolve
 // from `cur-imgs-config`; `cap-color: auto` keeps the surrounding text color.
 #let _caption-block(caption, cap-size: auto, cap-weight: auto, cap-color: auto) = context {
     let imgs-config = cur-imgs-config.get()
+    let resolved-cap-size = if cap-size != auto {
+        cap-size
+    } else if imgs-config.at("cap-size") != auto {
+        imgs-config.at("cap-size")
+    } else {
+        cur-font-sizes.get().small
+    }
     let cap-text-args = (
-        font: fonts.mono,
-        size: if cap-size == auto { imgs-config.at("cap-size") } else { cap-size },
+        font: font-config.mono,
+        size: resolved-cap-size,
         weight: if cap-weight == auto { imgs-config.at("cap-weight") } else { cap-weight },
     )
     if cap-color != auto { cap-text-args.insert("fill", cap-color) }
@@ -175,7 +194,7 @@
             let imgs-config = cur-imgs-config.get()
             let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
             let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
-            let slide-margins = slide-layouts.at(cur-ar.get())
+            let slide-margins = layout-config.at(cur-ar.get()).margins
             let resolved-left-margin = measure(h(slide-margins.left)).width
             let resolved-right-margin = measure(h(slide-margins.right)).width
 

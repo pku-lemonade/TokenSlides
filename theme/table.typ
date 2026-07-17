@@ -1,6 +1,6 @@
 // Table styling.
 
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, fonts, slide-layouts
+#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, layout-config
 #import "emph.typ": apply-emph-style
 #import "footer.typ": footer-height
 
@@ -19,7 +19,7 @@
         set table(stroke: (paint: colors.table-stroke, thickness: table-config.stroke-width))
         show table.cell: set text(size: table-text-size)
         show table.cell: cell => {
-            show raw: set text(font: fonts.mono, size: table-text-size)
+            show raw: set text(font: font-config.mono, size: table-text-size)
             cell
         }
         show table: it => [
@@ -290,7 +290,7 @@
 
     show table.cell: cell => {
         show raw: set text(
-            font: fonts.mono,
+            font: font-config.mono,
             size: if header-row and cell.y == 0 { header-text-size } else { text-size },
         )
         cell
@@ -393,7 +393,7 @@
 
     if fill-height {
         layout(size => context {
-            let slide-margins = slide-layouts.at(cur-ar.get())
+            let slide-margins = layout-config.at(cur-ar.get()).margins
             let top-margin = measure(v(slide-margins.top)).height
             let pos = here().position()
             let footer-height = footer-height()
