@@ -14,8 +14,6 @@
         title-dy: -1em,
         metadata-dy: -2em,
     ),
-    // CJK metadata face tweaks. The decorative face is not vendored with the
-    // repo — without it installed, Typst falls back to the body CJK font.
     han: (
         font: "FZFW ZhuZi GuDianS LH",
         size-delta: 6pt,
