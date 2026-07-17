@@ -7,3 +7,4 @@ __pycache__/
 out/
 **/review/
 third_party/
+.claude/settings.local.json

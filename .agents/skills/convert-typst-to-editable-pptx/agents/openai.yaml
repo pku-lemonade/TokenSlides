@@ -1,0 +1,4 @@
+interface:
+  display_name: "Typst to Editable PowerPoint"
+  short_description: "Rebuild Typst slide decks as editable PowerPoint"
+  default_prompt: "Use $convert-typst-to-editable-pptx to convert this Typst slide deck into a visually faithful, fully editable PowerPoint."
