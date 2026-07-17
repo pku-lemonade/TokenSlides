@@ -15,6 +15,7 @@ Use `@oai/artifact-tool` for authoring in environments governed by that presenta
 
 Read [references/reconstruction-guide.md](references/reconstruction-guide.md) before implementing the conversion. Read [references/qa-protocol.md](references/qa-protocol.md) before validating or delivering the output.
 Read [references/point-safe-typography.md](references/point-safe-typography.md) before mapping Typst font sizes into any CSS-pixel authoring API.
+Read [references/lemonade-calibration.md](references/lemonade-calibration.md) before re-deriving any empirical constant (line spacing, font faces, runtime unit quirks); it holds verified calibrations keyed to the tracked theme profile.
 
 ## Non-Negotiable Output Rules
 
@@ -58,14 +59,24 @@ Use the user's requested output path. If none is given, write `<source-stem>.ppt
 
 ### 3. Reconstruct the Theme and Layout
 
-Match the source aspect ratio and slide dimensions. Define reusable constants for palette, typography, spacing, margins, grid lines, and footer geometry. Keep typography constants in Typst/PowerPoint points even when slide geometry uses CSS pixels.
+For decks in this repo's lemonade theme, do not re-derive the design system by hand — refresh and read the tracked profile:
+
+```bash
+python <this-skill-dir>/scripts/make_theme_profile.py          # regenerate references/theme-profile.json
+python <this-skill-dir>/scripts/make_theme_profile.py --check  # verify it is not stale
+```
+
+The profile carries every `<feature>-config` from `theme/*.typ` (the AGENTS.md "Config convention" is the machine contract, so new theme configs appear automatically). Take the deck's own choices — aspect ratio, mode, overrides — from the `lemonade-theme.with(...)` call in the entry file. `layout-config.<aspect>.page-size` already equals PowerPoint's standard canvas, so Typst point geometry maps 1:1. Fall back to manual capture (reconstruction guide) only for non-lemonade decks.
+
+Match the source aspect ratio and slide dimensions. Define reusable constants for palette, typography, spacing, margins, grid lines, and footer geometry from the profile. Keep typography constants in Typst/PowerPoint points even when slide geometry uses CSS pixels.
 
 Use exact `pt * 96 / 72` values for numeric pixel text setters and explicit `pt` strings for structured runs; never round the conversion. Do not assume a point-named setter survives serialization without an OOXML smoke test. Do not reduce source font sizes to make text fit. Match fonts, rich-text runs, spacing, bounds, insets, and deliberate line breaks instead.
 
 Apply whole-shape text style before structured runs, then set paragraph-only
 properties through ranges if the authoring runtime drops them. Keep paragraph
-spacing in the runtime's documented units; artifact-tool 2.8.22 uses integer
-centipoints for structured `spaceBefore` and `spaceAfter`.
+spacing in the runtime's documented units and verify them with a one-shape
+export smoke test; verified per-version pins live in
+[references/lemonade-calibration.md](references/lemonade-calibration.md).
 
 Build reusable helpers for recurring slide types before adding content:
 
@@ -119,9 +130,11 @@ python <this-skill-dir>/scripts/audit_pptx_editability.py <output.pptx>
 
 Investigate every reported full-slide picture. The only acceptable pictures are legitimate source assets, and their count should match the manifest.
 
-Create a scratch typography policy from the effective Typst theme sizes and stable object roles, then audit the serialized DrawingML:
+Generate the typography policy from the tracked profile (add `--extra-size` for module-derived sizes listed in the calibration reference), then audit the serialized DrawingML:
 
 ```bash
+python <this-skill-dir>/scripts/make_typography_policy.py \
+  --aspect <deck-aspect> --output <scratch/typography-policy.json>
 python <this-skill-dir>/scripts/audit_pptx_typography.py \
   <output.pptx> --policy <scratch/typography-policy.json>
 ```

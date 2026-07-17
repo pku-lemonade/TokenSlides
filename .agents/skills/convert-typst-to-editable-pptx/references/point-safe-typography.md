@@ -16,22 +16,25 @@ canvas uses CSS pixels at 96 DPI; Typst and PowerPoint text sizes use points.
 - Numeric artifact-tool `fontSize` values are CSS pixels.
 - PowerPoint DrawingML stores `sz` in hundredths of a point.
 - Preserve a Typst point size as `round(pt * 100)` in final OOXML.
-- Structured paragraph `spaceBefore` and `spaceAfter` values are integer
-  centipoints in artifact-tool 2.8.22; encode `20pt` as `2000`, not as CSS
-  pixels.
+- Structured paragraph `spaceBefore` and `spaceAfter` units are
+  runtime-version-specific; the verified pins (integer centipoints as of
+  artifact-tool 2.8.22) live in [lemonade-calibration.md](lemonade-calibration.md).
 
 Do not copy a Typst value such as `40pt` into `fontSize: 40`; that exports as
 `30pt`. Do not round a point-to-pixel conversion to an integer or half-pixel.
 
 ## Authoring Pattern
 
-Keep the design-system constants in points:
+Keep the design-system constants in points, taken from the tracked theme
+profile (`layout-config.<aspect>.font-sizes` in `theme-profile.json`) — never
+copied from examples. The values below are the 16:9 lemonade profile; a 4:3
+deck uses different sizes (22/24/32/...):
 
 ```js
 const TYPE_PT = Object.freeze({
-  body: 26,
-  cardTitle: 28,
-  slideTitle: 40,
+  body: 26,       // layout-config["16-9"].font-sizes.body
+  cardTitle: 28,  // ...body-title
+  slideTitle: 40, // ...slide-title
 });
 
 const ptToPx = (pt) => pt * 96 / 72;
@@ -120,12 +123,20 @@ band. Never use shrink-to-fit to preserve a one-line source label.
 
 ## Source Manifest
 
-Record the effective Typst sizes after theme and script-specific adjustments.
-Use a deck-wide allowlist for simple decks:
+Generate the deck-wide allowlist from the tracked theme profile instead of
+writing it by hand:
+
+```bash
+python <this-skill-dir>/scripts/make_typography_policy.py \
+  --aspect <deck-aspect> --output <scratch/typography-policy.json>
+```
+
+It emits this shape (16:9 lemonade values shown; module-derived sizes go in
+via `--extra-size`, see lemonade-calibration.md):
 
 ```json
 {
-  "allowed_point_sizes": [26, 28, 34, 36, 40, 44, 46, 52],
+  "allowed_point_sizes": [18, 20, 26, 28, 34, 36, 40, 44, 46],
   "tolerance_pt": 0.01,
   "require_explicit_size": true,
   "forbid_autofit": true

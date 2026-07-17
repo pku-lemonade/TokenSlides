@@ -29,7 +29,16 @@ Treat source and render as complementary:
 
 ## Record the Design System
 
-Capture these values before building slides:
+For lemonade decks this is generated, not captured: run
+`scripts/make_theme_profile.py` and read `references/theme-profile.json` —
+every `<feature>-config` in `theme/*.typ` is exported automatically (AGENTS.md
+"Config convention"). The deck's own choices come from its
+`lemonade-theme.with(...)` arguments. `layout-config.<aspect>.page-size` is
+PowerPoint's standard canvas, so Typst point geometry transfers 1:1. Empirical
+constants that the profile cannot express live in
+[lemonade-calibration.md](lemonade-calibration.md).
+
+For non-lemonade decks, capture these values before building slides:
 
 - aspect ratio and page dimensions;
 - title, content, section, outline, and thank-you layouts;
@@ -98,6 +107,18 @@ only those properties through text ranges after the runs are installed. Do not
 reassign the whole base style afterward.
 
 Give elements stable, unique names. Use explicit geometry rather than positions inferred from content.
+
+Name shapes by role so typography expectations can target them mechanically:
+
+| Name prefix | Theme size role |
+| --- | --- |
+| `slide-title-` | `font-sizes.slide-title` |
+| `section-title-` | `font-sizes.section` |
+| `card-title-` | `font-sizes.body-title` |
+| `body-` | `font-sizes.body` |
+| `caption-` | `font-sizes.small` |
+| `code-` | `font-sizes.code` |
+| `footer-` / `page-number-` | footer text size / `font-sizes.page-number` |
 
 ## Reconstruct Diagrams
 

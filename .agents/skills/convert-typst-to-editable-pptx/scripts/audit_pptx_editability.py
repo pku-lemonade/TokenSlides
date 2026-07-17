@@ -32,6 +32,7 @@ NS = {
 P = "{%s}" % NS["p"]
 A = "{%s}" % NS["a"]
 R = "{%s}" % NS["r"]
+MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
 EMU_PER_INCH = 914400
 
 
@@ -197,18 +198,41 @@ def group_transform(group: ET.Element, parent: Transform) -> Transform:
     )
 
 
+def resolved_children(element: ET.Element) -> Iterable[ET.Element]:
+    """Children with mc:AlternateContent collapsed to the branch a renderer uses.
+
+    PowerPoint renders exactly one of mc:Choice / mc:Fallback, so counting both
+    would double-count the same logical object. Prefer the first Choice, fall
+    back to Fallback."""
+
+    for child in element:
+        if child.tag == MC + "AlternateContent":
+            branch = child.find(MC + "Choice")
+            if branch is None:
+                branch = child.find(MC + "Fallback")
+            if branch is not None:
+                yield from resolved_children(branch)
+        else:
+            yield child
+
+
+def walk_resolved(element: ET.Element) -> Iterable[ET.Element]:
+    for child in resolved_children(element):
+        yield child
+        yield from walk_resolved(child)
+
+
 def picture_elements(
     element: ET.Element, transform: Transform = Transform()
 ) -> Iterable[tuple[ET.Element, Transform]]:
     """Yield pictures and their enclosing group transform without duplicates."""
 
-    for child in element:
+    for child in resolved_children(element):
         if child.tag == P + "pic":
             yield child, transform
         elif child.tag == P + "grpSp":
             yield from picture_elements(child, group_transform(child, transform))
         else:
-            # Handles compatibility wrappers such as mc:AlternateContent.
             yield from picture_elements(child, transform)
 
 
@@ -230,8 +254,20 @@ def geometry(
         y = float(off.get("y", "0"))
         width = float(ext.get("cx", "0"))
         height = float(ext.get("cy", "0"))
+        rotation = float(xfrm.get("rot", "0")) / 60000.0
     except ValueError:
         return None
+
+    if rotation % 360 != 0:
+        # DrawingML rotates about the shape center; use the rotated rect's
+        # axis-aligned bounding box so e.g. a 90deg-rotated full-slide picture
+        # still trips the coverage thresholds.
+        angle = math.radians(rotation)
+        bound_w = abs(width * math.cos(angle)) + abs(height * math.sin(angle))
+        bound_h = abs(height * math.cos(angle)) + abs(width * math.sin(angle))
+        x += (width - bound_w) / 2
+        y += (height - bound_h) / 2
+        width, height = bound_w, bound_h
 
     x, y = transform.point(x, y)
     width = abs(width * transform.sx)
@@ -292,12 +328,13 @@ def has_text(element: ET.Element) -> bool:
 
 
 def count_slide_objects(root: ET.Element) -> dict[str, int]:
-    shapes = list(root.iter(P + "sp"))
-    connectors = list(root.iter(P + "cxnSp"))
-    graphic_frames = list(root.iter(P + "graphicFrame"))
-    pictures = list(root.iter(P + "pic"))
+    nodes = list(walk_resolved(root))
+    shapes = [node for node in nodes if node.tag == P + "sp"]
+    connectors = [node for node in nodes if node.tag == P + "cxnSp"]
+    graphic_frames = [node for node in nodes if node.tag == P + "graphicFrame"]
+    pictures = [node for node in nodes if node.tag == P + "pic"]
     text_candidates = shapes + connectors + graphic_frames + pictures
-    text_nodes = [node for node in root.iter(A + "t") if (node.text or "").strip()]
+    text_nodes = [node for node in nodes if node.tag == A + "t" and (node.text or "").strip()]
     text_shape_count = sum(1 for shape in shapes if has_text(shape))
     return {
         "text_objects": sum(1 for obj in text_candidates if has_text(obj)),
@@ -309,7 +346,7 @@ def count_slide_objects(root: ET.Element) -> dict[str, int]:
         "connectors": len(connectors),
         "graphic_frames": len(graphic_frames),
         "pictures": len(pictures),
-        "groups": sum(1 for _ in root.iter(P + "grpSp")),
+        "groups": sum(1 for node in nodes if node.tag == P + "grpSp"),
     }
 
 

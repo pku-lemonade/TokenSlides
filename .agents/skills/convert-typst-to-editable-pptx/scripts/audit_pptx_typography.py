@@ -25,6 +25,7 @@ from urllib.parse import unquote
 
 NS = {
     "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    "c": "http://schemas.openxmlformats.org/drawingml/2006/chart",
     "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
     "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
     "pr": "http://schemas.openxmlformats.org/package/2006/relationships",
@@ -95,9 +96,11 @@ def read_relationships(
         target = rel.get("Target")
         if not rel_id or target is None:
             continue
+        external = rel.get("TargetMode", "").lower() == "external"
         relationships[rel_id] = {
+            "type": rel.get("Type", "").rsplit("/", 1)[-1],
             "target": target,
-            "package_path": package_path(source_part, target),
+            "package_path": None if external else package_path(source_part, target),
         }
     return relationships
 
@@ -110,7 +113,7 @@ def ordered_slide_parts(archive: zipfile.ZipFile) -> list[str]:
     for slide_id in presentation.findall("p:sldIdLst/p:sldId", NS):
         rel_id = slide_id.get(R + "id")
         rel = relationships.get(rel_id or "")
-        if rel:
+        if rel and rel["package_path"]:
             ordered.append(rel["package_path"])
 
     if ordered:
@@ -270,6 +273,58 @@ def inspect_slide(root: ET.Element, slide_number: int, slide_part: str) -> dict[
         "text_bodies": bodies,
         "runs": runs,
     }
+
+
+def chart_parts_for_slide(
+    archive: zipfile.ZipFile, slide_part: str
+) -> list[str]:
+    return sorted(
+        {
+            rel["package_path"]
+            for rel in read_relationships(archive, slide_part).values()
+            if rel["type"] == "chart" and rel["package_path"]
+        }
+    )
+
+
+def inspect_chart(root: ET.Element, slide_number: int, chart_part: str) -> list[dict[str, Any]]:
+    """Extract explicitly sized text from a chart part as pseudo-runs.
+
+    Chart text inherits through chart styles and theme defaults that this
+    audit does not model, so only explicit `sz` values are checked; charts
+    with no explicit size surface in the `chart_parts_without_sizes` summary.
+    """
+
+    runs: list[dict[str, Any]] = []
+    chart_name = posixpath.basename(chart_part)
+    for node in root.iter():
+        if node.tag not in {A + "rPr", A + "defRPr"}:
+            continue
+        size = centipoints(node)
+        if size is None:
+            continue
+        runs.append(
+            {
+                "slide_number": slide_number,
+                "object_type": "chart",
+                "object_id": "",
+                "object_name": chart_name,
+                "body_index": 1,
+                "autofit": "inherited",
+                "paragraph_index": 0,
+                "run_index": len(runs) + 1,
+                "text": f"<chart {local_name(node.tag)}>",
+                "paragraph_text": "",
+                "size_centipoints": size,
+                "point_size": round(size * POINTS_PER_CENTIPOINT, 2),
+                "size_source": "chart",
+            }
+        )
+    return runs
+
+
+def local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
 
 
 def finite_positive(value: Any, context: str) -> float:
@@ -494,10 +549,19 @@ def audit(pptx_path: Path, policy: dict[str, Any]) -> dict[str, Any]:
         slide_parts = ordered_slide_parts(archive)
         if not slide_parts:
             raise AuditError("the package contains no slides")
-        slides = [
-            inspect_slide(parse_xml(archive, part), index, part)
-            for index, part in enumerate(slide_parts, 1)
-        ]
+        slides = []
+        chart_parts: list[str] = []
+        charts_without_sizes: list[str] = []
+        for index, part in enumerate(slide_parts, 1):
+            slide = inspect_slide(parse_xml(archive, part), index, part)
+            for chart_part in chart_parts_for_slide(archive, part):
+                chart_parts.append(chart_part)
+                chart_runs = inspect_chart(parse_xml(archive, chart_part), index, chart_part)
+                if chart_runs:
+                    slide["runs"].extend(chart_runs)
+                else:
+                    charts_without_sizes.append(chart_part)
+            slides.append(slide)
 
     runs = [run for slide in slides for run in slide["runs"]]
     bodies = [body for slide in slides for body in slide["text_bodies"]]
@@ -526,6 +590,8 @@ def audit(pptx_path: Path, policy: dict[str, Any]) -> dict[str, Any]:
             "missing_explicit_size_runs": missing,
             "unique_point_sizes": len(sizes),
             "autofit_modes": dict(sorted(autofit.items())),
+            "chart_parts": len(chart_parts),
+            "chart_parts_without_explicit_sizes": sorted(charts_without_sizes),
             "violations": len(violations),
         },
         "point_size_distribution": [
@@ -555,9 +621,16 @@ def human_report(result: dict[str, Any]) -> str:
         f"  Runs missing explicit size:   {summary['missing_explicit_size_runs']}",
         f"  Unique effective sizes:       {summary['unique_point_sizes']}",
         f"  AutoFit modes:                {summary['autofit_modes']}",
+        f"  Chart parts:                  {summary['chart_parts']}",
         "",
         "Effective point-size distribution",
     ]
+    if summary["chart_parts_without_explicit_sizes"]:
+        lines.insert(
+            -2,
+            "  Charts with no explicit sizes (inspect manually): "
+            + ", ".join(summary["chart_parts_without_explicit_sizes"]),
+        )
     for item in result["point_size_distribution"]:
         lines.append(
             f"  {item['point_size']:>6.2f} pt: {item['run_count']:>4} visible run(s)"

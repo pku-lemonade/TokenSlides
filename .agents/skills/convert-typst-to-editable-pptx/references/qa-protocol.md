@@ -29,12 +29,15 @@ Check slide count, object order, recurring margins, title alignment, footer beha
 
 ## 3. Render the Exported PPTX
 
-Use the installed presentation skill's renderer:
+Use the installed presentation skill's renderer. Derive the render size from
+the deck's slide dimensions (`layout-config.<aspect>.page-size` in the theme
+profile) — e.g. `1600x900` for a 16-9 deck, `1600x1200` for 4-3. Rendering a
+4-3 deck at a 16-9 viewport invalidates every visual comparison.
 
 ```bash
 python <presentations-skill-dir>/container_tools/render_slides.py \
   <output.pptx> --output_dir <scratch/pptx-render> \
-  --width 1600 --height 900
+  --width <w> --height <h>
 ```
 
 Inspect every rendered slide, not only a contact sheet. Compare it beside the corresponding Typst render.
@@ -107,12 +110,18 @@ Use `--allow-full-slide-pictures` only when the user explicitly accepts a legiti
 
 ## 7. Audit Serialized Typography
 
-Create a scratch JSON policy from the effective Typst theme and run:
+Generate the policy from the tracked theme profile, then audit:
 
 ```bash
+python <this-skill-dir>/scripts/make_typography_policy.py \
+  --aspect <deck-aspect> --output <scratch/typography-policy.json>
 python <this-skill-dir>/scripts/audit_pptx_typography.py \
   <output.pptx> --policy <scratch/typography-policy.json>
 ```
+
+Add `--extra-size` for module-derived sizes (see lemonade-calibration.md).
+Chart parts are audited for explicit sizes; charts reported under
+`chart_parts_without_explicit_sizes` must be inspected visually.
 
 Require explicit point sizes, forbid shrinking AutoFit, and use targeted
 expectations for mixed-size or role-critical text. Read
@@ -123,6 +132,7 @@ CSS-pixel conversion contract.
 
 Pass only when all are true:
 
+- `make_theme_profile.py --check` passes (the tracked theme profile is not stale);
 - final slide count and order match the intended compiled states;
 - every slide has been inspected at full size from the actual PPTX;
 - all text that should be editable is native text;
