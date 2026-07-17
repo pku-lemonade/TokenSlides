@@ -4,16 +4,14 @@
 #show: lecture-theme.with(
     aspect-ratio: "16-9",
     box-compact: true,
-    config-info(
-        title: [Introduction to Algebraic Graph Theory],
-        short-title: [Intro to Algebraic Graph Theory],
-        subtitle: [Discrete Mathematics],
-        author: [Youwei Zhuo],
-        date: [Nov 11, 2025],
-        institution: [Peking University],
-        email: "youwei@pku.edu.cn",
-        github: "pku-lemonade",
-    ),
+    title: [Introduction to Algebraic Graph Theory],
+    short-title: [Intro to Algebraic Graph Theory],
+    subtitle: [Discrete Mathematics],
+    author: [Youwei Zhuo],
+    date: [Nov 11, 2025],
+    institution: [Peking University],
+    email: "youwei@pku.edu.cn",
+    github: "pku-lemonade",
 )
 
 #set heading(numbering: numbly("{1}.", default: "1.1"))

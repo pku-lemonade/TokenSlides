@@ -7,14 +7,12 @@
     title-align: "left",
     box-compact: true,
     footer: "bar",
-    config-info(
-        title: [Tokencake],
-        venue: [arXiv preprint (v2)],
-        author: [Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo],
-        institution: [Peking University],
-        short-title: [Tokencake],
-        date: [October 31, 2025],
-    ),
+    title: [Tokencake],
+    venue: [arXiv preprint (v2)],
+    author: [Zhuohang Bian, Feiyang Wu, Teng Ma, Youwei Zhuo],
+    institution: [Peking University],
+    short-title: [Tokencake],
+    date: [October 31, 2025],
 )
 
 #title-slide()

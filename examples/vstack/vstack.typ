@@ -7,14 +7,12 @@
   title-align: "left",
   box-compact: true,
   footer: "bar",
-  config-info(
-    title: [vStack：面向高效 LLM 推理的异构 HBM-PIM 架构与运行时],
-    venue: [MICRO 2026 投稿],
-    author: [匿名作者],
-    institution: [中文文献解读],
-    short-title: [vStack],
-    date: [2026],
-  ),
+  title: [vStack：面向高效 LLM 推理的异构 HBM-PIM 架构与运行时],
+  venue: [MICRO 2026 投稿],
+  author: [匿名作者],
+  institution: [中文文献解读],
+  short-title: [vStack],
+  date: [2026],
 )
 
 #title-slide()

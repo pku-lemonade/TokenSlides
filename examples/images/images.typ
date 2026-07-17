@@ -39,12 +39,10 @@
         cap-size: 18pt,
         cap-weight: "bold",
     ),
-    config-info(
-        title: [Image Layout Examples],
-        short-title: [Image Layouts],
-        author: [Lemonade],
-        institution: [Theme Examples],
-    ),
+    title: [Image Layout Examples],
+    short-title: [Image Layouts],
+    author: [Lemonade],
+    institution: [Theme Examples],
 )
 
 = Image Layouts

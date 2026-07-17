@@ -48,6 +48,19 @@
     // ACM artifact badges shown on title and thank-you slides. Use names such as
     // ("available", "functional", "reusable", "reproduced", "replicated").
     artifact-badges: (),
+    // Deck metadata, rendered on the title/thank-you slides and in the footer.
+    // `auto` means "not set"; an omitted `date` defaults to today, `date: none`
+    // hides it.
+    title: auto,
+    subtitle: auto,
+    short-title: auto,
+    author: auto,
+    institution: auto,
+    date: auto,
+    venue: auto,
+    email: auto,
+    website: auto,
+    github: auto,
     imgs-config: (:),
     // Backwards-compat shims; prefer `imgs-config: (...)`.
     imgs-fill-height: auto,
@@ -77,6 +90,20 @@
     let resolved-imgs-config = default-imgs-config + imgs-config
     for (key, value) in legacy-imgs-config.pairs() {
         if value != auto { resolved-imgs-config.insert(key, value) }
+    }
+    let info = (date: if date == auto { datetime.today() } else { date })
+    for (key, value) in (
+        title: title,
+        subtitle: subtitle,
+        short-title: short-title,
+        author: author,
+        institution: institution,
+        venue: venue,
+        email: email,
+        website: website,
+        github: github,
+    ).pairs() {
+        if value != auto { info.insert(key, value) }
     }
     let section-slide-fn = body => outline-slide(level: 1)
 
@@ -115,6 +142,9 @@
             neutral-lightest: colors.neutral-lightest,
             neutral-darkest: colors.neutral-darkest,
         ),
+        // Before `..args` so an explicit `config-info(...)` still wins per key
+        // (Touying merges configs left to right).
+        config-info(..info),
         ..args,
     )
 

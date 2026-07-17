@@ -4,11 +4,9 @@
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
     box-compact: true,
-    config-info(
-        title: [vboxs layout check],
-        author: [Lemonade],
-        institution: [Theme QA],
-    ),
+    title: [vboxs layout check],
+    author: [Lemonade],
+    institution: [Theme QA],
 )
 
 = Box Layouts

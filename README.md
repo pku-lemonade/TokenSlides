@@ -183,12 +183,10 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
     cap-size: 18pt,
     cap-weight: "bold",
   ),
-  config-info(
-    title: [Paper Title],
-    venue: [MICRO 2025],
-    author: [Author et al.],
-    institution: [Institution Name],
-  ),
+  title: [Paper Title],
+  venue: [MICRO 2025],
+  author: [Author et al.],
+  institution: [Institution Name],
 )
 
 #title-slide()

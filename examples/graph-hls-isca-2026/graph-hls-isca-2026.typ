@@ -8,14 +8,12 @@
     box-compact: true,
     footer: "bar",
     artifact-badges: ("available", "functional", "reproduced"),
-    config-info(
-        title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
-        venue: [ISCA 2026],
-        author: [*Feiyang Wu*, Xuxiao Yang, Zhuohang Bian, Jing Wang, \ Ruifan Xu, Guangyu Sun, Yun Liang, Youwei Zhuo],
-        institution: [Peking University],
-        short-title: [Graph.hls],
-        date: [June 29, 2026],
-    ),
+    title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
+    venue: [ISCA 2026],
+    author: [*Feiyang Wu*, Xuxiao Yang, Zhuohang Bian, Jing Wang, \ Ruifan Xu, Guangyu Sun, Yun Liang, Youwei Zhuo],
+    institution: [Peking University],
+    short-title: [Graph.hls],
+    date: [June 29, 2026],
 )
 
 // ============================================================

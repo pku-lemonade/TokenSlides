@@ -11,14 +11,12 @@
         cap-size: 15pt,
     ),
     artifact-badges: ("available", "functional", "reproduced"),
-    config-info(
-        title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
-        venue: [ISCA 2026],
-        author: [吴飞扬],
-        institution: [Peking University],
-        short-title: [Graph.hls],
-        // date: [April 2026],
-    ),
+    title: [Graph.hls: A Compiler Framework for Composable Graph Accelerator Design],
+    venue: [ISCA 2026],
+    author: [吴飞扬],
+    institution: [Peking University],
+    short-title: [Graph.hls],
+    // date: [April 2026],
 )
 
 #let asset(name) = image("assets/" + name + ".pdf")

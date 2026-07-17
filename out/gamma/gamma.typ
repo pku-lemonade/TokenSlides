@@ -13,14 +13,12 @@
     cap-weight: "bold",
     fill-height: false,
   ),
-  config-info(
-    title: [GAMMA],
-    venue: [ICCAD '20],
-    author: [Sheng-Chun Kao and Tushar Krishna],
-    institution: [Georgia Institute of Technology],
-    short-title: [GAMMA],
-    date: [November 2020],
-  ),
+  title: [GAMMA],
+  venue: [ICCAD '20],
+  author: [Sheng-Chun Kao and Tushar Krishna],
+  institution: [Georgia Institute of Technology],
+  short-title: [GAMMA],
+  date: [November 2020],
 )
 
 #title-slide()
