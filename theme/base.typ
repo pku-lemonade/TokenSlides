@@ -32,7 +32,7 @@
             page-number: 36pt,
         ),
         spacing: (par: 1.2em, math-above: 0.8em, math-below: 0.6em),
-        margins: (top: 0.5em, bottom: 0em, left: 1.5em, right: 1em),
+        margins: (top: 0.75em, bottom: 0em, left: 1.5em, right: 1em),
         // Match PowerPoint's standard slide canvas instead of Typst/Touying's smaller presentation paper.
         page-size: (width: 13.333in, height: 7.5in),
     ),
@@ -115,25 +115,27 @@
     code-fg: rgb("#EDEDED"),
 )
 
-// Accents sit at OKLCH L 0.52 (white title text stays >= 4.5:1 on every bar);
-// fills share OKLCH L 0.955 / C 0.028 so no box reads heavier than its siblings.
+// Glass look: accents at OKLCH L 0.52 (white title text stays >= 4.5:1 on
+// every bar); fills are near-white panes at OKLCH L 0.975 / C 0.013 so the
+// hue is felt more than seen. Frame hairlines take the accent at low alpha
+// (see `frame-tint` in boxes.typ), which is what sells the tinted-glass edge.
 #let light-box-styles = (
-    highlight: (border: rgb("#915c00"), fill: rgb("#faefdc")),
-    info: (border: rgb("#3a65b8"), fill: rgb("#e6f1ff")),
-    error: (border: rgb("#ae3b47"), fill: rgb("#ffe9e9")),
-    success: (border: rgb("#327b38"), fill: rgb("#e5f6e5")),
-    neutral: (border: rgb("#585858"), fill: rgb("#f2f0ec")),
-    purple: (border: rgb("#7652ac"), fill: rgb("#f3ecff")),
+    highlight: (border: rgb("#915c00"), fill: rgb("#fbf6ed")),
+    info: (border: rgb("#3a65b8"), fill: rgb("#f2f7ff")),
+    error: (border: rgb("#ae3b47"), fill: rgb("#fff3f3")),
+    success: (border: rgb("#327b38"), fill: rgb("#f2f9f1")),
+    neutral: (border: rgb("#585858"), fill: rgb("#f7f7f4")),
+    purple: (border: rgb("#7652ac"), fill: rgb("#f8f5ff")),
 )
 
-// Same accents as light mode; fills share OKLCH L 0.27 / C 0.02.
+// Same accents as light mode; fills share OKLCH L 0.235 / C 0.014.
 #let dark-box-styles = (
-    highlight: (border: rgb("#915c00"), fill: rgb("#2c251b")),
-    info: (border: rgb("#3a65b8"), fill: rgb("#212730")),
-    error: (border: rgb("#ae3b47"), fill: rgb("#302323")),
-    success: (border: rgb("#327b38"), fill: rgb("#202920")),
-    neutral: (border: rgb("#585858"), fill: rgb("#272624")),
-    purple: (border: rgb("#7652ac"), fill: rgb("#28242f")),
+    highlight: (border: rgb("#915c00"), fill: rgb("#221d17")),
+    info: (border: rgb("#3a65b8"), fill: rgb("#1a1e25")),
+    error: (border: rgb("#ae3b47"), fill: rgb("#241c1c")),
+    success: (border: rgb("#327b38"), fill: rgb("#1a201a")),
+    neutral: (border: rgb("#585858"), fill: rgb("#1f1e1c")),
+    purple: (border: rgb("#7652ac"), fill: rgb("#1f1d24")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.

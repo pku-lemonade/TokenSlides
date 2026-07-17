@@ -28,6 +28,10 @@
     title-text-fill: white,
     title-align: center,
     frame-width: 1pt,
+    // With body fills on, hairlines take the box accent at this transparency
+    // instead of the neutral table stroke — the tinted edge on a near-white
+    // pane is what makes the box read as glass. Lower = stronger edge.
+    frame-tint: 70%,
 )
 
 #let vboxs-config = (
@@ -45,8 +49,8 @@
 #let _box-figure-kind = "lemonade-box"
 #let _box-spec-label = <lemonade-box-spec>
 
-#let _frame-stroke(colors, left: true, top: true, right: true, bottom: true) = {
-    let rule = box-config.frame-width + colors.table-stroke
+#let _frame-stroke(paint, left: true, top: true, right: true, bottom: true) = {
+    let rule = box-config.frame-width + paint
     let stroke = (:)
     if left { stroke.insert("left", rule) }
     if top { stroke.insert("top", rule) }
@@ -63,11 +67,14 @@
         assert(spec.style in styles.keys(), message: "box: unknown style `" + spec.style + "`")
         styles.at(spec.style)
     }
+    let accent = if style == none { colors.primary } else { style.border }
+    let fill = if style != none and cur-box-fill.get() { style.at("fill", default: none) } else { none }
+    let frame-paint = if fill == none { colors.table-stroke } else { accent.transparentize(box-config.frame-tint) }
     (
-        accent: if style == none { colors.primary } else { style.border },
-        fill: if style != none and cur-box-fill.get() { style.at("fill", default: none) } else { none },
-        frame: _frame-stroke(colors),
-        frame-no-left: _frame-stroke(colors, left: false),
+        accent: accent,
+        fill: fill,
+        frame: _frame-stroke(frame-paint),
+        frame-no-left: _frame-stroke(frame-paint, left: false),
     )
 }
 
