@@ -28,8 +28,7 @@
 #set text(lang: "en")
 
 // Deck-wide image defaults belong in `imgs-config`. Per-call arguments override
-// these values. The older `imgs-fill-height`, `imgs-fill-pad`, `imgs-cap-size`,
-// and `imgs-cap-weight` theme arguments remain compatibility shims.
+// these values.
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
     footer: "plain",

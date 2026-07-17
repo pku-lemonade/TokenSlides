@@ -6,17 +6,6 @@
 // Central Touying import: theme modules can import Touying APIs from `base.typ`
 // so we only pin the package version once.
 #import "@preview/touying:0.6.1": *
-#import "@preview/touying:0.6.1": config-info as touying-config-info
-
-// Keep Touying's `config-info` API, but default omitted `date:` to today.
-#let config-info(..args) = {
-    assert(args.pos().len() == 0, message: "Unexpected positional arguments.")
-    let named = args.named()
-    if not ("date" in named) {
-        named.insert("date", datetime.today())
-    }
-    touying-config-info(..named)
-}
 
 // CONFIG (frequently tweaked)
 #let font-size-presets = (

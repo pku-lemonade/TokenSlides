@@ -62,12 +62,6 @@
     website: auto,
     github: auto,
     imgs-config: (:),
-    // Backwards-compat shims; prefer `imgs-config: (...)`.
-    imgs-fill-height: auto,
-    imgs-fill-pad: auto,
-    imgs-cap-size: auto,
-    imgs-cap-weight: auto,
-    ..args,
     body,
 ) = {
     assert(aspect-ratio in aspect-ratios)
@@ -81,16 +75,7 @@
     let slide-margins = slide-layouts.at(aspect-ratio)
     let slide-page-size = slide-page-sizes.at(aspect-ratio)
     let resolved-font-sizes = font-size-presets.at(aspect-ratio)
-    let legacy-imgs-config = (
-        fill-height: imgs-fill-height,
-        fill-pad: imgs-fill-pad,
-        cap-size: imgs-cap-size,
-        cap-weight: imgs-cap-weight,
-    )
     let resolved-imgs-config = default-imgs-config + imgs-config
-    for (key, value) in legacy-imgs-config.pairs() {
-        if value != auto { resolved-imgs-config.insert(key, value) }
-    }
     let info = (date: if date == auto { datetime.today() } else { date })
     for (key, value) in (
         title: title,
@@ -142,10 +127,7 @@
             neutral-lightest: colors.neutral-lightest,
             neutral-darkest: colors.neutral-darkest,
         ),
-        // Before `..args` so an explicit `config-info(...)` still wins per key
-        // (Touying merges configs left to right).
         config-info(..info),
-        ..args,
     )
 
     set text(
@@ -178,6 +160,3 @@
 
     body
 }
-
-// Backwards-compat: keep the old name around.
-#let lecture-theme = lemonade-theme
