@@ -42,7 +42,10 @@
     ),
     title: outline-title,
     default-variant: "sections",
-    alpha: 20%,
+    // Inactive-entry opacity. Keep >= 45%: at 44pt black weight the faded
+    // entries still clear the 3:1 large-text contrast floor in both modes
+    // (light #8c8c8c ~3.2:1, dark #727272 ~3.8:1) while reading clearly dimmer.
+    alpha: 45%,
     entry-tracking: 0.1em,
     number-title-gap: 0em,
     numbering-style: auto,
