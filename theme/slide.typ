@@ -5,7 +5,7 @@
 #let slide-config = (
     show-numbered-heading: false,
     title-tracking: 0.00em,
-    title-body-gap: 0.5em,
+    title-body-gap: 0.4em,
 )
 
 #let slide(
