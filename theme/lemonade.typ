@@ -18,7 +18,7 @@
 #import "images.typ": *
 #import "images.typ": imgs-config as default-imgs-config
 
-#import "footer.typ": footer as footer-fn, footer-band
+#import "footer.typ": footer as footer-fn, footer-band, footer-parts, footer-presets, resolve-footer
 #import "slide.typ": slide
 #import "table.typ": apply-table-style, vtable
 #import "title.typ": title-slide
@@ -39,6 +39,9 @@
     aspect-ratio: "16-9",
     mode: "light",
     colors-override: none,
+    // Preset name from `footer-presets` ("bar", "plain", "page"), `none`, or a
+    // dict of `footer-config` overrides, e.g. `(middle: footer-parts.heading)`
+    // or `footer-presets.page + (left: [CC BY 4.0])`.
     footer: "bar",
     // File-level default for all `hbox/ibox/...`; per-box `compact:` still overrides it.
     box-compact: false,
@@ -67,17 +70,17 @@
 ) = {
     assert(aspect-ratio in aspect-ratios)
     assert(mode in mode-config.keys())
-    assert(footer in ("bar", "plain", "page", none))
     assert(title-align in title-alignments)
 
     let theme = mode-config.at(mode)
     let colors = theme.colors + (if colors-override == none { (:) } else { colors-override })
     let layout = layout-config.at(aspect-ratio)
     let spacing = layout.spacing
+    let footer-cfg = resolve-footer(footer)
     // Reserve the footer band as real bottom margin so slide content (incl.
     // anything after a fill-height row) always stops above the footer.
     let slide-margins = layout.margins + (
-        bottom: layout.margins.bottom + footer-band(aspect-ratio, footer),
+        bottom: layout.margins.bottom + footer-band(aspect-ratio, footer-cfg),
     )
     let slide-page-size = layout.page-size
     let resolved-font-sizes = layout.font-sizes
@@ -119,7 +122,7 @@
             fill: theme.colors.bg,
             margin: slide-margins,
             header: none,
-            footer: footer-fn.with(style: footer),
+            footer: if footer-cfg == none { none } else { footer-fn.with(config: footer-cfg) },
             // Let the footer fill the reserved band exactly instead of floating
             // 30% into it (the Typst default).
             footer-descent: 0pt,
