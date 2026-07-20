@@ -18,9 +18,6 @@
         title-dy: -1em,
         contact-dy: -1em,
     ),
-    // CJK face tweaks for the contact block. The decorative face is not
-    // vendored with the repo — without it installed, Typst falls back to the
-    // body CJK font.
     han: (font: "FZFW ZhuZi GuDianS LH", size-delta: 6pt),
 )
 
