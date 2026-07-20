@@ -1,5 +1,4 @@
 #import "base.typ": layout-config, bleed as bleed-block, cur-ar, cur-colors, cur-font-sizes, font-config
-#import "footer.typ": footer-height
 #import "assets.typ": asset-path, lemonade-qr
 
 // CONFIG
@@ -272,9 +271,8 @@
                 ]
 
                 if resolved-fill-height {
-                    block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
+                    block(width: 100%, height: 1fr)[
                         #layout(size => context {
-                            let footer-height = footer-height()
                             let caption-height = ordered
                                 .map(item => {
                                     if item.caption == none {
@@ -294,11 +292,11 @@
                             }
                             let pad-height = measure(v(resolved-fill-pad)).height
                             let remaining-height = size.height
-                            let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
+                            let reserved-height = calc.max(0pt, remaining-height - pad-height)
                             let resolved-height = (
                                 calc.max(
                                     0pt,
-                                    remaining-height - footer-height - pad-height - caption-height - stack-gap-height,
+                                    remaining-height - pad-height - caption-height - stack-gap-height,
                                 )
                                     / count
                             )
@@ -386,9 +384,8 @@
                 let captions-grid = block(width: 100%)[#captions-body]
 
                 if resolved-fill-height {
-                    block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
+                    block(width: 100%, height: 1fr)[
                         #layout(size => context {
-                            let footer-height = footer-height()
                             let caption-height = if has-captions {
                                 measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
                             } else {
@@ -396,10 +393,10 @@
                             }
                             let pad-height = measure(v(resolved-fill-pad)).height
                             let remaining-height = size.height
-                            let reserved-height = calc.max(0pt, remaining-height - footer-height - pad-height)
+                            let reserved-height = calc.max(0pt, remaining-height - pad-height)
                             let resolved-height = calc.max(
                                 0pt,
-                                remaining-height - caption-height - footer-height - pad-height,
+                                remaining-height - caption-height - pad-height,
                             )
                             let measured-width = body-measure-width(size.width)
                             let natural-grid-height = measure(

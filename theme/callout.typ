@@ -1,13 +1,14 @@
 #import "@preview/shadowed:0.3.0": shadow as draw-shadow
 
-#import "base.typ": cur-colors, cur-font-sizes, bleed as bleed-block
+#import "base.typ": bleed as bleed-block, cur-colors, cur-font-sizes
 #import "emph.typ": apply-emph-style
 
 // CONFIG
 #let callout-config = (
     inset: (left: 0em, right: 0em, top: 0.5em, bottom: 0.5em),
-    above: 0.2em,
-    below: 0em,
+    // `auto` = the uniform `flow` gap (paragraph spacing).
+    above: auto,
+    below: auto,
     radius: 0pt,
     stroke-width: 1pt,
     size: auto,
@@ -110,7 +111,7 @@
             ]
         ]
 
-        let out = block(width: width, above: above, below: below, breakable: false)[
+        let out = block(width: width, breakable: false)[
             #if shadow != none and shadow != false {
                 draw-shadow(
                     dx: shadow-dx,
@@ -125,7 +126,11 @@
             }
         ]
 
-        if bleed { bleed-block(out) } else { out }
+        // `above`/`below` must sit on the outermost block: spacing on a block
+        // nested inside the bleed wrapper never reaches the outer flow.
+        block(above: above, below: below, breakable: false)[
+            #if bleed { bleed-block(out) } else { out }
+        ]
     }
 }
 

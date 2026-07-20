@@ -1,10 +1,12 @@
-#import "base.typ": cur-ar, cur-colors, cur-footer-style, font-config
+#import "base.typ": cur-ar, cur-colors, font-config
 #import "base.typ": utils
 
 // CONFIG
 #let footer-config = (
     // Footer geometry per aspect ratio. `height` uses `em` so it scales with
     // `text-size` (e.g. `text-size: 16pt` + `height: 1.6em` => 25.6pt tall footer).
+    // The theme reserves this band as the page bottom margin (see `footer-band`
+    // in lemonade.typ), so slide content can never run under the footer.
     layouts: (
         "16-9": (height: 1.2em, text-size: 16pt),
         "4-3": (height: 1.2em, text-size: 16pt),
@@ -18,21 +20,18 @@
     show-heading: false,
 )
 
-#let _footer-inline-title(it) = utils.markup-text(it, mode: "typ").replace(regex("\\s*[\\r\\n]+\\s*"), "")
-
-// Height the footer reserves at the bottom of a slide (0pt when disabled).
-// Requires context. Fill-height layouts subtract this from the slide height.
-#let footer-height() = {
-    if cur-footer-style.get() == none {
+// Absolute height of the footer band for a given aspect ratio (0pt when the
+// footer is disabled). Context-free so it can size the page bottom margin.
+#let footer-band(aspect-ratio, style) = {
+    if style == none {
         0pt
     } else {
-        let footer-layout = footer-config.layouts.at(cur-ar.get())
-        measure({
-            set text(size: footer-layout.text-size)
-            v(footer-layout.height)
-        }).height
+        let footer-layout = footer-config.layouts.at(aspect-ratio)
+        footer-layout.height.em * footer-layout.text-size + footer-layout.height.abs
     }
 }
+
+#let _footer-inline-title(it) = utils.markup-text(it, mode: "typ").replace(regex("\\s*[\\r\\n]+\\s*"), "")
 
 // Footer renderer. Set as `config-page(footer: footer.with(style: ...))` in the theme.
 #let footer(self, style: "bar") = context {

@@ -1,6 +1,5 @@
-#import "base.typ": cur-ar, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes
+#import "base.typ": cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-spacing
 #import "emph.typ": on-primary
-#import "footer.typ": footer-height
 
 // USER CONFIG
 // - Geometry and title typography: edit `box-config` below.
@@ -11,16 +10,14 @@
 //
 // Per-box `compact`, `title-size`, and `title-inset` override these defaults.
 // A vboxs `title-size` applies to the row unless a box sets its own title size.
+// Outer box spacing is not configured here: boxes take the uniform `flow`
+// rhythm (see `layout-config` in base.typ) via `auto` block spacing.
 #let box-config = (
     normal: (
         body-inset: (left: 0.5em, right: 0.5em, top: 0.75em, bottom: 0.75em),
-        above: 0.5em,
-        below: 0.5em,
     ),
     compact: (
         body-inset: (left: 10pt, right: 10pt, top: 0.5em, bottom: 0.5em),
-        above: 0.25em,
-        below: 0.25em,
     ),
     accent-width: 5pt,
     title-inset: (left: 0.1em, right: 0.1em, top: 0.5em, bottom: 0.5em),
@@ -36,7 +33,9 @@
 
 #let vboxs-config = (
     gap: 0.4em,
-    after-gap: 0.3em,
+    // `auto` = the uniform `flow` gap, so `after:` content sits exactly like
+    // inline content following the row.
+    after-gap: auto,
     fill-height: true,
     fill-pad: 0.3em,
 )
@@ -192,8 +191,8 @@
     let compact = spec.at("compact", default: cur-box-compact.get())
     let metrics = if compact { box-config.compact } else { box-config.normal }
     let visuals = _box-visuals(spec, colors)
-    let above = if outer-spacing { metrics.above } else { 0pt }
-    let below = if outer-spacing { metrics.below } else { 0pt }
+    let above = if outer-spacing { auto } else { 0pt }
+    let below = if outer-spacing { auto } else { 0pt }
 
     if spec.kind == "plain" {
         _plain-frame(
@@ -348,16 +347,16 @@
         }
 
         context {
+            let after-gap = if after-gap == auto { cur-spacing().flow } else { after-gap }
             if fill-height {
-                block(width: 100%, height: 1fr, spacing: 0pt, above: 0pt, below: 0pt)[
+                block(width: 100%, height: 1fr)[
                     #layout(size => {
-                        let footer-height = footer-height()
                         let pad-height = measure(v(fill-pad)).height
                         let after-height = if after == none { 0pt } else {
                             measure(after-block, width: size.width).height
                         }
                         let gap-height = if after == none { 0pt } else { measure(v(after-gap)).height }
-                        let available-height = calc.max(0pt, size.height - footer-height - pad-height)
+                        let available-height = calc.max(0pt, size.height - pad-height)
                         let row-height = calc.max(0pt, available-height - after-height - gap-height)
                         block(width: 100%, height: available-height)[
                             #align(center)[#box(width: width)[#row(row-height)]]
@@ -369,7 +368,7 @@
                     })
                 ]
             } else {
-                block(width: 100%, spacing: 0pt, above: 0pt, below: 0pt)[
+                block(width: 100%)[
                     #align(center)[
                         #box(width: width)[
                             #layout(size => {

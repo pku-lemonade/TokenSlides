@@ -16,7 +16,16 @@
 // CONFIG (frequently tweaked)
 //
 // Everything `lemonade-theme(aspect-ratio: ...)` controls: font sizes,
-// text/math spacing, slide margins, and page size per aspect ratio.
+// vertical rhythm, slide margins, and page size per aspect ratio.
+// `margins.bottom` excludes the footer band: lemonade-theme adds the band
+// height on top when a footer style is active.
+//
+// Vertical rhythm is two tokens, resolved against the body text size:
+// - `leading`: line spacing inside paragraphs (and tight list items).
+// - `flow`: THE gap between any two flow blocks — paragraphs, boxes, vboxs
+//   rows, callouts, block math, tables, grids, code boxes. Components default
+//   their outer spacing to this token, so the rhythm stays uniform; keep
+//   `flow` >= `leading` so paragraph breaks read looser than line breaks.
 #let layout-config = (
     "16-9": (
         font-sizes: (
@@ -31,9 +40,8 @@
             table: 20pt,
             page-number: 36pt,
         ),
-        spacing: (par: 1.2em, math-above: 0.8em, math-below: 0.6em),
+        spacing: (leading: 0.65em, flow: 0.5em),
         margins: (top: 0.75em, bottom: 0em, left: 1.5em, right: 1em),
-        // Match PowerPoint's standard slide canvas instead of Typst/Touying's smaller presentation paper.
         page-size: (width: 13.333in, height: 7.5in),
     ),
     "4-3": (
@@ -49,7 +57,7 @@
             table: 18pt,
             page-number: 32pt,
         ),
-        spacing: (par: 0.3em, math-above: 1em, math-below: auto),
+        spacing: (leading: 0.65em, flow: 0.5em),
         margins: (top: 0.75em, bottom: 0em, left: 1em, right: 0.75em),
         page-size: (width: 10in, height: 7.5in),
     ),
@@ -60,7 +68,7 @@
 // Font family stacks.
 #let font-config = (
     body: ("Inter", "Arial", "Source Han Sans SC"),
-    math: ("Inter", "New Computer Modern Math"),
+    math: ("Noto Sans Math", "New Computer Modern Math"),
     mono: ("Inconsolata", "Source Han Sans SC"),
 )
 
@@ -166,8 +174,10 @@
 #let cur-box-fill = state("lec-box-fill", false)
 #let cur-title-align = state("lec-title-align", "center")
 #let cur-font-sizes = state("lec-font-sizes", layout-config.at("16-9").font-sizes)
-#let cur-footer-style = state("lec-footer-style", "bar")
 #let cur-artifact-badges = state("lec-artifact-badges", ())
+
+// Rhythm tokens for the active aspect ratio. Requires context.
+#let cur-spacing() = layout-config.at(cur-ar.get()).spacing
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {

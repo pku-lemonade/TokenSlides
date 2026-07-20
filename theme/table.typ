@@ -2,14 +2,13 @@
 
 #import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, layout-config
 #import "emph.typ": apply-emph-style
-#import "footer.typ": footer-height
 
 // CONFIG
+// Tables take the uniform `flow` rhythm around them (default block spacing);
+// only in-table typography is configured here.
 #let table-config = (
     text-size: auto,
     stroke-width: 1pt,
-    spacing-above: 0em,
-    spacing-below: 0.3em,
 )
 
 #let apply-table-style(colors, body) = {
@@ -22,11 +21,6 @@
             show raw: set text(font: font-config.mono, size: table-text-size)
             cell
         }
-        show table: it => [
-            #v(table-config.spacing-above)
-            #it
-            #v(table-config.spacing-below)
-        ]
         body
     }
 }
@@ -398,10 +392,9 @@
             let slide-margins = layout-config.at(cur-ar.get()).margins
             let top-margin = measure(v(slide-margins.top)).height
             let pos = here().position()
-            let footer-height = footer-height()
             let pad-height = measure(v(fill-pad)).height
             let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
-            let target-height = calc.max(0pt, remaining-height - footer-height - pad-height)
+            let target-height = calc.max(0pt, remaining-height - pad-height)
             let row-tracks = stretch-row-tracks(target-height, size.width)
             block(width: 100%, height: target-height)[
                 #show table: it => it

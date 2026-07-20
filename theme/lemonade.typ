@@ -3,7 +3,7 @@
 
 #import "base.typ": (
     accent-config, layout-config, aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact,
-    cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style, cur-mode, cur-title-align, font-config,
+    cur-box-fill, cur-colors, cur-font-sizes, cur-mode, cur-title-align, font-config,
     mode-config, title-alignments,
 )
 #import "base.typ": (
@@ -18,8 +18,7 @@
 #import "images.typ": *
 #import "images.typ": imgs-config as default-imgs-config
 
-#import "footer.typ": footer as footer-fn
-#import "grid.typ": apply-grid-style
+#import "footer.typ": footer as footer-fn, footer-band
 #import "slide.typ": slide
 #import "table.typ": apply-table-style, vtable
 #import "title.typ": title-slide
@@ -75,7 +74,11 @@
     let colors = theme.colors + (if colors-override == none { (:) } else { colors-override })
     let layout = layout-config.at(aspect-ratio)
     let spacing = layout.spacing
-    let slide-margins = layout.margins
+    // Reserve the footer band as real bottom margin so slide content (incl.
+    // anything after a fill-height row) always stops above the footer.
+    let slide-margins = layout.margins + (
+        bottom: layout.margins.bottom + footer-band(aspect-ratio, footer),
+    )
     let slide-page-size = layout.page-size
     let resolved-font-sizes = layout.font-sizes
     let resolved-imgs-config = default-imgs-config + imgs-config
@@ -103,11 +106,9 @@
     cur-box-fill.update(box-fill)
     cur-title-align.update(title-align)
     cur-font-sizes.update(resolved-font-sizes)
-    cur-footer-style.update(footer)
     cur-artifact-badges.update(artifact-badges)
     cur-imgs-config.update(resolved-imgs-config)
 
-    show: apply-grid-style
     show: apply-box-style
     show: apply-table-style.with(theme.colors)
     show: touying-slides.with(
@@ -119,6 +120,9 @@
             margin: slide-margins,
             header: none,
             footer: footer-fn.with(style: footer),
+            // Let the footer fill the reserved band exactly instead of floating
+            // 30% into it (the Typst default).
+            footer-descent: 0pt,
         ),
         config-common(
             slide-fn: slide,
@@ -141,13 +145,12 @@
         fill: colors.fg,
         features: ("halt",),
     )
-    set par(spacing: spacing.par)
+    // Uniform vertical rhythm: block-level elements (block math, tables,
+    // grids, code boxes, ...) default their outer spacing to `par.spacing`,
+    // so setting it here is what makes every flow gap equal `flow`.
+    set par(leading: spacing.leading, spacing: spacing.flow)
     set heading(numbering: numbly("{1}.", default: "1.1"))
     show math.equation: set text(font: font-config.math)
-    show math.equation.where(block: true): set block(
-        above: spacing.math-above,
-        below: spacing.math-below,
-    )
     show raw: set text(font: font-config.mono, size: resolved-font-sizes.code)
     show: apply-emph-style.with(strong-fill: colors.primary)
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
