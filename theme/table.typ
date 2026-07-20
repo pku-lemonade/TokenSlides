@@ -39,12 +39,39 @@
     total-text-fill: colors.fg,
 )
 
+#let _vtable-palettes(colors) = (
+    primary: vtable-colors(colors.primary, colors.secondary, colors),
+    blue: vtable-colors(rgb("#2F6F9F"), rgb("#FDB515"), colors),
+)
+
+// Style presets: everything the banded/grid switch controls, as data.
+// Color-dependent values are functions of the mode colors; `fills` overrides
+// mask palette entries (grid keeps the page fill under the header and total).
+#let vtable-styles = (
+    // Banded: separators read as page-colored gaps between tinted rows.
+    banded: (
+        banded-rows: true,
+        stroke-paint: colors => colors.bg,
+        fills: colors => (:),
+    ),
+    // Grid: plain ruled table; rules take the text color.
+    grid: (
+        banded-rows: false,
+        stroke-paint: colors => colors.fg,
+        fills: colors => (header-fill: none, header-text-fill: colors.fg, total-fill: none),
+    ),
+)
+
 // Presentation table preset with Excel-style table options.
+// Cell colors resolve as palette < style preset < `fills:`; `fills` takes any
+// `vtable-colors` key, and the string value "palette" restores the palette
+// entry that a style preset masks (e.g. grid + palette header).
 #let vtable(
     columns: auto,
     header: none,
     style: "banded",
     palette: "primary",
+    fills: (:),
     center-cols: (),
     text-size: 20pt,
     header-text-size: 24pt,
@@ -58,15 +85,7 @@
     first-column: false,
     last-column: false,
     banded-rows: auto,
-    banded-columns: auto,
-    header-fill: auto,
-    header-text-fill: auto,
-    row-odd-fill: auto,
-    row-even-fill: auto,
-    column-odd-fill: auto,
-    column-even-fill: auto,
-    total-fill: auto,
-    total-text-fill: auto,
+    banded-columns: false,
     stroke: auto,
     inset: (left: 0.25em, right: 0em, top: 0.3em, bottom: 0.3em),
     header-inset: (left: 0em, right: 0em, top: 0.25em, bottom: 0.3em),
@@ -74,8 +93,14 @@
     align: left,
     ..cells,
 ) = context {
+    // Named arguments that match no parameter would silently land in the
+    // `..cells` sink; reject them so typos and removed options fail loudly.
+    assert(
+        cells.named().len() == 0,
+        message: "vtable: unknown options " + cells.named().keys().join(", "),
+    )
     assert(columns != auto, message: "vtable: `columns` is required")
-    assert(style in ("banded", "grid"), message: "vtable: `style` must be \"banded\" or \"grid\"")
+    assert(style in vtable-styles, message: "vtable: `style` must be \"banded\" or \"grid\"")
     assert(header-row or header == none, message: "vtable: `header` requires `header-row: true`")
     assert(not header-row or header != none, message: "vtable: `header` is required when `header-row` is true")
     assert(row-stretch in ("content", "equal"), message: "vtable: `row-stretch` must be \"content\" or \"equal\"")
@@ -83,74 +108,35 @@
     let colors = cur-colors.get()
     let column-count = columns.len()
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
+    let palettes = _vtable-palettes(colors)
     // `red` is a historical alias from when the primary accent was red.
     let palette = if palette == "red" { "primary" } else { palette }
-    let palettes = (
-        primary: vtable-colors(colors.primary, colors.secondary, colors),
-        blue: vtable-colors(rgb("#2F6F9F"), rgb("#FDB515"), colors),
-    )
-    assert(palette in palettes.keys(), message: "vtable: unknown palette `" + palette + "`")
-    let palette-colors = palettes.at(palette)
-    let is-grid-style = style == "grid"
-    let banded-rows = if banded-rows == auto { not is-grid-style } else { banded-rows }
-    let banded-columns = if banded-columns == auto { false } else { banded-columns }
-    // Banded separators are page-colored gaps; grid rules take the text color.
-    let default-stroke-paint = if is-grid-style { colors.fg } else { colors.bg }
+    let palette-colors = if type(palette) == str {
+        assert(palette in palettes, message: "vtable: unknown palette `" + palette + "`")
+        palettes.at(palette)
+    } else {
+        assert(type(palette) == dictionary, message: "vtable: palette must be a name or a fill dictionary")
+        for key in palette.keys() {
+            assert(key in palettes.primary, message: "vtable: unknown palette key `" + key + "`")
+        }
+        palettes.primary + palette
+    }
+    let style-preset = vtable-styles.at(style)
+    for key in fills.keys() {
+        assert(key in palettes.primary, message: "vtable: unknown fills key `" + key + "`")
+    }
+    let fill-of = palette-colors + (style-preset.fills)(colors) + fills
+    let fill-of = fill-of
+        .pairs()
+        .map(((key, value)) => (key, if value == "palette" { palette-colors.at(key) } else { value }))
+        .to-dict()
+    let banded-rows = if banded-rows == auto { style-preset.banded-rows } else { banded-rows }
     let stroke = if stroke == auto {
-        1pt + default-stroke-paint
+        1pt + (style-preset.stroke-paint)(colors)
     } else if type(stroke) == length {
-        stroke + default-stroke-paint
+        stroke + (style-preset.stroke-paint)(colors)
     } else {
         stroke
-    }
-    let has-palette-header-fill = header-fill == true or (header-fill == auto and not is-grid-style)
-    let header-fill = if header-fill == auto {
-        if is-grid-style { none } else { palette-colors.header-fill }
-    } else if header-fill == true {
-        palette-colors.header-fill
-    } else if header-fill == false {
-        none
-    } else {
-        header-fill
-    }
-    let header-text-fill = if header-text-fill == auto {
-        if has-palette-header-fill { palette-colors.header-text-fill } else { colors.fg }
-    } else if header-text-fill == true {
-        palette-colors.header-text-fill
-    } else if header-text-fill == false {
-        colors.fg
-    } else {
-        header-text-fill
-    }
-    let row-odd-fill = if row-odd-fill == auto {
-        palette-colors.row-odd-fill
-    } else {
-        row-odd-fill
-    }
-    let row-even-fill = if row-even-fill == auto {
-        palette-colors.row-even-fill
-    } else {
-        row-even-fill
-    }
-    let column-odd-fill = if column-odd-fill == auto {
-        palette-colors.column-odd-fill
-    } else {
-        column-odd-fill
-    }
-    let column-even-fill = if column-even-fill == auto {
-        palette-colors.column-even-fill
-    } else {
-        column-even-fill
-    }
-    let total-fill = if total-fill == auto {
-        if is-grid-style { none } else { palette-colors.total-fill }
-    } else {
-        total-fill
-    }
-    let total-text-fill = if total-text-fill == auto {
-        palette-colors.total-text-fill
-    } else {
-        total-text-fill
     }
 
     let body-cells = cells.pos()
@@ -193,13 +179,13 @@
         let body-row = y - header-offset
         let style = col-style(x)
         let default-fill = if is-header {
-            header-fill
+            fill-of.header-fill
         } else if is-total {
-            total-fill
+            fill-of.total-fill
         } else if banded-rows {
-            if calc.odd(body-row + 1) { row-odd-fill } else { row-even-fill }
+            if calc.odd(body-row + 1) { fill-of.row-odd-fill } else { fill-of.row-even-fill }
         } else if banded-columns {
-            if calc.odd(x + 1) { column-odd-fill } else { column-even-fill }
+            if calc.odd(x + 1) { fill-of.column-odd-fill } else { fill-of.column-even-fill }
         } else {
             none
         }
@@ -235,9 +221,9 @@
             "medium"
         }
         let default-fill = if is-header {
-            header-text-fill
+            fill-of.header-text-fill
         } else if is-total {
-            total-text-fill
+            fill-of.total-text-fill
         } else {
             colors.fg
         }

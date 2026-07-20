@@ -29,7 +29,9 @@
     header: ([Model], [Throughput], [Speedup]),
     style: "grid",
     palette: "blue",
-    header-fill: true,
+    // Grid style keeps the page fill under the header; "palette" restores the
+    // palette's header colors on top of it.
+    fills: (header-fill: "palette", header-text-fill: "palette"),
     total-row: true,
     first-column: true,
     center-cols: (1, 2),
