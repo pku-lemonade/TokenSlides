@@ -1,39 +1,27 @@
 #import "base.typ": font-config
-#import "hero.typ": hero-han-font, hero-parts, hero-slide
+#import "title.typ": title-config, title-parts, title-slide
 
 // CONFIG
-// Everything the closing slide renders — edit here. The scaffold (band
-// placement, Han handling, line padding) is shared with the title slide in
-// hero.typ.
-#let thank-you-config = (
-    // Thank-you-slide page margins per aspect ratio.
-    layouts: (
-        "16-9": (top: 0em, bottom: 0em, left: 1em, right: 1em),
-        "4-3": (top: 0em, bottom: 0em, left: 1em, right: 1em),
-    ),
-    placement: (
-        venue-dy: 2em,
-        title-dy: -1em,
-        bottom-dy: -1em,
-    ),
+// The closing slide is the title slide with these overrides — only real
+// deltas appear here; everything else (layouts, han, venue band, ...) is
+// inherited from `title-config`. Nested dicts merge explicitly.
+#let thank-you-config = title-config + (
+    placement: title-config.placement + (bottom-dy: -1em),
     // Intentionally larger than the opening title slide; Han glyphs stay at
-    // the title size (`han-size-delta: none`).
+    // the title size.
     title: (size-delta: 12pt, han-size-delta: none),
-    // Contact lines at the bottom; same slot semantics as title-config.
-    bottom: (
+    // Contact lines instead of the deck metadata; same slot semantics.
+    bottom: title-config.bottom + (
         font: font-config.mono,
         size: "body",
-        weight: "medium",
-        leading: 0.75em,
         min-lines: 4,
         lines: (
-            hero-parts.author,
-            hero-parts.institution,
-            hero-parts.email,
-            hero-parts.website,
-            hero-parts.github,
+            title-parts.author,
+            title-parts.institution,
+            title-parts.email,
+            title-parts.website,
+            title-parts.github,
         ),
-        han: (font: hero-han-font, size-delta: 6pt),
     ),
 )
 
@@ -43,9 +31,9 @@
     title: [Thank You],
     config: (:),
     ..extras,
-) = hero-slide(
-    thank-you-config,
+) = title-slide(
     config: config,
+    preset: thank-you-config,
     title: title,
     extra: extras.pos().sum(default: none),
 )
