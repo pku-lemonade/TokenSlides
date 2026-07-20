@@ -1,5 +1,5 @@
 #import "base.typ": cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-spacing
-#import "emph.typ": on-primary
+#import "emph.typ": apply-emph-style, on-primary
 
 // USER CONFIG
 // - Geometry and title typography: edit `box-config` below.
@@ -22,6 +22,8 @@
     accent-width: 5pt,
     title-inset: (left: 0.1em, right: 0.1em, top: 0.5em, bottom: 0.5em),
     title-weight: "bold",
+    // Default ink on the accent bar; a box style whose accent is too light
+    // for white overrides it per style (`title-text-fill` in base.typ).
     title-text-fill: white,
     title-align: center,
     frame-width: 1pt,
@@ -69,18 +71,32 @@
     let accent = if style == none { colors.primary } else { style.border }
     let fill = if style != none and cur-box-fill.get() { style.at("fill", default: none) } else { none }
     let frame-paint = if fill == none { colors.table-stroke } else { accent.transparentize(box-config.frame-tint) }
+    let title-ink = if style == none {
+        box-config.title-text-fill
+    } else {
+        style.at("title-text-fill", default: box-config.title-text-fill)
+    }
     (
         accent: accent,
         fill: fill,
+        title-ink: title-ink,
         frame: _frame-stroke(frame-paint),
         frame-no-left: _frame-stroke(frame-paint, left: false),
     )
 }
 
-#let _title-content(spec, font-sizes, row-title-size: none) = {
+#let _title-content(spec, visuals, font-sizes, row-title-size: none) = {
     let default-size = if row-title-size == none { font-sizes.body-title } else { row-title-size }
     let title-size = spec.at("title-size", default: default-size)
-    text(size: title-size, weight: box-config.title-weight, fill: box-config.title-text-fill)[#on-primary(spec.title)]
+    // White ink gets the usual on-primary emphasis (secondary accent); a
+    // style-supplied dark ink keeps emphasis in the ink — the secondary
+    // yellow would vanish on the light accent that forced the dark ink.
+    let title = if visuals.title-ink == box-config.title-text-fill {
+        on-primary(spec.title)
+    } else {
+        apply-emph-style(spec.title, emph-fill: visuals.title-ink, strong-fill: visuals.title-ink)
+    }
+    text(size: title-size, weight: box-config.title-weight, fill: visuals.title-ink)[#title]
 }
 
 #let _body-content(spec, font-sizes) = block(width: 100%)[
@@ -104,7 +120,7 @@
     let title-inset = spec.at("title-inset", default: box-config.title-inset)
     let columns = if has-title { (auto, 1fr) } else { (box-config.accent-width, 1fr) }
     let rows = if height == auto { (auto,) } else { (1fr,) }
-    let leading-cell = if has-title { _title-content(spec, font-sizes, row-title-size: row-title-size) } else { [] }
+    let leading-cell = if has-title { _title-content(spec, visuals, font-sizes, row-title-size: row-title-size) } else { [] }
 
     block(width: 100%, height: height, above: above, below: below, spacing: 0pt)[
         #grid(
@@ -129,7 +145,7 @@
         inset: title-inset,
         outset: (left: box-config.frame-width / 2, right: box-config.frame-width / 2),
     )[
-        #align(box-config.title-align)[#_title-content(spec, font-sizes, row-title-size: row-title-size)]
+        #align(box-config.title-align)[#_title-content(spec, visuals, font-sizes, row-title-size: row-title-size)]
     ]
 }
 

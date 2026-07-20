@@ -138,8 +138,12 @@
 // every bar); fills are near-white panes at OKLCH L 0.975 / C 0.013 so the
 // hue is felt more than seen. Frame hairlines take the accent at low alpha
 // (see `frame-tint` in boxes.typ), which is what sells the tinted-glass edge.
+// Exception: a yellow dark enough for white ink can only read as brown, so
+// highlight rides at OKLCH L 0.67 (max sRGB chroma, >= 3:1 against the white
+// page) and swaps in near-black title ink via `title-text-fill` — the same
+// move the dark-mode footer makes on its light primary.
 #let light-box-styles = (
-    highlight: (border: rgb("#915c00"), fill: rgb("#fbf6ed")),
+    highlight: (border: rgb("#c18a04"), fill: rgb("#fbf6ed"), title-text-fill: rgb("#0D0D0D")),
     info: (border: rgb("#3a65b8"), fill: rgb("#f2f7ff")),
     error: (border: rgb("#ae3b47"), fill: rgb("#fff3f3")),
     success: (border: rgb("#327b38"), fill: rgb("#f2f9f1")),
@@ -149,7 +153,7 @@
 
 // Same accents as light mode; fills share OKLCH L 0.235 / C 0.014.
 #let dark-box-styles = (
-    highlight: (border: rgb("#915c00"), fill: rgb("#221d17")),
+    highlight: (border: rgb("#c18a04"), fill: rgb("#221d17"), title-text-fill: rgb("#0D0D0D")),
     info: (border: rgb("#3a65b8"), fill: rgb("#1a1e25")),
     error: (border: rgb("#ae3b47"), fill: rgb("#241c1c")),
     success: (border: rgb("#327b38"), fill: rgb("#1a201a")),
