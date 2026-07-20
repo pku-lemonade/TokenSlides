@@ -8,6 +8,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - `theme/base.typ` controls global sizes, spacing, colors, and runtime state
 - `theme/slide.typ` and `theme/title.typ` own the main slide layouts
 - `theme/images.typ` owns image placement helpers such as `#imgs(...)`
+- `theme/assets.typ` exports common figure paths (`pku-logo`, `thu-logo`, `nsfc-logo`, `lemonade-qr`); place them with `#place-logo(pku-logo)` top-right or `#place-qr()` bottom-right (typical on the thank-you slide)
 - validate with `typst compile --root . <deck>.typ /tmp/out.pdf`
 - under that compile flow, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`
 

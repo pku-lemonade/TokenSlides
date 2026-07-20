@@ -3,14 +3,15 @@
 
 #import "base.typ": (
     accent-config, layout-config, aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact,
-    cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style, cur-title-align, font-config, mode-config,
-    title-alignments,
+    cur-box-fill, cur-colors, cur-font-sizes, cur-footer-style, cur-mode, cur-title-align, font-config,
+    mode-config, title-alignments,
 )
 #import "base.typ": (
     config-colors, config-common, config-info, config-page, meanwhile, pause, speaker-note, touying-slides,
 )
 
 #import "artifact-badges.typ": *
+#import "assets.typ": lemonade-qr, nsfc-logo, pku-logo, thu-logo
 #import "boxes.typ": *
 #import "callout.typ": *
 #import "emph.typ": apply-emph-style, on-primary
@@ -95,6 +96,7 @@
     let section-slide-fn = body => outline-slide(level: 1)
 
     cur-ar.update(aspect-ratio)
+    cur-mode.update(mode)
     cur-colors.update(colors)
     cur-box.update(theme.box)
     cur-box-compact.update(box-compact)

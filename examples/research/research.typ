@@ -180,10 +180,5 @@
 #thank-you-slide(
     title: [感谢各位专家，敬请批评指正！],
 )[
-    #place-image(
-        assets.qr-code,
-        caption: "pku-lemonade",
-        width: 20%,
-        position: bottom + right,
-    )
+    #place-qr(caption: "pku-lemonade")
 ]

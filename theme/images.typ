@@ -1,12 +1,8 @@
 #import "base.typ": layout-config, bleed as bleed-block, cur-ar, cur-colors, cur-font-sizes, font-config
 #import "footer.typ": footer-height
+#import "assets.typ": asset-path, lemonade-qr
 
 // CONFIG
-#let assets = (
-    logo: "../assets/logo.png",
-    qr-code: "../assets/qr.png",
-)
-
 // Default image options; deck-level overrides merge in via `lemonade-theme(imgs-config: ...)`.
 // `cap-size: auto` resolves to the current aspect ratio's `small` font size.
 #let imgs-config = (
@@ -44,8 +40,10 @@
     ]
 }
 
+// Floating figure anchored to a slide corner. `source` is an image path or a
+// per-mode variant dict from `theme/assets.typ` (e.g. `pku-logo`).
 #let place-image(
-    path,
+    source,
     caption: none,
     width: 25%,
     height: auto,
@@ -59,33 +57,37 @@
         #if caption != none [
             #block(width: width, spacing: 0pt, below: cap-gap)[#_caption-block(caption)]
         ]
-        #if height == auto {
-            image(path, width: width)
-        } else {
-            image(path, width: width, height: height, fit: fit)
+        #context {
+            let path = asset-path(source)
+            if height == auto {
+                image(path, width: width)
+            } else {
+                image(path, width: width, height: height, fit: fit)
+            }
         }
     ]
 ]
 
-#let place-logo(..args) = place-image(assets.logo, dx: -0.5em, dy: -1em, position: top + right, ..args)
-#let place-bottom-right(path, caption: none, ..args) = place-image(
-    path,
-    caption: caption,
-    width: 20%,
-    dx: -1.5em,
-    dy: 0em,
-    position: bottom + right,
+// Presets over `place-image` — identical API, tuned defaults.
+#let place-logo(source, width: 10%, ..args) = place-image(
+    source,
+    width: width,
+    dx: -0.5em,
+    dy: -1em,
+    position: top + right,
     ..args,
 )
-#let place-bottom-left(path, caption: none, ..args) = place-image(
-    path,
-    caption: caption,
-    width: 20%,
-    dx: 1.5em,
-    dy: 0em,
-    position: bottom + left,
-    ..args,
-)
+// The source defaults to the repo QR: `#place-qr()`,
+// `#place-qr(caption: "pku-lemonade")`, `#place-qr("/path/to/other-qr.png")`.
+#let place-qr(..args) = {
+    assert(args.pos().len() <= 1, message: "place-qr takes at most one source")
+    place-image(
+        args.pos().at(0, default: lemonade-qr),
+        width: 20%,
+        position: bottom + right,
+        ..args.named(),
+    )
+}
 
 #let imgs(
     ..images,

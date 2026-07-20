@@ -1,4 +1,4 @@
-// Compilable reference for theme/images.typ.
+// Compilable reference for theme/images.typ and theme/assets.typ.
 //
 // Compile from the repository root:
 //   typst compile --root . examples/images/images.typ /tmp/images.pdf
@@ -152,7 +152,7 @@ The design separates request routing, scheduling, and memory management.
 // figures. `position`, `dx`, and `dy` control the anchor and offset. An explicit
 // parent height gives bottom anchors a stable placement region.
 #block(width: 100%, height: 330pt)[
-    #place-logo(width: 8%)
+    #place-logo(pku-logo, width: 8%)
     #place-image(
         "/examples/vstack/assets/vstack-fig03-architecture.png",
         caption: "architecture",
@@ -163,10 +163,23 @@ The design separates request routing, scheduling, and memory management.
     )
 ]
 
-// Other convenience helpers:
-//   place-bottom-right(path, caption: none, ..args)
-//   place-bottom-left(path, caption: none, ..args)
-//
+== Common assets
+
+// Commonly used figures live under `assets/logos/` and `assets/qr/` and are
+// exported as plain path values from `theme/assets.typ` (`pku-logo`,
+// `thu-logo`, `nsfc-logo`, `lemonade-qr`). There is no registry: ad-hoc
+// figures pass a root-absolute path to the same helpers. `place-logo` and
+// `place-qr` are `place-image` presets with the same API and tuned corner
+// defaults; a value may carry per-mode variants ((light: ..., dark: ...))
+// that `place-xx` resolves against `lemonade-theme(mode: ...)`.
+For the rare inline case, wrap a sized image in a box to keep it on the text
+baseline: #box(image(nsfc-logo, height: 1em), baseline: 0.2em).
+
+#block(width: 100%, height: 330pt)[
+    #place-logo(thu-logo, width: 7%)
+    #place-qr(caption: "pku-lemonade")
+]
+
 // ACM artifact badges are configured at theme level rather than through imgs:
 //   artifact-badges: ("available", "functional", "reusable")
 // Built-in names are available, functional, reusable, reproduced, replicated.

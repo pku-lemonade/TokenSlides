@@ -159,6 +159,7 @@
 
 // Internal runtime state (set by `lemonade-theme`; other modules read it).
 #let cur-ar = state("lec-ar", "16-9")
+#let cur-mode = state("lec-mode", "light")
 #let cur-colors = state("lec-colors", mode-config.light.colors)
 #let cur-box = state("lec-box", mode-config.light.box)
 #let cur-box-compact = state("lec-box-compact", false)

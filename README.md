@@ -13,6 +13,7 @@ This repo is set up to be driven from Codex, not only edited by hand. The main u
 
 - `lemonade.typ`: stable theme entrypoint that re-exports `theme/lemonade.typ`
 - `theme/`: shared theme modules for layout, outline, boxes, images, footer, and tables
+- `assets/`: shared figures (PKU/THU/NSFC logos, QR codes) exported as path values from `theme/assets.typ` — see `assets/README.md`
 - `.codex/skills/academic-paper-to-slides/`: paper-to-deck workflow and writing guidance
 - `.codex/skills/figure-extraction/`: figure recovery workflow for PDFs and slide decks
 - `out/<paper>/`: one workspace per generated deck
