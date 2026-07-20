@@ -4,6 +4,7 @@
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
     box-compact: true,
+    footer: "plain",
     title: [Introduction to Algebraic Graph Theory],
     short-title: [Intro to Algebraic Graph Theory],
     subtitle: [Discrete Mathematics],
@@ -35,12 +36,6 @@ We need to identify *coherent groups* or *communities*:
 
 == Defining a 'Good' Community
 
-#v(1em)
-
-#tbox(weight: "bold", alignment: center)[
-    What makes a community "good"?
-]
-
 #vboxs(
     sbox[
         - Strong internal connections
@@ -52,11 +47,10 @@ We need to identify *coherent groups* or *communities*:
         - Few edges leaving $S$
         - Low boundary size
     ],
-    gap: 20pt,
     fill-height: false,
 )
 
-#tbox(weight: "bold", alignment: center)[
+#bcallout[
     How do we formalize this mathematically?
 ]
 
@@ -69,7 +63,7 @@ A *cut* separates a subset $S subset V$ from the rest $overline(S) = V without S
 
     $ "cut"(S, overline(S)) = sum_(u in S, v in.not S) w_(u,v) $
 
-    where $w_(u,v)$ represents the affinity weight between nodes $u$ and $v$.
+    where $w_(u,v)$ represents the affinity weight between $u$ and $v$.
 ]
 This measures the total weight of edges crossing the boundary between $S$ and $overline(S)$.
 
@@ -153,7 +147,6 @@ Conductance quantifies whether internal connections are *significantly richer* t
         - Scale-invariant (values in $[0,1]$)
         - Structural significance
     ],
-    // gap: 10pt,
     fill-height: false,
 )
 
@@ -182,7 +175,8 @@ How can we *approximate* the minimum conductance cut?
 
 == Adjacency Matrix
 
-#nbox[From now on, we will consider undirected and unweighted graphs. However, the conclusions will extend to directed/weighted graphs]
+From now on, we will consider undirected and unweighted graphs.
+However, the conclusions will extend to directed/weighted graphs.
 
 #nbox[
     *Adjacency Matrix ($W$):*
@@ -256,7 +250,7 @@ How can we *approximate* the minimum conductance cut?
 ]
 
 #nbox[
-    You can verify this example:
+    Verify this example:
 
     $
         L = mat(
