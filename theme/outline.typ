@@ -49,9 +49,11 @@
     // (light #8c8c8c ~3.2:1, dark #727272 ~3.8:1) while reading clearly dimmer.
     alpha: 45%,
     entry-tracking: 0.1em,
+    entry-weight: "black",
     number-title-gap: 0em,
     numbering-style: auto,
     numbering-styles: outline-numbering-styles,
+    title-weight: "black",
     variants: (
         sections: (
             depth: 1,
@@ -225,7 +227,7 @@
             highlight-current: highlight-current,
             depth: variant-config.depth,
             text-size: variant-config.text-size,
-            text-weight: ("black",),
+            text-weight: (outline-config.entry-weight,),
         )
 
         set text(font: font-config.mono, tracking: outline-config.entry-tracking)
@@ -234,7 +236,11 @@
 
     let main-body = {
         align(center)[
-            #text(size: font-sizes.title, font: font-config.mono, weight: "black")[#title]
+            #text(
+                size: font-sizes.title,
+                font: font-config.mono,
+                weight: outline-config.title-weight,
+            )[#title]
         ]
         if variant-config.use-columns {
             align(center)[
