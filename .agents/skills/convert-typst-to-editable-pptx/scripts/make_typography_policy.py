@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Derive an audit_pptx_typography.py policy from the tracked theme profile.
+"""Derive an audit_pptx_typography.py policy from a generated theme profile.
 
-Reads references/theme-profile.json (see make_theme_profile.py), selects the
+Reads the disposable profile produced by make_theme_profile.py, selects the
 deck's aspect ratio, and emits a policy JSON whose allowed point sizes are the
 theme's effective sizes for that aspect:
 
@@ -22,7 +22,6 @@ import re
 import sys
 from pathlib import Path
 
-SKILL_DIR = Path(__file__).resolve().parent.parent
 POINTS = re.compile(r"^(-?\d+(?:\.\d+)?)pt$")
 
 
@@ -37,8 +36,8 @@ def to_points(value: object, context: str) -> float:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "--profile", type=Path, default=SKILL_DIR / "references" / "theme-profile.json",
-        help="theme profile JSON (default: the skill's tracked copy)",
+        "--profile", type=Path, required=True,
+        help="generated theme profile JSON from the current conversion",
     )
     parser.add_argument("--aspect", required=True, help='deck aspect ratio, e.g. "16-9" or "4-3"')
     parser.add_argument(
@@ -84,6 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     rendered = json.dumps(policy, indent=2, sort_keys=True) + "\n"
     if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered, encoding="utf-8")
         print(f"wrote {args.output} ({len(sizes)} allowed sizes)", file=sys.stderr)
     else:

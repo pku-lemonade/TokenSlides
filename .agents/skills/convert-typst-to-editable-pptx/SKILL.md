@@ -15,7 +15,7 @@ Use `@oai/artifact-tool` for authoring in environments governed by that presenta
 
 Read [references/reconstruction-guide.md](references/reconstruction-guide.md) before implementing the conversion. Read [references/qa-protocol.md](references/qa-protocol.md) before validating or delivering the output.
 Read [references/point-safe-typography.md](references/point-safe-typography.md) before mapping Typst font sizes into any CSS-pixel authoring API.
-Read [references/lemonade-calibration.md](references/lemonade-calibration.md) before re-deriving any empirical constant (line spacing, font faces, runtime unit quirks); it holds verified calibrations keyed to the tracked theme profile.
+Read [references/lemonade-calibration.md](references/lemonade-calibration.md) before re-deriving any empirical constant (line spacing, font faces, runtime unit quirks); it holds verified calibrations for generated theme profiles.
 
 ## Non-Negotiable Output Rules
 
@@ -59,14 +59,15 @@ Use the user's requested output path. If none is given, write `<source-stem>.ppt
 
 ### 3. Reconstruct the Theme and Layout
 
-For decks in this repo's lemonade theme, do not re-derive the design system by hand — refresh and read the tracked profile:
+For decks in this repo's lemonade theme, do not re-derive the design system by hand. Generate a disposable profile under the task scratch directory and read it:
 
 ```bash
-python <this-skill-dir>/scripts/make_theme_profile.py          # regenerate references/theme-profile.json
-python <this-skill-dir>/scripts/make_theme_profile.py --check  # verify it is not stale
+PROFILE="$TMP_DIR/theme-profile.json"
+python <this-skill-dir>/scripts/make_theme_profile.py \
+  --root <project-root> --output "$PROFILE"
 ```
 
-The profile carries every `<feature>-config` from `theme/*.typ` (the AGENTS.md "Config convention" is the machine contract, so new theme configs appear automatically). Take the deck's own choices — aspect ratio, mode, overrides — from the `lemonade-theme.with(...)` call in the entry file. `layout-config.<aspect>.page-size` already equals PowerPoint's standard canvas, so Typst point geometry maps 1:1. Fall back to manual capture (reconstruction guide) only for non-lemonade decks.
+Never write or update a profile under this skill's `references/` directory. The scratch profile carries every `<feature>-config` from `theme/*.typ` (the AGENTS.md "Config convention" is the machine contract, so new theme configs appear automatically). Take the deck's own choices — aspect ratio, mode, overrides — from the `lemonade-theme.with(...)` call in the entry file. `layout-config.<aspect>.page-size` already equals PowerPoint's standard canvas, so Typst point geometry maps 1:1. Fall back to manual capture (reconstruction guide) only for non-lemonade decks.
 
 Match the source aspect ratio and slide dimensions. Define reusable constants for palette, typography, spacing, margins, grid lines, and footer geometry from the profile. Keep typography constants in Typst/PowerPoint points even when slide geometry uses CSS pixels.
 
@@ -130,13 +131,23 @@ python <this-skill-dir>/scripts/audit_pptx_editability.py <output.pptx>
 
 Investigate every reported full-slide picture. The only acceptable pictures are legitimate source assets, and their count should match the manifest.
 
-Generate the typography policy from the tracked profile (add `--extra-size` for module-derived sizes listed in the calibration reference), then audit the serialized DrawingML:
+Re-check the scratch profile against the live theme before final QA. If it is stale, regenerate it and rebuild the deck:
+
+```bash
+python <this-skill-dir>/scripts/make_theme_profile.py \
+  --root <project-root> --output "$PROFILE" --check
+```
+
+Generate the typography policy from that exact profile (add `--extra-size` for module-derived sizes listed in the calibration reference), then audit the serialized DrawingML:
 
 ```bash
 python <this-skill-dir>/scripts/make_typography_policy.py \
-  --aspect <deck-aspect> --output <scratch/typography-policy.json>
+  --profile "$PROFILE" --aspect <deck-aspect> \
+  --output "$TMP_DIR/typography-policy.json"
 python <this-skill-dir>/scripts/audit_pptx_typography.py \
-  <output.pptx> --policy <scratch/typography-policy.json>
+  <output.pptx> --policy "$TMP_DIR/typography-policy.json"
+python <this-skill-dir>/scripts/audit_pptx_lemonade.py \
+  <output.pptx> --profile "$PROFILE"
 ```
 
 Require explicit sizes and forbid AutoFit unless the source semantics demand otherwise. Treat unexpected centipoint sizes as an export failure, not a harmless PowerPoint display difference.

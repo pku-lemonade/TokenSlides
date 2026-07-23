@@ -25,9 +25,9 @@ Do not copy a Typst value such as `40pt` into `fontSize: 40`; that exports as
 
 ## Authoring Pattern
 
-Keep the design-system constants in points, taken from the tracked theme
-profile (`layout-config.<aspect>.font-sizes` in `theme-profile.json`) — never
-copied from examples. The values below are the 16:9 lemonade profile; a 4:3
+Keep the design-system constants in points, taken from the disposable profile
+generated for the current conversion (`layout-config.<aspect>.font-sizes`) —
+never copied from examples. The values below are the 16:9 lemonade profile; a 4:3
 deck uses different sizes (22/24/32/...):
 
 ```js
@@ -123,12 +123,13 @@ band. Never use shrink-to-fit to preserve a one-line source label.
 
 ## Source Manifest
 
-Generate the deck-wide allowlist from the tracked theme profile instead of
-writing it by hand:
+Generate the deck-wide allowlist from the current conversion's scratch profile
+instead of writing it by hand:
 
 ```bash
 python <this-skill-dir>/scripts/make_typography_policy.py \
-  --aspect <deck-aspect> --output <scratch/typography-policy.json>
+  --profile <scratch>/theme-profile.json --aspect <deck-aspect> \
+  --output <scratch>/typography-policy.json
 ```
 
 It emits this shape (16:9 lemonade values shown; module-derived sizes go in

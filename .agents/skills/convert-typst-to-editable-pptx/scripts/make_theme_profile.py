@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or verify the tracked lemonade theme profile.
+"""Generate or verify a disposable lemonade theme profile.
 
 Scans `theme/*.typ` for the repo's config convention (every user-tweakable
 style dict is a top-level `#let <name>-config`; see AGENTS.md "Config
@@ -7,9 +7,9 @@ convention"), builds a Typst probe that imports each config, and queries the
 compiled metadata into a JSON profile. New configs are picked up automatically
 as long as they follow the convention — this script needs no edits.
 
-Default output is `<skill>/references/theme-profile.json` (tracked in git, so
-theme changes show up as reviewable diffs). Use `--check` in QA gates to fail
-when the tracked profile is stale.
+The caller must provide `--output`, normally a path under the conversion's
+external scratch directory. Use `--check` near the end of the conversion to
+fail if the generated profile no longer matches the live theme.
 """
 
 from __future__ import annotations
@@ -106,12 +106,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", type=Path, help="theme repo root (auto-detected by default)")
     parser.add_argument(
-        "--output", type=Path, default=SKILL_DIR / "references" / "theme-profile.json",
-        help="profile path (default: the skill's tracked references/theme-profile.json)",
+        "--output", type=Path, required=True,
+        help="disposable profile path, normally <task-scratch>/theme-profile.json",
     )
     parser.add_argument(
         "--check", action="store_true",
-        help="do not write; exit 1 if the tracked profile differs from the theme",
+        help="do not write; exit 1 if the generated profile differs from the live theme",
     )
     args = parser.parse_args(argv)
 
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             existing = json.loads(args.output.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
-            print(f"STALE: cannot read tracked profile {args.output}: {exc}", file=sys.stderr)
+            print(f"STALE: cannot read generated profile {args.output}: {exc}", file=sys.stderr)
             return 1
         if existing != profile:
             new_keys = sorted(set(profile) - set(existing))
@@ -139,7 +139,11 @@ def main(argv: list[str] | None = None) -> int:
             for label, keys in (("added", new_keys), ("removed", gone_keys), ("changed", changed)):
                 if keys:
                     print(f"  {label}: {', '.join(keys)}", file=sys.stderr)
-            print("Re-run make_theme_profile.py (without --check) and review the diff.", file=sys.stderr)
+            print(
+                "Re-run make_theme_profile.py with the same --root and --output, "
+                "then rebuild from the refreshed profile.",
+                file=sys.stderr,
+            )
             return 1
         print(f"OK: {args.output} matches the theme ({len(profile) - 1} configs).")
         return 0

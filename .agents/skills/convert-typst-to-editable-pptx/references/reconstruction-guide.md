@@ -30,13 +30,26 @@ Treat source and render as complementary:
 ## Record the Design System
 
 For lemonade decks this is generated, not captured: run
-`scripts/make_theme_profile.py` and read `references/theme-profile.json` —
-every `<feature>-config` in `theme/*.typ` is exported automatically (AGENTS.md
-"Config convention"). The deck's own choices come from its
+`scripts/make_theme_profile.py --root <project-root> --output
+<scratch>/theme-profile.json` and read that disposable profile — every
+`<feature>-config` in `theme/*.typ` is exported automatically (AGENTS.md
+"Config convention"). Never create or update a profile under the skill's
+`references/` directory. The deck's own choices come from its
 `lemonade-theme.with(...)` arguments. `layout-config.<aspect>.page-size` is
 PowerPoint's standard canvas, so Typst point geometry transfers 1:1. Empirical
 constants that the profile cannot express live in
 [lemonade-calibration.md](lemonade-calibration.md).
+
+Two Lemonade mappings are easy to get subtly wrong:
+
+- If `slide-config.centered-title-full-bleed` is true, use a zero-inset title
+  textbox spanning the full slide width. Overlay the separate page-number
+  object; do not reserve its width or shrink the title, because the narrower
+  frame can wrap in PowerPoint even when another renderer keeps one line.
+- Apply `outline-config.entry-weight` to every outline entry and
+  `outline-config.title-weight` to its title. Current-section emphasis comes
+  from the source color/opacity logic; do not infer a weight change from the
+  active state.
 
 For non-lemonade decks, capture these values before building slides:
 

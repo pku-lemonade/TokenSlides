@@ -25,3 +25,5 @@ Every user-tweakable style dict is a top-level `#let <feature>-config` in the mo
 - related knob groups as nested sub-dicts (see `title-config.han`).
 
 Unsuffixed dicts (`light-colors`, `outline-titles`) are internal building blocks or content tables. The `-config` suffix is a machine contract: export tooling (e.g. the `convert-typst-to-editable-pptx` skill) scans `theme/*.typ` for top-level `#let <name>-config` to build its design-system profile, so keep the suffix when adding or renaming a config and fold new user-facing knobs into the module's `-config` instead of adding unsuffixed dicts.
+
+Generated design-system profiles are disposable build artifacts. Conversion tooling must write them to the task's external scratch directory with an explicit `--output`; do not add or update a profile snapshot under `.agents/skills/*/references/`.

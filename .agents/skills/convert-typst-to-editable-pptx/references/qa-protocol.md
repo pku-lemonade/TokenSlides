@@ -110,13 +110,19 @@ Use `--allow-full-slide-pictures` only when the user explicitly accepts a legiti
 
 ## 7. Audit Serialized Typography
 
-Generate the policy from the tracked theme profile, then audit:
+First verify that the disposable profile still matches the live theme, then
+generate the policy from that exact profile and audit:
 
 ```bash
+python <this-skill-dir>/scripts/make_theme_profile.py \
+  --root <project-root> --output <scratch>/theme-profile.json --check
 python <this-skill-dir>/scripts/make_typography_policy.py \
-  --aspect <deck-aspect> --output <scratch/typography-policy.json>
+  --profile <scratch>/theme-profile.json --aspect <deck-aspect> \
+  --output <scratch>/typography-policy.json
 python <this-skill-dir>/scripts/audit_pptx_typography.py \
-  <output.pptx> --policy <scratch/typography-policy.json>
+  <output.pptx> --policy <scratch>/typography-policy.json
+python <this-skill-dir>/scripts/audit_pptx_lemonade.py \
+  <output.pptx> --profile <scratch>/theme-profile.json
 ```
 
 Add `--extra-size` for module-derived sizes (see lemonade-calibration.md).
@@ -132,7 +138,7 @@ CSS-pixel conversion contract.
 
 Pass only when all are true:
 
-- `make_theme_profile.py --check` passes (the tracked theme profile is not stale);
+- `make_theme_profile.py --root <project-root> --output <scratch>/theme-profile.json --check` passes;
 - final slide count and order match the intended compiled states;
 - every slide has been inspected at full size from the actual PPTX;
 - all text that should be editable is native text;
@@ -141,6 +147,7 @@ Pass only when all are true:
 - no undeclared full-slide image exists;
 - no visible clipping, overlap, bad wrapping, or incorrect connector remains;
 - final DrawingML point sizes match the effective Typst typography policy;
+- centered content-title widths and outline weights pass the Lemonade contract audit;
 - no text is visually resized by AutoFit unless explicitly required and documented;
 - the final deck re-imports successfully;
 - overflow diagnostics pass or every false positive is explained.
