@@ -249,8 +249,17 @@ However, the conclusions will extend to directed/weighted graphs.
     $
 ]
 
+== The Laplacian Quadratic Form
+
+#ibox[
+    *Key Property (Quadratic Form):* For any vector $x in RR^n$:
+    $
+        x^T L x & = sum_((i,j) in E) w_(i j) (x_i - x_j)^2
+    $
+]
+
 #nbox[
-    Verify this example:
+    *Verify this example:*
 
     $
         L = mat(
