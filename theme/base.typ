@@ -40,7 +40,7 @@
             table: 20pt,
             page-number: 36pt,
         ),
-        spacing: (leading: 0.65em, flow: 0.5em),
+        spacing: (leading: 0.65em, flow: 0.3em),
         margins: (top: 0.75em, bottom: 0em, left: 1.5em, right: 1em),
         page-size: (width: 13.333in, height: 7.5in),
     ),
@@ -68,7 +68,7 @@
 // Font family stacks.
 #let font-config = (
     body: ("Inter", "Arial", "Source Han Sans SC"),
-    math: ("Noto Sans Math", "New Computer Modern Math"),
+    math: "New Computer Modern Math",
     mono: ("Inconsolata", "Source Han Sans SC"),
 )
 

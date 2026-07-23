@@ -1,8 +1,8 @@
-#import "lemonade.typ": *
+#import "/lemonade.typ": *
 #import "@preview/numbly:0.1.0": numbly
 
 #show: lemonade-theme.with(
-    aspect-ratio: "16-9",
+    aspect-ratio: "4-3",
     box-compact: true,
     footer: "plain",
     title: [Introduction to Algebraic Graph Theory],

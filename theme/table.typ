@@ -5,10 +5,41 @@
 
 // CONFIG
 // Tables take the uniform `flow` rhythm around them (default block spacing);
-// only in-table typography is configured here.
+// `vtable` keeps content (`columns`, `header`, and cells) at the call site,
+// while every optional presentation-table default lives under `vtable`.
 #let table-config = (
     text-size: auto,
     stroke-width: 1pt,
+    vtable: (
+        style: "banded",
+        palette: "primary",
+        fills: (:),
+        center-cols: (),
+        text-size: 20pt,
+        header-text-size: 24pt,
+        weight: "medium",
+        header-weight: "bold",
+        emphasis-weight: "black",
+        leading: auto,
+        header-leading: auto,
+        column-styles: (),
+        fill-height: false,
+        fill-pad: 0.3em,
+        row-stretch: "content",
+        row-weights: auto,
+        header-row: true,
+        total-row: false,
+        first-column: false,
+        last-column: false,
+        banded-rows: auto,
+        banded-columns: false,
+        stroke: auto,
+        inset: (left: 0.25em, right: 0em, top: 0.3em, bottom: 0.3em),
+        header-inset: (left: 0em, right: 0em, top: 0.3em, bottom: 0.35em),
+        header-repeat: true,
+        align: left,
+        header-align: center,
+    ),
 )
 
 #let apply-table-style(colors, body) = {
@@ -69,28 +100,34 @@
 #let vtable(
     columns: auto,
     header: none,
-    style: "banded",
-    palette: "primary",
-    fills: (:),
-    center-cols: (),
-    text-size: 20pt,
-    header-text-size: 24pt,
-    column-styles: (),
-    fill-height: false,
-    fill-pad: 0.3em,
-    row-stretch: "content",
-    row-weights: auto,
-    header-row: true,
-    total-row: false,
-    first-column: false,
-    last-column: false,
-    banded-rows: auto,
-    banded-columns: false,
-    stroke: auto,
-    inset: (left: 0.25em, right: 0em, top: 0.3em, bottom: 0.3em),
-    header-inset: (left: 0em, right: 0em, top: 0.25em, bottom: 0.3em),
-    header-repeat: true,
-    align: left,
+    style: table-config.vtable.style,
+    palette: table-config.vtable.palette,
+    fills: table-config.vtable.fills,
+    center-cols: table-config.vtable.center-cols,
+    text-size: table-config.vtable.text-size,
+    header-text-size: table-config.vtable.header-text-size,
+    weight: table-config.vtable.weight,
+    header-weight: table-config.vtable.header-weight,
+    emphasis-weight: table-config.vtable.emphasis-weight,
+    leading: table-config.vtable.leading,
+    header-leading: table-config.vtable.header-leading,
+    column-styles: table-config.vtable.column-styles,
+    fill-height: table-config.vtable.fill-height,
+    fill-pad: table-config.vtable.fill-pad,
+    row-stretch: table-config.vtable.row-stretch,
+    row-weights: table-config.vtable.row-weights,
+    header-row: table-config.vtable.header-row,
+    total-row: table-config.vtable.total-row,
+    first-column: table-config.vtable.first-column,
+    last-column: table-config.vtable.last-column,
+    banded-rows: table-config.vtable.banded-rows,
+    banded-columns: table-config.vtable.banded-columns,
+    stroke: table-config.vtable.stroke,
+    inset: table-config.vtable.inset,
+    header-inset: table-config.vtable.header-inset,
+    header-repeat: table-config.vtable.header-repeat,
+    align: table-config.vtable.align,
+    header-align: table-config.vtable.header-align,
     ..cells,
 ) = context {
     // Named arguments that match no parameter would silently land in the
@@ -165,7 +202,13 @@
     let cell-align = (x, y) => {
         let is-header = header-row and y == 0
         let style = col-style(x)
-        let default-align = if is-header or x in center-cols { center } else { align }
+        let default-align = if is-header {
+            header-align
+        } else if x in center-cols {
+            center
+        } else {
+            align
+        }
         let horizontal = if is-header {
             style-value(style, "header-align", default-align)
         } else {
@@ -214,11 +257,11 @@
         let is-emphasis = is-header or is-total or is-first-column or is-last-column
         let default-size = if is-header { header-text-size } else { text-size }
         let default-weight = if is-header {
-            "bold"
+            header-weight
         } else if is-emphasis {
-            "black"
+            emphasis-weight
         } else {
-            "medium"
+            weight
         }
         let default-fill = if is-header {
             fill-of.header-text-fill
@@ -242,14 +285,14 @@
         } else {
             style-value(style, "text-fill", default-fill)
         }
-        let leading = if is-header {
-            style-value(style, "header-leading", auto)
+        let cell-leading = if is-header {
+            style-value(style, "header-leading", header-leading)
         } else {
-            style-value(style, "leading", auto)
+            style-value(style, "leading", leading)
         }
         table.cell(x: col, y: local-row)[
             #block(width: 100%)[
-                #set par(leading: leading) if leading != auto
+                #set par(leading: cell-leading) if cell-leading != auto
                 #show: apply-emph-style.with(emph-fill: fill, strong-fill: fill)
                 #text(size: size, weight: weight, fill: fill)[#cell]
             ]
