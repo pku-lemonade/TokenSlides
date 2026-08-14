@@ -919,7 +919,7 @@ def build_escape_fragment_payload(
             "#sbox",
             "#ebox",
             "#pbox",
-            "#cbox",
+            "#code",
             "#mbox",
             "#table",
             "#v",
@@ -1492,7 +1492,7 @@ def render_equation_block(equation: dict[str, Any]) -> list[str]:
         lines.append(f"#align(center)[$ {math_expr} $]")
         lines.append("")
     elif text:
-        lines.append("#cbox[")
+        lines.append("#code[")
         lines.append(f"  {typst_escape(text)}")
         lines.append("]")
         lines.append("")

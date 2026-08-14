@@ -31,6 +31,30 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - if a multi-panel source figure turns into a tiny center thumbnail, crop or split the evidence before abandoning `#imgs(...)`
 - keep color overrides local to the current example or deck unless the user asks to change the theme globally
 
+## Code Snippets
+
+- use `#code[...]` from `theme/code.typ` with an ordinary raw fence inside it;
+  never emit `#raw("line\nline", block: true, lang: ...)` — an escaped
+  one-line string is unreadable and uneditable in the deck source
+- `#code` is titleless; label a listing with the box helper around it
+  (`#ebox[...]`) plus a `#tbox(size: 20pt)[Label]`, not with a title bar
+- for a listing inside a box, pass `frame: false` so the surface is not drawn
+  twice
+- pass `indent: 2` on every slide listing: slides are short on width, and
+  re-indenting from the source's own indent unit keeps the full code font where
+  4-space source would have forced a smaller one
+- reach for `scale:` only after `indent: 2` still overflows the column, and use
+  the same value on both listings of a comparison
+- when two listings need no labels, drop them straight into `#vboxs(...)` — a
+  bare `#code` is a row item, so `#vboxs(code(indent: 2)[...],
+  code(indent: 2)[...], after: hbox[...])` compares them at equal height
+- keep the default `fill-height: true` on a row of listings; a short listing
+  leaves space inside its panel, which still reads better than
+  `fill-height: false` pushing the whole row into the top half of the slide
+- to point at part of a snippet, use `hl:` / `focus:` (1-based line numbers) or
+  `mark:` (tokens), not a separate annotation slide
+- full API and rendered reference: `examples/code/code.typ`
+
 ## Read Next
 
 - for composition choice, read `references/archetypes.md`
