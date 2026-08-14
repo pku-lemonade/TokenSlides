@@ -320,6 +320,17 @@
 
 #let apply-box-style(body) = {
     show figure.where(kind: _box-figure-kind): set align(left)
+    // A figure is placed as one unbreakable unit, and Typst DROPS one that does
+    // not fit its region: no warning, no partial render, the slide simply comes
+    // out empty. Box items are figures only so a spec can ride along with the
+    // body (`box-item`), so that placement rule buys this theme nothing and
+    // costs it silent content loss. Breakable, an over-tall box spills onto the
+    // next page instead — still wrong for a slide, but wrong where it shows.
+    //
+    // This reaches the blocks inside a box as well, so a frame splits rather
+    // than being pushed along whole. A block that passes `breakable:` itself
+    // still wins, which is why `code-config.breakable` is on.
+    show figure.where(kind: _box-figure-kind): set block(breakable: true)
     show figure.where(kind: _box-figure-kind): it => _render-spec(_with-body(_figure-spec(it), it.body))
     body
 }

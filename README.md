@@ -251,6 +251,10 @@ Write snippets as ordinary Typst raw fences inside `#code[...]` — never as
 - A listing is as wide as the text column. The gap to its right is the slide's
   `layout-config.margins.right` (base.typ), which moves prose and tables with
   it; `code-config.inset` is the code-local part and the one to reach for first.
+- A listing taller than its slide splits and continues on the next page rather
+  than disappearing (`code-config.breakable`, and the breakable box figures in
+  `apply-box-style`). Treat a split listing as a sign to cut lines or `scale:`
+  it — the overflow is shown so it can be fixed, not because it reads well.
 - `mark: ("@ t",)` accents a token wherever it appears, on top of the
   highlighting rather than instead of it, and outranks whatever the highlighter
   made of it — a marked token inside a comment or a string is still marked. Pass
