@@ -106,9 +106,8 @@
     shadow: black.transparentize(70%),
     footer-bg: auto,
     footer-fg: white,
-    code-bg: rgb("#f5f5f5"),
-    code-border: rgb("#d4d4d4"),
-    code-fg: black,
+    // Code listings carry their own per-mode palette (surface plus syntax
+    // colors) in `light-code-palette` / `dark-code-palette` in code.typ.
 )
 
 // Based on the Codex CLI TUI dark theme.
@@ -129,9 +128,6 @@
     // The bar footer fills with `primary` (#38BDF8); near-black text keeps
     // contrast on it, where light text would wash out.
     footer-fg: rgb("#0D0D0D"),
-    code-bg: rgb("#0B1220"),
-    code-border: rgb("#334155"),
-    code-fg: rgb("#EDEDED"),
 )
 
 // Glass look: accents at OKLCH L 0.52 (white title text stays >= 4.5:1 on

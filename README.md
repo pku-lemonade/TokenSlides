@@ -12,7 +12,7 @@ This repo is set up to be driven from Codex, not only edited by hand. The main u
 ## What Lives Here
 
 - `lemonade.typ`: stable theme entrypoint that re-exports `theme/lemonade.typ`
-- `theme/`: shared theme modules for layout, outline, boxes, images, footer, and tables
+- `theme/`: shared theme modules for layout, outline, boxes, code, images, footer, and tables
 - `assets/`: shared figures (PKU/THU/NSFC logos, QR codes) exported as path values from `theme/assets.typ` — see `assets/README.md`
 - `.codex/skills/academic-paper-to-slides/`: paper-to-deck workflow and writing guidance
 - `.codex/skills/figure-extraction/`: figure recovery workflow for PDFs and slide decks
@@ -219,6 +219,116 @@ The repo ships shared VS Code workspace settings in `.vscode/`:
 For local edits, use relative paths such as `image("assets/figure.png")`. The shared `#imgs(...)` helper accepts preloaded `image(...)` content so the file still resolves relative to the deck file instead of the theme package.
 
 See [`examples/images/images.typ`](examples/images/images.typ) for the compilable image API reference and layout examples.
+
+## Code Snippets
+
+Write snippets as ordinary Typst raw fences inside `#code[...]` — never as
+`#raw("line\nline", block: true)`. Markup may sit beside the listing.
+
+````typst
+#code(focus: (2, 3), mark: ("@ t",))[
+  ```python
+  @tm.func
+  def axpy[t: Time](x: Tile @ t, y: Tile @ t) -> Tile @ (t + 1):
+      return tm.fma(alpha, x, y)
+  ```
+  Both operands must arrive at the same logical time.
+]
+````
+
+- `hl: (2, 3)` bands those 1-based lines; `focus:` also mutes every other line;
+  `dim:` mutes only the lines given. `range(2, 5)` works as the argument.
+- Line numbers are on by default, zero-padded to two digits, so the lines `hl:`
+  and `focus:` name are ones the audience can see. `numbers: false` drops the
+  gutter for one listing; `code-config.numbers` is the deck-wide default, and
+  `number-digits` / `number-gap` / `number-tint` size and shade it. A listing of
+  more than 99 lines widens its own gutter.
+- A long line wraps with its continuation hanging under its own first code
+  column, and an accent band covers every row of it. `code-config.wrap-indent`
+  pushes continuations deeper still. A single token wider than the frame has no
+  break opportunity and overflows visibly — shorten it, or reach for `indent:`
+  and then `scale:`.
+- A listing is as wide as the text column. The gap to its right is the slide's
+  `layout-config.margins.right` (base.typ), which moves prose and tables with
+  it; `code-config.inset` is the code-local part and the one to reach for first.
+- `mark: ("@ t",)` accents a token wherever it appears, on top of the
+  highlighting rather than instead of it, and outranks whatever the highlighter
+  made of it — a marked token inside a comment or a string is still marked. Pass
+  a `regex` for a pattern.
+- A mark has to fall inside one piece of what the highlighter cut the line into.
+  A spec only cuts out what its own rules describe, so most marks land — `@ t`
+  and `tm.load` are untouched plain text as far as `python-lang` is concerned.
+  One that crosses a boundary, like `while q < Q` over the `while` keyword,
+  silently does not match: mark `q < Q` instead, or put `lang: none` on that
+  listing to drop highlighting and mark everything.
+- Syntect cuts at every token, so a listing it highlights turns highlighting off
+  as soon as it has a mark — a mark that quietly fails to show is worse than a
+  listing without color.
+- `frame: false` drops the surface for listings already inside a box helper;
+  `scale: 80%` shrinks one so two fit side by side.
+- `indent: 2` re-indents the snippet from its own indent unit (the smallest
+  non-zero indent in the source) down to two spaces per level. Slides are short
+  on width, so this is usually what buys a listing a larger font — reach for it
+  before `scale:`.
+- The surface and the token styling both come from a palette dict —
+  `light-code-palette` / `dark-code-palette` in `theme/code.typ`, picked per
+  mode through `code-config.palettes`. The default styles faces rather than
+  hues: keywords bold, comments grey, everything else body ink. Give a `syntax`
+  row a `fill` to bring a color back. Pass `theme:` your own palette dict for
+  one listing, or `theme: none` for a single flat ink.
+- `font:` sets the listing font, defaulting to `code-config.font`. It is a
+  separate knob from `font-config.mono`, which dresses footers, outlines,
+  tables, and inline `raw` in prose.
+
+### Languages
+
+Two highlighters, picked per listing. A fence whose tag is registered in
+`code-config.langs` is highlighted by rules this theme owns; anything else goes
+to syntect, whose spans are repainted into the same palette buckets. Python
+ships as a spec (`python-lang` in `theme/code.typ`); `lang: none` hands one
+listing back to syntect, and `lang:` a name or a spec forces the other way.
+
+A spec is an ordered list of `(bucket, pattern)` rules — declare one at the top
+of a deck and register it under the fence tag it answers to:
+
+```typst
+#let tdsl = code-lang(
+  ("comment", "#.*"),
+  ("name", "\\bkernel\\s+([A-Za-z_][A-Za-z0-9_]*)"),
+  ("keyword", ("kernel", "tile", "at", "yield")),
+  ("number", "\\b[0-9]+\\b"),
+)
+
+#show: lemonade-theme.with(code-langs: (tdsl: tdsl), ..)
+```
+
+- `bucket` is a palette `syntax` row, so a spec and a syntect listing wear the
+  same theme. `pattern` is a regex **source string** or an array of literal
+  words — never a `regex` value, which cannot be spliced into the combined
+  pattern the spec compiles to.
+- Rules are tried in order and the first match wins, which is what keeps a
+  keyword inside a comment or a string quiet. Typst's regex engine has no
+  look-around; capture instead, as the `name` rule above does — the capture
+  takes the bucket and the `kernel` around it goes back through the rules.
+- `code-langs: (python: none)` hands Python back to syntect deck-wide.
+
+For a full language rather than a slide-sized one, syntect will load a real
+grammar: `#set raw(syntaxes: read("x.sublime-syntax", encoding: none))` at the
+top of a deck reaches inside `#code` as well.
+
+The block is titleless. Label a listing with the box helper around it or a
+`tbox` above it. A bare `#code` is also a `vboxs` row item, so two unlabelled
+listings can be the columns of one equal-height row:
+
+```typst
+#vboxs(
+  code(indent: 2)[...],
+  code(indent: 2)[...],
+  after: hbox[Same recurrence, two loop structures.],
+)
+```
+
+See [`examples/code/code.typ`](examples/code/code.typ).
 
 ## Where To Edit
 

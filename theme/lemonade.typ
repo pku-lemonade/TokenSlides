@@ -14,6 +14,7 @@
 #import "assets.typ": lemonade-qr, nsfc-logo, pku-logo, thu-logo
 #import "boxes.typ": *
 #import "callout.typ": *
+#import "code.typ": code, code-config, code-lang, cur-code-langs, python-lang
 #import "emph.typ": apply-emph-style, on-primary
 #import "images.typ": *
 #import "images.typ": imgs-config as default-imgs-config
@@ -66,6 +67,11 @@
     website: auto,
     github: auto,
     imgs-config: (:),
+    // Language specs for `#code`, keyed by the fence tag they answer to, e.g.
+    // `(tdsl: code-lang(("comment", "#.*"), ("keyword", ("kernel", "tile"))))`.
+    // Merges over `code-config.langs`, so a name that is already there (such as
+    // `python`) is replaced, and `(python: none)` hands it back to syntect.
+    code-langs: (:),
     body,
 ) = {
     assert(aspect-ratio in aspect-ratios)
@@ -85,6 +91,7 @@
     let slide-page-size = layout.page-size
     let resolved-font-sizes = layout.font-sizes
     let resolved-imgs-config = default-imgs-config + imgs-config
+    let resolved-code-langs = code-config.langs + code-langs
     let info = (date: if date == auto { datetime.today() } else { date })
     for (key, value) in (
         title: title,
@@ -111,6 +118,7 @@
     cur-font-sizes.update(resolved-font-sizes)
     cur-artifact-badges.update(artifact-badges)
     cur-imgs-config.update(resolved-imgs-config)
+    cur-code-langs.update(resolved-code-langs)
 
     show: apply-box-style
     show: apply-table-style.with(theme.colors)

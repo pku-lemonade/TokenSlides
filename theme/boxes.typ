@@ -42,11 +42,6 @@
     fill-pad: 0.3em,
 )
 
-#let code-box-config = (
-    inset: 10pt,
-    border-width: 1pt,
-)
-
 #let _box-figure-kind = "lemonade-box"
 #let _box-spec-label = <lemonade-box-spec>
 
@@ -201,41 +196,53 @@
     height: auto,
     outer-spacing: true,
     row-title-size: none,
-) = context {
-    let colors = cur-colors.get()
-    let font-sizes = cur-font-sizes.get()
-    let compact = spec.at("compact", default: cur-box-compact.get())
-    let metrics = if compact { box-config.compact } else { box-config.normal }
-    let visuals = _box-visuals(spec, colors)
-    let above = if outer-spacing { auto } else { 0pt }
-    let below = if outer-spacing { auto } else { 0pt }
+) = if "render" in spec {
+    // Foreign row item (see `box-item`): its own module renders it.
+    (spec.render)(spec, height: height, outer-spacing: outer-spacing)
+} else {
+    context {
+        let colors = cur-colors.get()
+        let font-sizes = cur-font-sizes.get()
+        let compact = spec.at("compact", default: cur-box-compact.get())
+        let metrics = if compact { box-config.compact } else { box-config.normal }
+        let visuals = _box-visuals(spec, colors)
+        let above = if outer-spacing { auto } else { 0pt }
+        let below = if outer-spacing { auto } else { 0pt }
 
-    if spec.kind == "plain" {
-        _plain-frame(
-            spec,
-            visuals,
-            metrics,
-            font-sizes,
-            height: height,
-            above: above,
-            below: below,
-            row-title-size: row-title-size,
-        )
-    } else {
-        _top-frame(
-            spec,
-            visuals,
-            metrics,
-            font-sizes,
-            height: height,
-            above: above,
-            below: below,
-            row-title-size: row-title-size,
-        )
+        if spec.kind == "plain" {
+            _plain-frame(
+                spec,
+                visuals,
+                metrics,
+                font-sizes,
+                height: height,
+                above: above,
+                below: below,
+                row-title-size: row-title-size,
+            )
+        } else {
+            _top-frame(
+                spec,
+                visuals,
+                metrics,
+                font-sizes,
+                height: height,
+                above: above,
+                below: below,
+                row-title-size: row-title-size,
+            )
+        }
     }
 }
 
-#let _box-figure(spec, body) = figure(
+// Row-item constructor. A box helper — or any other theme module that wants its
+// output to compose with `vboxs` — wraps its spec and body with this. A spec
+// carrying a `render:` function is rendered by that function instead of by the
+// box frames above, which is how `theme/code.typ` joins an equal-height row
+// without boxes.typ knowing anything about code listings. The renderer is
+// called as `render(spec, height: ..., outer-spacing: ...)` and reads its body
+// from `spec.body`; `height` is `100%` inside a stretched row, else `auto`.
+#let box-item(spec, body) = figure(
     kind: _box-figure-kind,
     caption: none,
     supplement: none,
@@ -290,7 +297,7 @@
     for key in ("compact", "title-size", "title-inset") {
         if key in parsed.named { spec.insert(key, parsed.named.at(key)) }
     }
-    _box-figure(spec, parsed.body)
+    box-item(spec, parsed.body)
 }
 
 #let _make-plain(style, name, ..args) = _make-box-helper("plain", style, name, ..args)
@@ -419,7 +426,7 @@
         .map(item => {
             assert(
                 type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
-                message: "vboxs: items must be Lemonade box helpers",
+                message: "vboxs: items must be Lemonade box helpers or `code`",
             )
             _with-body(_figure-spec(item), item.body)
         })
@@ -434,19 +441,6 @@
         fill-pad: fill-pad,
         title-size: title-size,
     )
-}
-
-#let cbox(body, breakable: false) = context {
-    let colors = cur-colors.get()
-    block(
-        breakable: breakable,
-        fill: colors.code-bg,
-        stroke: (paint: colors.code-border, thickness: code-box-config.border-width),
-        inset: code-box-config.inset,
-    )[
-        #set text(fill: colors.code-fg)
-        #body
-    ]
 }
 
 #let tbox(
