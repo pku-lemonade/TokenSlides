@@ -11,6 +11,7 @@ import argparse
 import json
 import math
 import posixpath
+import re
 import sys
 import xml.etree.ElementTree as ET
 import zipfile
@@ -34,6 +35,10 @@ A = "{%s}" % NS["a"]
 R = "{%s}" % NS["r"]
 MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
 EMU_PER_INCH = 914400
+LINE_FRAGMENT_NAME = re.compile(
+    r"^(?P<prefix>.+?)(?:[-_ ]line(?:[-_ ]?\d+))$",
+    re.IGNORECASE,
+)
 
 
 class AuditError(Exception):
@@ -327,6 +332,33 @@ def has_text(element: ET.Element) -> bool:
     return any((node.text or "").strip() for node in element.iter(A + "t"))
 
 
+def generated_line_fragment_groups(
+    root: ET.Element, slide_number: int
+) -> list[dict[str, Any]]:
+    """Find repeated text boxes named as visual-line fragments of one block."""
+
+    groups: dict[str, list[str]] = defaultdict(list)
+    for shape in walk_resolved(root):
+        if shape.tag != P + "sp" or not has_text(shape):
+            continue
+        props = shape.find("p:nvSpPr/p:cNvPr", NS)
+        name = props.get("name", "") if props is not None else ""
+        match = LINE_FRAGMENT_NAME.match(name)
+        if match:
+            groups[match.group("prefix")].append(name)
+
+    return [
+        {
+            "slide_number": slide_number,
+            "semantic_prefix": prefix,
+            "text_box_count": len(names),
+            "object_names": names,
+        }
+        for prefix, names in sorted(groups.items())
+        if len(names) >= 2
+    ]
+
+
 def count_slide_objects(root: ET.Element) -> dict[str, int]:
     nodes = list(walk_resolved(root))
     shapes = [node for node in nodes if node.tag == P + "sp"]
@@ -398,6 +430,7 @@ def audit(
 
         slides: list[dict[str, Any]] = []
         suspicious: list[dict[str, Any]] = []
+        line_fragment_groups: list[dict[str, Any]] = []
         media_references: dict[str, list[dict[str, Any]]] = defaultdict(list)
         totals: Counter[str] = Counter()
 
@@ -406,6 +439,10 @@ def audit(
             relationships = read_relationships(archive, slide_part)
             counts = count_slide_objects(root)
             totals.update(counts)
+            slide_line_fragment_groups = generated_line_fragment_groups(
+                root, slide_number
+            )
+            line_fragment_groups.extend(slide_line_fragment_groups)
             pictures: list[dict[str, Any]] = []
             sp_tree = root.find("p:cSld/p:spTree", NS)
             if sp_tree is None:
@@ -469,6 +506,7 @@ def audit(
                     "part": slide_part,
                     "counts": counts,
                     "pictures": pictures,
+                    "line_fragment_groups": slide_line_fragment_groups,
                 }
             )
 
@@ -484,7 +522,7 @@ def audit(
 
     return {
         "file": str(pptx_path.resolve()),
-        "status": "fail" if suspicious else "pass",
+        "status": "fail" if suspicious or line_fragment_groups else "pass",
         "slide_size": {
             "width_emu": width,
             "height_emu": height,
@@ -503,6 +541,7 @@ def audit(
         "slides": slides,
         "media": media,
         "suspicious_pictures": suspicious,
+        "line_fragment_groups": line_fragment_groups,
         "definitions": {
             "text_objects": "Drawable slide objects containing non-empty DrawingML text.",
             "text_runs": "Non-empty a:t elements.",
@@ -511,6 +550,11 @@ def audit(
             "graphic_frames": "p:graphicFrame elements such as tables, charts, and diagrams.",
             "pictures": "p:pic picture elements; one picture may reference multiple fallback assets.",
             "coverage": "Visible picture bounds intersected with the slide bounds.",
+            "line_fragment_groups": (
+                "Repeated generated text-box names ending in line-N for one "
+                "semantic prefix; these indicate PDF visual lines were rebuilt "
+                "as separate text boxes."
+            ),
         },
     }
 
@@ -584,6 +628,21 @@ def human_report(result: dict[str, Any], allowed: bool) -> str:
     else:
         lines.append("  No ppt/media assets found.")
 
+    lines.extend(["", "Semantic text grouping"])
+    if result["line_fragment_groups"]:
+        lines.append(
+            "FAIL: found repeated generated line-fragment text boxes that should "
+            "be one semantic text block."
+        )
+        for group in result["line_fragment_groups"]:
+            lines.append(
+                f"  Slide {group['slide_number']}, "
+                f"{group['semantic_prefix']}: "
+                f"{group['text_box_count']} line-level text boxes"
+            )
+    else:
+        lines.append("PASS: no repeated generated line-fragment text boxes found.")
+
     lines.append("")
     suspicious_count = len(result["suspicious_pictures"])
     if suspicious_count:
@@ -620,11 +679,13 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Inspect a .pptx OOXML package for editable text, shapes, connectors, "
             "graphic frames, pictures, and media. Near-full-slide pictures are "
-            "treated as suspicious slide-image exports."
+            "treated as suspicious slide-image exports, and repeated generated "
+            "line-fragment text boxes are treated as broken semantic grouping."
         ),
         epilog=(
             "Exit status is 0 when the audit passes, 1 when suspicious pictures "
-            "are found, and 2 for input/package errors. Use "
+            "or repeated generated line-fragment text boxes are found, and 2 "
+            "for input/package errors. Use "
             "--allow-full-slide-pictures to acknowledge intentional full-bleed images."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -675,13 +736,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         output = dict(result)
         output["allowed_full_slide_pictures"] = args.allow_full_slide_pictures
-        output["effective_status"] = (
-            "allowed" if result["suspicious_pictures"] and args.allow_full_slide_pictures else result["status"]
-        )
+        if result["line_fragment_groups"]:
+            output["effective_status"] = "fail"
+        elif result["suspicious_pictures"] and args.allow_full_slide_pictures:
+            output["effective_status"] = "allowed"
+        else:
+            output["effective_status"] = result["status"]
         print(json.dumps(output, ensure_ascii=False, indent=2, sort_keys=True))
     else:
         print(human_report(result, allowed=args.allow_full_slide_pictures))
 
+    if result["line_fragment_groups"]:
+        return 1
     if result["suspicious_pictures"] and not args.allow_full_slide_pictures:
         return 1
     return 0

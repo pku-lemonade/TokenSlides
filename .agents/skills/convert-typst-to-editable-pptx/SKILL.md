@@ -94,6 +94,12 @@ Use explicit geometry and stable dimensions. Keep text inside its assigned bound
 
 Create all text as text boxes or text-bearing shapes. Preserve bold, color, code font, and paragraph structure with rich-text runs.
 
+Use one text box per semantic text block: title, paragraph, list, callout,
+card body, or table cell. Never recreate PDF visual lines as separate text
+boxes. Preserve wrapping inside the semantic block with paragraph breaks and
+rich-text runs; split a block only when its parts require independent geometry
+or interaction.
+
 Create all structure as native objects:
 
 - cards and panels: rectangles plus editable text;

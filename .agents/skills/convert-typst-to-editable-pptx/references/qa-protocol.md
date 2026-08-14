@@ -99,6 +99,8 @@ The audit must reconcile:
 
 - slide count;
 - text-bearing and native shape counts;
+- semantic text grouping, with no repeated generated `*-line-N` text boxes for
+  a single paragraph, list, callout, or card body;
 - connector and graphic-frame counts;
 - picture relationships and coverage;
 - packaged media types and sizes;
