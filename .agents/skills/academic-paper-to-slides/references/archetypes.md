@@ -10,7 +10,7 @@ Use a small set of reusable compositions. The goal is predictable, readable page
 - Default to simpler archetypes before inventing a custom composition.
 - Choose by rendered geometry, not by semantic label alone.
 - Generated visuals are the default asset source; they must still fit the existing archetypes instead of creating a new layout family.
-- Use `#imgs(...)`-compatible figure rows and captions for generated assets unless an existing archetype requires a different scripted renderer.
+- Use `#vboxs(img(...), ...)` figure rows and captions for generated assets unless an existing archetype requires a different scripted renderer.
 - On figure-led slides, keep the figure as the main evidence; the text explains why it matters.
 - Treat a two-line title on a dense evidence slide as a warning sign. Shorten the title before you start shrinking evidence or rewriting every box.
 - Vary neighboring figure-heavy slides instead of repeating the same side-by-side pattern for an entire section.

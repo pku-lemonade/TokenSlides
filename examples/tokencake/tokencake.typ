@@ -29,8 +29,8 @@
     *Systems implication:* Some agents sit on the critical path while others wait on external tools, so naive KV-cache placement wastes scarce GPU memory.
 ]
 
-#imgs(
-    image("assets/tokencake-fig01-workloads.pdf"),
+#vboxs(
+    img(image("assets/tokencake-fig01-workloads.pdf")),
     width: 98%,
 )
 
@@ -49,9 +49,9 @@
     *Time:* Tool stalls leave the first inference prefix idle on GPU; peaks reach 18.5% of used KV cache.
 ]
 
-#imgs(
-    image("assets/tokencake-fig02-space-contention.pdf"),
-    image("assets/tokencake-fig03-time-underutilization.pdf"),
+#vboxs(
+    img(image("assets/tokencake-fig02-space-contention.pdf")),
+    img(image("assets/tokencake-fig03-time-underutilization.pdf")),
     width: 96%,
     gap: 0.8em,
 )
@@ -76,8 +76,8 @@
     pause,
 
     [
-        #imgs(
-            (image("assets/tokencake-fig04-overview.jpeg"), [Tokencake Overview]),
+        #vboxs(
+            img(image("assets/tokencake-fig04-overview.jpeg"), [Tokencake Overview]),
             width: 100%,
         )
 
@@ -99,8 +99,8 @@
     *Mechanism:* Static graph analysis gives cold-start estimates, runtime feedback refines them, and predictive upload hides transfer latency before the agent resumes.
 ]
 
-#imgs(
-    (image("assets/tokencake-fig07-time-lifecycle.jpeg"), [Time Scheduler Lifecycle]),
+#vboxs(
+    img(image("assets/tokencake-fig07-time-lifecycle.jpeg"), [Time Scheduler Lifecycle]),
     width: 98%,
 )
 
@@ -119,8 +119,8 @@
     *Reservation:* The reserved pool grows with memory pressure and is divided across critical agents by score and historical memory demand. The configurable critical_ratio controls how many agent types receive protection.
 ]
 
-#imgs(
-    (image("assets/tokencake-fig08-space-feedback.jpeg"), [Dynamic Memory Partitioning]),
+#vboxs(
+    img(image("assets/tokencake-fig08-space-feedback.jpeg"), [Dynamic Memory Partitioning]),
     width: 98%,
 )
 
@@ -160,8 +160,8 @@
     *Interpretation:* The benefit is modest when the system is not memory-bound, but it grows once tool stalls and agent interference start to constrain batch size.
 ]
 
-#imgs(
-    (image("assets/tokencake-fig09-latency.jpeg"), [End-to-End Latency]),
+#vboxs(
+    img(image("assets/tokencake-fig09-latency.jpeg"), [End-to-End Latency]),
     width: 98%,
 )
 
@@ -186,9 +186,9 @@
 
     ],
     [
-        #imgs(
-            image("assets/tokencake-fig10-utilization.jpeg"),
-            image("assets/tokencake-fig12-abnormal-agents.jpeg"),
+        #vboxs(
+            img(image("assets/tokencake-fig10-utilization.jpeg")),
+            img(image("assets/tokencake-fig12-abnormal-agents.jpeg")),
             dir: ttb,
             width: 100%,
             gap: 0.6em,
@@ -218,9 +218,9 @@
 
     ],
     [
-        #imgs(
-            image("assets/tokencake-fig13-offload-tradeoff.jpeg"),
-            image("assets/tokencake-fig14-overhead-mitigation.jpeg"),
+        #vboxs(
+            img(image("assets/tokencake-fig13-offload-tradeoff.jpeg")),
+            img(image("assets/tokencake-fig14-overhead-mitigation.jpeg")),
             dir: ttb,
             width: 100%,
             gap: 0.6em,

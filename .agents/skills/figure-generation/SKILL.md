@@ -24,7 +24,7 @@ If required labels are not known, ask the parent for them before generating. Do 
 
 ## Canvas Contract
 
-Generated slide figures should read large inside `#imgs(...)`.
+Generated slide figures should read large inside `#vboxs(img(...))`.
 
 - Keep a tight crop: the main diagram should occupy roughly 85-92% of the bitmap width and height.
 - Use a consistent safe margin across a visual series, typically 4-6% per side after any crop/pad cleanup.

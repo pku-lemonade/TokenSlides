@@ -7,7 +7,7 @@
     title-align: "left",
     box-compact: true,
     footer: "bar",
-    imgs-config: (
+    img-config: (
         cap-size: 15pt,
     ),
     artifact-badges: ("available", "functional", "reproduced"),
@@ -35,8 +35,11 @@
     *Anchor numbers:* the paper reports `50+ min` emulation loops, while GH-Scope finishes validation in under `1 s`.
 ]
 
-#imgs(
-    (asset("fig1-workflow"), [Existing flows spend effort on integration and emulation, not exploration]),
+#vboxs(
+    img(
+        asset("fig1-workflow"),
+        [Existing flows spend effort on integration and emulation, not exploration],
+    ),
 )
 
 == Integration Tax
@@ -49,8 +52,8 @@
     *Concrete cost:* ReGraph needs `200+` edited lines across `10+` files for a `32-bit -> 16-bit` SSSP change.
 ]
 
-#imgs(
-    (asset("fig2-bitwidth-cascade"), [One bitwidth change fans out across the accelerator stack]),
+#vboxs(
+    img(asset("fig2-bitwidth-cascade"), [One bitwidth change fans out across the accelerator stack]),
 )
 
 = Design
@@ -65,8 +68,11 @@
     *Structure:* a hierarchical abstraction feeds GH-Architect for code generation and GH-Scope for IR-level verification.
 ]
 
-#imgs(
-    (asset("fig3-overview"), [Abstraction, generation, and verification form one compiler workflow]),
+#vboxs(
+    img(
+        asset("fig3-overview"),
+        [Abstraction, generation, and verification form one compiler workflow],
+    ),
 )
 
 == Cost-Tiered Abstraction
@@ -88,8 +94,8 @@
         ]
     ],
     [
-        #imgs(
-            (asset("fig4-hierarchy"), [`L1` single-line, `L2` multi-file, `L3` redesign]),
+        #vboxs(
+            img(asset("fig4-hierarchy"), [`L1` single-line, `L2` multi-file, `L3` redesign]),
         )
     ],
 )
@@ -109,8 +115,8 @@
         ]
     ],
     [
-        #imgs(
-            (asset("fig5a-dsl"), [One DSL block binds schema, parameters, and one iteration]),
+        #vboxs(
+            img(asset("fig5a-dsl"), [One DSL block binds schema, parameters, and one iteration]),
         )
     ],
 )
@@ -134,8 +140,11 @@
         ]
     ],
     [
-        #imgs(
-            (asset("fig5b-level-examples"), [The hierarchy maps to partitioning, bitwidth, and pipeline changes]),
+        #vboxs(
+            img(
+                asset("fig5b-level-examples"),
+                [The hierarchy maps to partitioning, bitwidth, and pipeline changes],
+            ),
         )
     ],
 )
@@ -205,8 +214,8 @@
     *Where it wins most:* skewed graphs such as `R24`, `AM`, and `LJ` benefit from better partition-ratio tuning.
 ]
 
-#imgs(
-    (
+#vboxs(
+    img(
         asset("fig6-vs-regraph"),
         [Only `L1` changes here, so the gain comes from better use of ReGraph's fixed structure],
     ),
@@ -222,8 +231,11 @@
     *Coverage:* the paper reports `1.2x` average speedup and `five` large-graph cases where ThunderGP runs out of memory.
 ]
 
-#imgs(
-    (asset("fig7-vs-thundergp"), [Graph.hls keeps pace while avoiding several ThunderGP out-of-memory cases]),
+#vboxs(
+    img(
+        asset("fig7-vs-thundergp"),
+        [Graph.hls keeps pace while avoiding several ThunderGP out-of-memory cases],
+    ),
 )
 
 == Cross-Level Gains
@@ -236,8 +248,11 @@
     *Ablation:* Naive `0.71x`, `L1` `1.99x`, `L1+L2` `2.95x`, `L1+L3` `2.52x`, full `L1+L2+L3` `4.48x`.
 ]
 
-#imgs(
-    (asset("fig8-ablation"), [The full gain appears only when the three levels are tuned together]),
+#vboxs(
+    img(
+        asset("fig8-ablation"),
+        [The full gain appears only when the three levels are tuned together],
+    ),
 )
 
 == Simulation Speed
@@ -250,8 +265,8 @@
     *Anchor number:* average speedup is `301.6x`; PageRank on `rmat-24-16` drops from `1779.06 s` to `8.29 s`.
 ]
 
-#imgs(
-    (asset("fig9-simulation-speedup"), [IR-level simulation consistently outpaces Vitis `C-Sim`]),
+#vboxs(
+    img(asset("fig9-simulation-speedup"), [IR-level simulation consistently outpaces Vitis `C-Sim`]),
 )
 
 == Takeaways

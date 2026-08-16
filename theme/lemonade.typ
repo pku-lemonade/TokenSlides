@@ -17,7 +17,8 @@
 #import "code.typ": code, code-config, code-lang, cur-code-langs, python-lang
 #import "emph.typ": apply-emph-style, on-primary
 #import "images.typ": *
-#import "images.typ": imgs-config as default-imgs-config
+#import "images.typ": img-config as default-img-config
+#import "boxes.typ": vboxs-config as default-vboxs-config
 
 #import "footer.typ": footer as footer-fn, footer-band, footer-parts, footer-presets, resolve-footer
 #import "slide.typ": slide
@@ -66,7 +67,11 @@
     email: auto,
     website: auto,
     github: auto,
-    imgs-config: (:),
+    // Per-figure defaults for `#img` (caption typography, frame, fit).
+    img-config: (:),
+    // Defaults for `#vboxs`, which lays out every equal-height row in the theme
+    // — figures and listings as well as boxes (`gap`, `fill-height`, ...).
+    vboxs-config: (:),
     // Language specs for `#code`, keyed by the fence tag they answer to, e.g.
     // `(tdsl: code-lang(("comment", "#.*"), ("keyword", ("kernel", "tile"))))`.
     // Merges over `code-config.langs`, so a name that is already there (such as
@@ -90,7 +95,20 @@
     )
     let slide-page-size = layout.page-size
     let resolved-font-sizes = layout.font-sizes
-    let resolved-imgs-config = default-imgs-config + imgs-config
+    // A stale or misplaced key would otherwise merge in and be read by nobody —
+    // silent wrong layout rather than an error. `fill-height` moving from the
+    // figure to the row is exactly the mistake worth failing on.
+    let checked-config = (name, defaults, overrides) => {
+        for key in overrides.keys() {
+            assert(
+                key in defaults,
+                message: name + ": unknown key `" + key + "`; known keys are " + repr(defaults.keys()),
+            )
+        }
+        defaults + overrides
+    }
+    let resolved-img-config = checked-config("img-config", default-img-config, img-config)
+    let resolved-vboxs-config = checked-config("vboxs-config", default-vboxs-config, vboxs-config)
     let resolved-code-langs = code-config.langs + code-langs
     let info = (date: if date == auto { datetime.today() } else { date })
     for (key, value) in (
@@ -117,7 +135,8 @@
     cur-title-align.update(title-align)
     cur-font-sizes.update(resolved-font-sizes)
     cur-artifact-badges.update(artifact-badges)
-    cur-imgs-config.update(resolved-imgs-config)
+    cur-img-config.update(resolved-img-config)
+    cur-vboxs-config.update(resolved-vboxs-config)
     cur-code-langs.update(resolved-code-langs)
 
     show: apply-box-style

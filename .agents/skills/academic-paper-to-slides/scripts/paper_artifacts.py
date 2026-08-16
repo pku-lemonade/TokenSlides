@@ -912,7 +912,8 @@ def build_escape_fragment_payload(
         "spec_notes": (spec or {}).get("notes", []),
         "allowed_primitives": [
             "#grid",
-            "#imgs",
+            "#vboxs",
+            "#img",
             "#ibox",
             "#hbox",
             "#nbox",
@@ -1312,7 +1313,7 @@ def fold_support_points_into_boxes(
     ]
 
 
-def render_imgs_block(
+def render_figure_row(
     asset_entries: list[dict[str, Any]],
     *,
     width: str = "100%",
@@ -1322,13 +1323,13 @@ def render_imgs_block(
     visible = [entry for entry in asset_entries if entry.get("expr")]
     if not visible:
         return []
-    lines = ["#imgs("]
+    lines = ["#vboxs("]
     for entry in visible:
         caption = typst_escape(entry.get("caption") or "")
         if caption:
-            lines.append(f"  ({entry['expr']}, [{caption}]),")
+            lines.append(f"  img({entry['expr']}, [{caption}]),")
         else:
-            lines.append(f"  {entry['expr']},")
+            lines.append(f"  img({entry['expr']}),")
     lines.append(f"  width: {width},")
     if len(visible) > 1:
         lines.append(f"  gap: {gap},")
@@ -1343,13 +1344,13 @@ def render_stacked_images(asset_entries: list[dict[str, Any]]) -> list[str]:
     visible = [entry for entry in asset_entries if entry.get("expr")]
     if not visible:
         return []
-    lines = ["#imgs("]
+    lines = ["#vboxs("]
     for entry in visible:
         caption = typst_escape(entry.get("caption") or "")
         if caption:
-            lines.append(f"  ({entry['expr']}, [{caption}]),")
+            lines.append(f"  img({entry['expr']}, [{caption}]),")
         else:
-            lines.append(f"  {entry['expr']},")
+            lines.append(f"  img({entry['expr']}),")
     lines.append("  dir: ttb,")
     lines.append("  width: 100%,")
     lines.append("  gap: 0.6em,")
@@ -1441,7 +1442,7 @@ def render_card_body(card: dict[str, Any]) -> list[str]:
             lines.append("#v(0.5em)")
         card_asset = dict(asset)
         card_asset["caption"] = ""
-        lines.extend(render_imgs_block([card_asset], width="100%"))
+        lines.extend(render_figure_row([card_asset], width="100%"))
     return lines or ["- Add card content."]
 
 
@@ -1546,7 +1547,7 @@ def render_generic_slide(
         warnings.append(f"slide {slide.get('slide_id') or slide.get('title')}: table data is incomplete")
     lines.extend(table_lines)
     if asset_entries:
-        lines.extend(render_imgs_block(asset_entries[:2], width="94%"))
+        lines.extend(render_figure_row(asset_entries[:2], width="94%"))
     if equations:
         lines.extend(render_equation_block(equations[0]))
     if not lines:
@@ -1596,7 +1597,7 @@ def render_figure_led_vertical_body(
     # the box system. When the text budget is already full, merge the extra sentence
     # into the last visible box instead of leaving a free bullet above the figure.
     lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
-    lines.extend(render_imgs_block(asset_entries[:2], width=width))
+    lines.extend(render_figure_row(asset_entries[:2], width=width))
     return lines, warnings
 
 
@@ -1627,7 +1628,7 @@ def render_method_side_by_side_body(
     bullet_limit = limit_from_spec(spec, "bullets_max", 2)
     bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
     left_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
-    right_panel = render_imgs_block(asset_entries[:1], width="100%") or render_text_box(
+    right_panel = render_figure_row(asset_entries[:1], width="100%") or render_text_box(
         "neutral",
         "Missing evidence",
         "Add one overview asset or choose another archetype.",
@@ -1711,11 +1712,11 @@ def render_comparison_body(
     bullet_items = bullets[:bullet_limit] if bullet_limit is not None else bullets
     lines.extend(render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit)))
     if len(asset_entries) >= 2:
-        lines.extend(render_imgs_block(asset_entries[:2], width="96%"))
+        lines.extend(render_figure_row(asset_entries[:2], width="96%"))
     elif slide.get("table"):
         lines.extend(render_table_block(slide.get("table")))
     elif asset_entries:
-        lines.extend(render_imgs_block(asset_entries[:1], width="92%"))
+        lines.extend(render_figure_row(asset_entries[:1], width="92%"))
     return lines, warnings
 
 
@@ -1789,7 +1790,7 @@ def render_motivation_background_body(
         lines.extend(render_grid([0.95, 1.05], [left_panel, table_lines]))
     elif asset_entries:
         left_panel = render_box_stack(fold_support_points_into_boxes(boxes, bullet_items, box_limit=box_limit))
-        right_panel = render_imgs_block(asset_entries[:1], width="100%")
+        right_panel = render_figure_row(asset_entries[:1], width="100%")
         lines.extend(render_grid([0.95, 1.05], [left_panel, right_panel]))
     else:
         if boxes:
@@ -1816,7 +1817,7 @@ def render_conclusion_takeaways_body(
     else:
         lines.extend(render_bullet_list(bullet_items))
     if asset_entries:
-        lines.extend(render_imgs_block(asset_entries[:1], width="88%"))
+        lines.extend(render_figure_row(asset_entries[:1], width="88%"))
     return lines, []
 
 

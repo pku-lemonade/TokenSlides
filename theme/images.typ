@@ -1,34 +1,45 @@
-#import "base.typ": layout-config, bleed as bleed-block, cur-ar, cur-colors, cur-font-sizes, font-config
+#import "base.typ": cur-colors, cur-font-sizes, font-config
 #import "assets.typ": asset-path, lemonade-qr
+#import "boxes.typ": box-item
 
 // CONFIG
-// Default image options; deck-level overrides merge in via `lemonade-theme(imgs-config: ...)`.
-// `cap-size: auto` resolves to the current aspect ratio's `small` font size.
-#let imgs-config = (
-    fill-height: true,
-    fill-pad: 0.3em,
+// Default options for one figure; deck-level overrides merge in via
+// `lemonade-theme(img-config: ...)`. `cap-size: auto` resolves to the current
+// aspect ratio's `small` font size.
+//
+// How a figure is PLACED is not here: `img` is a `vboxs` row item, so the row
+// owns width, direction, gaps, bleed, and whether it fills the slide — see
+// `vboxs-config` in boxes.typ.
+#let img-config = (
     cap-size: auto,
     cap-weight: "bold",
+    // `auto` = a hairline in the mode's table-stroke color; `none` = no frame.
+    border: auto,
+    border-radius: 0pt,
+    inset: 0pt,
+    fit: "contain",
+    // Gap between a figure and its caption.
+    cap-gap: 0.2em,
 )
 
 // Internal runtime state (set by `lemonade-theme`).
-#let cur-imgs-config = state("lec-imgs-config", imgs-config)
+#let cur-img-config = state("lec-img-config", img-config)
 
-// Shared caption styling for `place-image` and `imgs`. `auto` values resolve
-// from `cur-imgs-config`; `cap-color: auto` keeps the surrounding text color.
+// Shared caption styling for `place-image` and `img`. `auto` values resolve
+// from `cur-img-config`; `cap-color: auto` keeps the surrounding text color.
 #let _caption-block(caption, cap-size: auto, cap-weight: auto, cap-color: auto) = context {
-    let imgs-config = cur-imgs-config.get()
+    let img-config = cur-img-config.get()
     let resolved-cap-size = if cap-size != auto {
         cap-size
-    } else if imgs-config.at("cap-size") != auto {
-        imgs-config.at("cap-size")
+    } else if img-config.at("cap-size") != auto {
+        img-config.at("cap-size")
     } else {
         cur-font-sizes.get().small
     }
     let cap-text-args = (
         font: font-config.mono,
         size: resolved-cap-size,
-        weight: if cap-weight == auto { imgs-config.at("cap-weight") } else { cap-weight },
+        weight: if cap-weight == auto { img-config.at("cap-weight") } else { cap-weight },
     )
     if cap-color != auto { cap-text-args.insert("fill", cap-color) }
     block(width: 100%)[
@@ -88,359 +99,123 @@
     )
 }
 
-#let imgs(
-    ..images,
-    dir: ltr,
+// One figure, as a `vboxs` row item. The row decides how much height this gets
+// (`height`), and lays the caption out itself from the spec's `foot` — see
+// `box-item` in boxes.typ. `height` is a definite length inside a row, `auto`
+// standing alone or when the row is not filling.
+//
+// A definite height is handed straight to the image with `fit`, so `contain`
+// letterboxes a figure whose aspect ratio does not match its slot rather than
+// distorting it, and the figure sits centered in what it was given.
+#let _render-img(spec, height: auto, outer-spacing: true) = context {
+    let cfg = cur-img-config.get()
+    let pick = (value, key) => if value == auto { cfg.at(key) } else { value }
+    let stroke = {
+        let border = pick(spec.border, "border")
+        // The config's own `auto` is the mode-dependent hairline; only a
+        // resolved color or `none` gets past here.
+        if border == auto { 1pt + cur-colors.get().table-stroke } else { border }
+    }
+    let target = if height != auto { height } else { spec.height }
+
+    // A `set` rule sizes the image whether the caller passed a path or ready-made
+    // `image(...)` content, and leaves an explicit `image(width: ...)` alone.
+    let figure-body = block(width: spec.width)[
+        #if target == auto [
+            #set image(width: 100%)
+            #spec.body
+        ] else [
+            #set image(width: 100%, height: target, fit: pick(spec.fit, "fit"))
+            #spec.body
+        ]
+    ]
+    let framed = if stroke == none {
+        figure-body
+    } else {
+        box(
+            stroke: stroke,
+            radius: pick(spec.border-radius, "border-radius"),
+            clip: true,
+            inset: pick(spec.inset, "inset"),
+            figure-body,
+        )
+    }
+
+    block(
+        width: 100%,
+        height: target,
+        above: if outer-spacing { auto } else { 0pt },
+        below: if outer-spacing { auto } else { 0pt },
+        spacing: 0pt,
+    )[
+        #align(center + horizon)[#framed]
+    ]
+}
+
+// `#img(source)` or `#img(source, [caption])`, where `source` is a path or
+// ready-made `image(...)` content. (The per-mode `(light:, dark:)` variant dicts
+// that `place-xx` resolves are for logos, and are not accepted here.)
+//
+// The result is a `vboxs` row item, which is the only image layout in this
+// theme: `#vboxs(img(a), img(b))` puts two figures side by side at one height,
+// `dir: ttb` stacks them, and `after:` hangs content under the row. A bare
+// `#img(...)` renders on its own at its natural size, the same way a bare
+// `#code[...]` does.
+#let img(
+    ..args,
     width: 100%,
-    bleed: false,
-    widths: auto,
-    gap: 0.4em,
-    valign: horizon,
-    img-width: 100%,
-    img-height: auto,
-    img-fit: "contain",
-    fill-height: auto,
-    fill-pad: auto,
+    height: auto,
+    fit: auto,
+    border: auto,
+    border-radius: auto,
+    inset: auto,
     cap-size: auto,
     cap-weight: auto,
     cap-color: auto,
-    cap-gap: 0.2em,
-    // `auto` resolves to a hairline in the mode's table-stroke color.
-    border: auto,
-    border-radius: 0pt,
-    inset: 0pt,
+    cap-gap: auto,
 ) = {
-    let items = images.pos()
-    let count = items.len()
-    if count == 0 {
-        []
-    } else {
-        let is-image-content = item => type(item) == content and item.func() == image
-        let is-image-source = item => type(item) == str or type(item) == bytes or is-image-content(item)
-
-        let parsed = ()
-        let pending-source = none
-        for item in items {
-            if type(item) == array {
-                if pending-source != none {
-                    parsed.push((source: pending-source, caption: none))
-                    pending-source = none
-                }
-                parsed.push((source: item.at(0), caption: item.at(1, default: none)))
-            } else if is-image-source(item) {
-                if pending-source != none {
-                    parsed.push((source: pending-source, caption: none))
-                }
-                pending-source = item
-            } else if pending-source != none {
-                parsed.push((source: pending-source, caption: item))
-                pending-source = none
-            } else {
-                pending-source = item
-            }
-        }
-        if pending-source != none {
-            parsed.push((source: pending-source, caption: none))
-        }
-
-        let count = parsed.len()
-        let is-vertical = dir == ttb or dir == btt
-        let ordered = if dir == rtl or dir == btt { parsed.rev() } else { parsed }
-
-        let render-caption = caption => _caption-block(
-            caption,
-            cap-size: cap-size,
-            cap-weight: cap-weight,
-            cap-color: cap-color,
-        )
-
-        let render-image = (source, resolved-width, resolved-height) => {
-            if type(source) == str or type(source) == bytes {
-                if resolved-height == auto {
-                    image(source, width: resolved-width)
-                } else {
-                    image(source, width: resolved-width, height: resolved-height, fit: img-fit)
-                }
-            } else {
-                block(width: resolved-width)[
-                    #if resolved-height == auto [
-                        #set image(width: 100%)
-                        #source
-                    ] else [
-                        #set image(width: 100%, height: resolved-height, fit: img-fit)
-                        #source
-                    ]
+    let pos = args.pos()
+    assert(
+        pos.len() == 1 or pos.len() == 2,
+        message: "img: use #img(source) or #img(source, [caption])",
+    )
+    // A ratio has nothing to resolve against here: in a filling row the row
+    // hands down a length and this is ignored, and in a non-filling one the row
+    // measures the figure at its natural size first, where `50%` of an
+    // as-yet-unknown height measures as nothing and the figure silently
+    // vanishes. Filling a container is the row's job.
+    assert(
+        height == auto or type(height) == length,
+        message: "img: `height` takes a length; for a figure that fills its container, "
+            + "let the row do it — `vboxs(img(..), fill-height: true)`",
+    )
+    let source = pos.at(0)
+    let caption = pos.at(1, default: none)
+    let body = if type(source) == str or type(source) == bytes { image(source) } else { source }
+    // The caption travels as the item's `foot`, so the ROW can measure every
+    // caption in it together and give the figures above them one shared height.
+    let foot = if caption == none { none } else {
+        context {
+            v(if cap-gap == auto { cur-img-config.get().cap-gap } else { cap-gap })
+            block(width: 100%, spacing: 0pt)[
+                #align(center)[
+                    #_caption-block(caption, cap-size: cap-size, cap-weight: cap-weight, cap-color: cap-color)
                 ]
-            }
-        }
-
-        // `border` may be `auto` (mode-dependent); bind `render-cell` once the
-        // resolved stroke is known inside the context block below.
-        let render-cell-with = (resolved-border, source, resolved-width, resolved-height) => {
-            let img = render-image(source, resolved-width, resolved-height)
-            let cell = if resolved-border != none {
-                box(
-                    stroke: resolved-border,
-                    radius: border-radius,
-                    clip: true,
-                    inset: inset,
-                    img,
-                )
-            } else { img }
-            block(width: 100%)[
-                #align(center)[#cell]
             ]
         }
-
-        let has-captions = ordered.any(it => it.caption != none)
-
-        context {
-            let imgs-config = cur-imgs-config.get()
-            let resolved-fill-height = if fill-height == auto { imgs-config.at("fill-height") } else { fill-height }
-            let resolved-fill-pad = if fill-pad == auto { imgs-config.at("fill-pad") } else { fill-pad }
-            let resolved-border = if border == auto { 1pt + cur-colors.get().table-stroke } else { border }
-            let render-cell = render-cell-with.with(resolved-border)
-            let slide-margins = layout-config.at(cur-ar.get()).margins
-            let resolved-left-margin = measure(h(slide-margins.left)).width
-            let resolved-right-margin = measure(h(slide-margins.right)).width
-
-            let uses-bleed = available-width => {
-                if bleed {
-                    let full-slide-width = page.width - resolved-left-margin - resolved-right-margin
-                    available-width >= full-slide-width
-                } else { false }
-            }
-
-            let body-measure-width = available-width => {
-                if uses-bleed(available-width) { page.width } else { available-width }
-            }
-
-            let wrap-body = (body, available-width) => {
-                if uses-bleed(available-width) {
-                    bleed-block(align(center)[#body])
-                } else {
-                    block(width: 100%)[
-                        #align(center)[#body]
-                    ]
-                }
-            }
-
-            if is-vertical {
-                let vertical-item = (item, resolved-height, available-width: auto) => {
-                    let target-height = if resolved-height == auto { img-height } else { resolved-height }
-                    let resolved-item = render-cell(
-                        item.source,
-                        if target-height == auto { img-width } else { 100% },
-                        target-height,
-                    )
-                    if resolved-height != auto and available-width != auto {
-                        let measured-width = body-measure-width(available-width)
-                        let natural-item-height = measure(
-                            box(width: width)[#render-cell(item.source, img-width, auto)],
-                            width: measured-width,
-                        ).height
-                        if natural-item-height < target-height {
-                            block(width: 100%, height: target-height)[
-                                #align(bottom + center)[#render-cell(item.source, img-width, auto)]
-                            ]
-                        } else {
-                            resolved-item
-                        }
-                    } else {
-                        resolved-item
-                    }
-                }
-
-                let vertical-stack = (resolved-height, available-width: auto) => block(width: 100%)[
-                    #for (index, item) in ordered.enumerate() [
-                        #block(
-                            spacing: 0pt,
-                            below: if item.caption != none { cap-gap } else { 0pt },
-                        )[
-                            #vertical-item(item, resolved-height, available-width: available-width)
-                        ]
-                        #if item.caption != none [
-                            #align(center)[
-                                #render-caption(item.caption)
-                            ]
-                        ]
-                        #if index < count - 1 [
-                            #v(gap)
-                        ]
-                    ]
-                ]
-
-                if resolved-fill-height {
-                    block(width: 100%, height: 1fr)[
-                        #layout(size => context {
-                            let caption-height = ordered
-                                .map(item => {
-                                    if item.caption == none {
-                                        0pt
-                                    } else {
-                                        (
-                                            measure(render-caption(item.caption), width: size.width).height
-                                                + measure(v(cap-gap)).height
-                                        )
-                                    }
-                                })
-                                .sum(default: 0pt)
-                            let stack-gap-height = if count > 1 {
-                                measure(v(gap)).height * (count - 1)
-                            } else {
-                                0pt
-                            }
-                            let pad-height = measure(v(resolved-fill-pad)).height
-                            let remaining-height = size.height
-                            let reserved-height = calc.max(0pt, remaining-height - pad-height)
-                            let resolved-height = (
-                                calc.max(
-                                    0pt,
-                                    remaining-height - pad-height - caption-height - stack-gap-height,
-                                )
-                                    / count
-                            )
-                            block(width: 100%, height: reserved-height)[
-                                #wrap-body(
-                                    box(width: width)[
-                                        #vertical-stack(resolved-height, available-width: size.width)
-                                    ],
-                                    size.width,
-                                )
-                            ]
-                        })
-                    ]
-                } else {
-                    layout(size => wrap-body(
-                        box(width: width)[
-                            #vertical-stack(auto)
-                        ],
-                        size.width,
-                    ))
-                }
-            } else {
-                let col-widths = if widths == auto {
-                    range(count).map(_ => 1fr)
-                } else { widths }
-
-                let cols = ()
-                for (i, w) in col-widths.enumerate() {
-                    cols.push(w)
-                    if i < count - 1 { cols.push(gap) }
-                }
-
-                let single-image = resolved-height => {
-                    let item = ordered.at(0)
-                    let resolved-width = if resolved-height == auto { img-width } else { 100% }
-                    render-cell(item.source, resolved-width, resolved-height)
-                }
-
-                let images-grid = resolved-height => block(width: 100%)[
-                    #if count == 1 {
-                        single-image(resolved-height)
-                    } else {
-                        grid(
-                            columns: cols,
-                            align: (center + valign,) * (count * 2 - 1),
-                            rows: (auto,),
-                            ..ordered
-                                .enumerate()
-                                .map(((i, item)) => {
-                                    // Fit images to their grid cell width by default to avoid overflow across pages.
-                                    // (Slide decks prioritize predictable layout over intrinsic image sizing.)
-                                    let cell = render-cell(item.source, img-width, resolved-height)
-                                    if i < count - 1 { (cell, []) } else { (cell,) }
-                                })
-                                .flatten()
-                        )
-                    }
-                ]
-
-                let captions-body = if count == 1 {
-                    let item = ordered.at(0)
-                    if item.caption != none {
-                        align(center)[
-                            #render-caption(item.caption)
-                        ]
-                    } else {
-                        []
-                    }
-                } else {
-                    grid(
-                        columns: cols,
-                        align: (center,) * (count * 2 - 1),
-                        ..ordered
-                            .enumerate()
-                            .map(((i, item)) => {
-                                let cell = if item.caption != none {
-                                    render-caption(item.caption)
-                                } else { [] }
-                                if i < count - 1 { (cell, []) } else { (cell,) }
-                            })
-                            .flatten()
-                    )
-                }
-
-                let captions-grid = block(width: 100%)[#captions-body]
-
-                if resolved-fill-height {
-                    block(width: 100%, height: 1fr)[
-                        #layout(size => context {
-                            let caption-height = if has-captions {
-                                measure(captions-body, width: size.width).height + measure(v(cap-gap)).height
-                            } else {
-                                0pt
-                            }
-                            let pad-height = measure(v(resolved-fill-pad)).height
-                            let remaining-height = size.height
-                            let reserved-height = calc.max(0pt, remaining-height - pad-height)
-                            let resolved-height = calc.max(
-                                0pt,
-                                remaining-height - caption-height - pad-height,
-                            )
-                            let measured-width = body-measure-width(size.width)
-                            let natural-grid-height = measure(
-                                box(width: width)[#images-grid(auto)],
-                                width: measured-width,
-                            ).height
-                            let resolved-images-body = if (
-                                natural-grid-height < resolved-height
-                            ) {
-                                block(width: 100%, height: resolved-height)[
-                                    #if has-captions {
-                                        align(bottom + center)[#images-grid(resolved-height)]
-                                    } else {
-                                        align(top + center)[#images-grid(resolved-height)]
-                                    }
-                                ]
-                            } else {
-                                images-grid(resolved-height)
-                            }
-                            block(width: 100%, height: reserved-height)[
-                                #wrap-body(
-                                    box(width: width)[
-                                        #block(spacing: 0pt, below: cap-gap)[#resolved-images-body]
-                                        #if has-captions [
-                                            #block(spacing: 0pt, above: 0pt)[#captions-grid]
-                                        ]
-                                    ],
-                                    size.width,
-                                )
-                            ]
-                        })
-                    ]
-                } else {
-                    layout(size => wrap-body(
-                        box(width: width)[
-                            #block(spacing: 0pt, below: cap-gap)[#images-grid(img-height)]
-                            #if has-captions [
-                                #block(spacing: 0pt, above: 0pt)[#captions-grid]
-                            ]
-                        ],
-                        size.width,
-                    ))
-                }
-            }
-        }
     }
+    box-item(
+        (
+            kind: "img",
+            render: _render-img,
+            foot: foot,
+            width: width,
+            height: height,
+            fit: fit,
+            border: border,
+            border-radius: border-radius,
+            inset: inset,
+        ),
+        body,
+    )
 }

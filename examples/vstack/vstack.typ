@@ -39,8 +39,8 @@
     
   ],
   [
-    #imgs(
-      (image("assets/vstack-fig01-workflow.png"), [Prefill 与 decode 的资源形态差异]),
+    #vboxs(
+      img(image("assets/vstack-fig01-workflow.png"), [Prefill 与 decode 的资源形态差异]),
       width: 100%,
     )
     
@@ -62,8 +62,8 @@
   *Dedicated-PIM:* 非 PIM 数据不再浪费面积，但 prefill、FFN 与 callback 共用的 HBM 带宽被固定切走。 真正缺失的是同一 stack 内的 layer specialization，而不是更多 software tiering。
 ]
 
-#imgs(
-  (image("assets/vstack-fig02-baselines.png"), [Uniform 与 Dedicated-PIM 的结构失配]),
+#vboxs(
+  img(image("assets/vstack-fig02-baselines.png"), [Uniform 与 Dedicated-PIM 的结构失配]),
   width: 94%,
 )
 
@@ -123,8 +123,8 @@
     
   ],
   [
-    #imgs(
-      (image("assets/vstack-fig03-architecture.png"), [vStack 系统架构]),
+    #vboxs(
+      img(image("assets/vstack-fig03-architecture.png"), [vStack 系统架构]),
       width: 100%,
     )
     
@@ -175,8 +175,8 @@
   *V:* bank b_V(j)=j mod B 保存整列，output 组装同样避免 cross-bank reduction。 只有让数据布局贴合 attention dataflow，PIM bank 的本地带宽才真正被利用。
 ]
 
-#imgs(
-  (image("assets/vstack-fig05-kv-layout.png"), [K/V 非对称布局]),
+#vboxs(
+  img(image("assets/vstack-fig05-kv-layout.png"), [K/V 非对称布局]),
   width: 94%,
 )
 
@@ -195,8 +195,8 @@
   *容量效果:* capacity-side KV 有效扩展 2.667x，promotion 只需容量层读加解压，而不是重新 prefill。 前台只搬回真正 latency-visible 的 miss，避免把所有冷数据都重新热起来。
 ]
 
-#imgs(
-  (image("assets/vstack-fig06-lifecycle.png"), [KV 生命周期与 K8V4 路径]),
+#vboxs(
+  img(image("assets/vstack-fig06-lifecycle.png"), [KV 生命周期与 K8V4 路径]),
   width: 94%,
 )
 
@@ -254,8 +254,8 @@
     
   ],
   [
-    #imgs(
-      (image("assets/vstack-fig07-workloads.png"), [四类 trace 的输入输出长度分布]),
+    #vboxs(
+      img(image("assets/vstack-fig07-workloads.png"), [四类 trace 的输入输出长度分布]),
       width: 100%,
     )
     
@@ -277,8 +277,8 @@
   *容量含义:* 2x latency SLO 下，SLO-compliant serving capacity 再提升 1.70x；收益在大模型和高 overflow 负载上最明显。
 ]
 
-#imgs(
-  (image("assets/vstack-fig08-throughput.png"), [吞吐收益随 overflow 压力增强]),
+#vboxs(
+  img(image("assets/vstack-fig08-throughput.png"), [吞吐收益随 overflow 压力增强]),
   width: 98%,
 )
 
@@ -293,8 +293,8 @@
   *Queueing:* Devstral-123B / traceA 上，平均 queue delay 在 QPS=0.2 下降 86%，在 QPS=1.0 下降 95%。
 ]
 
-#imgs(
-  (image("assets/vstack-fig09-latency.png"), [高负载下延迟不会像 AttAcc 一样发散]),
+#vboxs(
+  img(image("assets/vstack-fig09-latency.png"), [高负载下延迟不会像 AttAcc 一样发散]),
   width: 98%,
 )
 
@@ -309,8 +309,8 @@
   *TTFT:* AttAcc 相对 vStack 的 p50 TTFT 几何平均高 127x，峰值超过 4500x，说明优势首先来自更早释放 decode slots。
 ]
 
-#imgs(
-  (image("assets/vstack-fig11-ttft-tbt.png"), [TTFT 主导总体时延差距]),
+#vboxs(
+  img(image("assets/vstack-fig11-ttft-tbt.png"), [TTFT 主导总体时延差距]),
   width: 98%,
 )
 
@@ -329,9 +329,9 @@
   *代价:* 每 token 能耗再降 30%-47%，节省主要来自 attention 的 off-chip memory access，而不是牺牲效率换吞吐。
 ]
 
-#imgs(
-  (image("assets/vstack-fig12-ablation.png"), [布局贡献最大，其次是调度与压缩]),
-  (image("assets/vstack-fig10-energy.png"), [每 token 能耗同步下降]),
+#vboxs(
+  img(image("assets/vstack-fig12-ablation.png"), [布局贡献最大，其次是调度与压缩]),
+  img(image("assets/vstack-fig10-energy.png"), [每 token 能耗同步下降]),
   width: 96%,
   gap: 0.8em,
 )

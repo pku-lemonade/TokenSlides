@@ -7,7 +7,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - `lemonade.typ` re-exports `theme/lemonade.typ`
 - `theme/base.typ` controls global sizes, spacing, colors, and runtime state
 - `theme/slide.typ` and `theme/title.typ` own the main slide layouts
-- `theme/images.typ` owns image placement helpers such as `#imgs(...)`
+- `theme/images.typ` owns the figure item `#img(...)` and the floating `#place-xx` helpers
 - `theme/assets.typ` exports common figure paths (`pku-logo`, `thu-logo`, `nsfc-logo`, `lemonade-qr`); place them with `#place-logo(pku-logo)` top-right or `#place-qr()` bottom-right (typical on the thank-you slide)
 - validate with `typst compile --root . <deck>.typ /tmp/out.pdf`
 - under that compile flow, prefer root-relative imports such as `/lemonade.typ` and `/theme/...`
@@ -19,16 +19,19 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - no need to wrap normal slide content in `#slide[...]`
 - keep a stable scaffold: theme import, optional `#set text(lang: ...)`, local helpers if needed, then `#show: lemonade-theme.with(...)`
 - keep the default text size; if a slide is too dense, split it into more pages
-- use `#imgs(...)` as the default for normal image rows, single figures, multi-panel figure blocks, and captioned evidence
-- captions render automatically whenever an image item provides one
-- prefer theme-level image defaults via `imgs-config: (...)` instead of repeating the same option on every slide
+- a figure is `#img(source)` or `#img(source, [caption])`, and it is a `vboxs` row item like a box or a `#code` listing — there is no separate image-layout call
+- use `#vboxs(img(...), ...)` as the default for normal image rows, single figures, multi-panel figure blocks, and captioned evidence; a bare `#img(...)` renders at natural size, while a row can fill the slide (`fill-height`), stack (`dir: ttb`), bleed, or carry an `after:` conclusion
+- a row measures every caption in it and reserves one band for the tallest, so figures with captions of different lengths still end on the same line
+- mix freely: `#vboxs(ibox[...], img(fig))` puts a figure beside a box at one height
+- prefer theme-level defaults instead of repeating an option on every slide — `img-config: (...)` for one figure's look (caption typography, frame, fit), `vboxs-config: (...)` for the row (gaps, `fill-height`)
+- `img(height:)` is a fixed length; to fill a container use `fill-height` on the row, never a ratio height (it is rejected)
 - the theme overrides Touying's default presentation paper size to match standard PowerPoint canvases (`13.333in x 7.5in` for `16:9`, `10in x 7.5in` for `4:3`)
 - do not add deck-local wrappers such as `figcell` for ordinary figure layout unless you first confirmed that `theme/images.typ` cannot express the needed behavior
 - if a side-by-side slide does not wrap text correctly, the image helper may be escaping its column; use a plain in-cell image block instead of shrinking text
-- if a side-column figure is short, first look for another recovered asset or sub-asset that can share the column; then prefer a tall crop or a vertically stacked evidence column built from one or two `#imgs(...)` blocks instead of leaving dead whitespace
-- if a figure-led or comparison slide still needs short follow-on support, keep it inside the box system instead of leaving loose bullets around `#imgs(...)`
+- if a side-column figure is short, first look for another recovered asset or sub-asset that can share the column; then prefer a tall crop or a vertically stacked evidence column built from one `#vboxs(..., dir: ttb)` stack instead of leaving dead whitespace
+- if a figure-led or comparison slide still needs short follow-on support, keep it inside the box system instead of leaving loose bullets around the figure row
 - if the same image-layout problem appears across multiple slides, inspect `theme/images.typ` and fix the helper instead of swapping helpers page by page
-- if a multi-panel source figure turns into a tiny center thumbnail, crop or split the evidence before abandoning `#imgs(...)`
+- if a multi-panel source figure turns into a tiny center thumbnail, crop or split the evidence before abandoning the figure row
 - keep color overrides local to the current example or deck unless the user asks to change the theme globally
 
 ## Code Snippets

@@ -54,13 +54,13 @@
 
 $ "rank"(v) = 0.15 + 0.85 sum_(u -> v) "rank"(u) / "deg"(u) $
 
-#imgs(image("assets/page3.png"), width: 45%)
+#vboxs(img(image("assets/page3.png")), width: 45%)
 
 == Challenge 1: Manual HLS
 
 
-#imgs(
-    (image("assets/page4.png"),),
+#vboxs(
+    img(image("assets/page4.png")),
     width: 100%,
 )
 
@@ -74,8 +74,8 @@ What if we want to optimize — e.g., reduce bit width 32→16?
     #text(font: "Inconsolata", size: 28pt)[ap_uint\<32\>] → #text(font: "Inconsolata", size: 28pt)[ap_uint\<16\>]: *200+ line changes* across host, kernel, cache, and packing logic.
 ]
 
-#imgs(
-    (image("assets/fig03-parameter-cascade.svg"),),
+#vboxs(
+    img(image("assets/fig03-parameter-cascade.svg")),
     width: 95%,
 )
 
@@ -89,8 +89,8 @@ What if we want to optimize — e.g., reduce bit width 32→16?
     16-bit overflow at vertex 65540 → Vitis HW emulation hangs with a #text(font: "Inconsolata", size: 28pt)[deadlock]. No graph context.
 ]
 
-#imgs(
-    (image("assets/fig05-verification-slow.svg"),),
+#vboxs(
+    img(image("assets/fig05-verification-slow.svg")),
     width: 95%,
 )
 
@@ -320,8 +320,8 @@ These concerns naturally separate into three abstraction levels:
     #text(font: "Inconsolata", size: 28pt)[L1: \{ VF_thrhd: 0.5 \}] --- higher-out-degree vertices go to little pipelines.
 ]
 
-#imgs(
-    (image("assets/page12.png"),),
+#vboxs(
+    img(image("assets/page12.png")),
     width: 95%,
 )
 
@@ -331,8 +331,8 @@ These concerns naturally separate into three abstraction levels:
     #text(font: "Inconsolata", size: 28pt)[Node: \{ rank: int\<16\> \}] --- halves memory per vertex property, doubles throughput.
 ]
 
-#imgs(
-    (image("assets/fig10-change-l2.svg"),),
+#vboxs(
+    img(image("assets/fig10-change-l2.svg")),
     width: 95%,
 )
 
@@ -342,8 +342,8 @@ These concerns naturally separate into three abstraction levels:
     #text(font: "Inconsolata", size: 28pt)[pipe_partition: [\{big,2\},\{little,2\},\{little,2\}]]
 ]
 
-#imgs(
-    (image("assets/fig11-change-l3.svg"),),
+#vboxs(
+    img(image("assets/fig11-change-l3.svg")),
     width: 95%,
 )
 
@@ -718,8 +718,8 @@ Compiler backend: DSL + config → synthesizable accelerator.
 
 == Full Pipeline
 
-#imgs(
-    (image("assets/page24.png"),),
+#vboxs(
+    img(image("assets/page24.png")),
     width: 95%,
 )
 
@@ -733,8 +733,8 @@ Compiler backend: DSL + config → synthesizable accelerator.
     L1-only exploration: *2.6×* over ReGraph, *1.2×* over ThunderGP on 6 representative graphs.
 ]
 
-#imgs(
-    (image("assets/fig16-perf-combined-new.png"),),
+#vboxs(
+    img(image("assets/fig16-perf-combined-new.png")),
     width: 98%,
 )
 
@@ -744,8 +744,8 @@ Compiler backend: DSL + config → synthesizable accelerator.
     Each level removes a _different_ bottleneck. Gains compound to *4.48×*.
 ]
 
-#imgs(
-    (image("assets/fig18-ablation-new.png"),),
+#vboxs(
+    img(image("assets/fig18-ablation-new.png")),
     width: 85%,
 )
 
@@ -753,8 +753,8 @@ Compiler backend: DSL + config → synthesizable accelerator.
 
 #v(1fr)
 
-#imgs(
-    (image("assets/fig19-ghscope-speed.svg"),),
+#vboxs(
+    img(image("assets/fig19-ghscope-speed.svg")),
     width: 85%,
     fill-height: false,
 )

@@ -8,9 +8,11 @@
   aspect-ratio: "16-9",
   title-align: "left",
   box-compact: true,
-  imgs-config: (
+  img-config: (
     cap-size: 15pt,
     cap-weight: "bold",
+  ),
+  vboxs-config: (
     fill-height: false,
   ),
   title: [GAMMA],
@@ -35,8 +37,11 @@
   *Consequence:* those choices set reuse and memory traffic, so no fixed dataflow stays efficient across early, middle, and late CNN layers.
 ]
 
-#imgs(
-  (asset("gamma-fig01-overview.pdf"), [CONV dimensions, hierarchical mapper, and physical mapping]),
+#vboxs(
+  img(
+    asset("gamma-fig01-overview.pdf"),
+    [CONV dimensions, hierarchical mapper, and physical mapping],
+  ),
   width: 94%,
   fill-height: true,
 )
@@ -51,8 +56,11 @@
   *Scale:* layer 2 is already `O(10^12)` at one level and `O(10^36)` at three levels, so brute force and random search are poor fits.
 ]
 
-#imgs(
-  (asset("gamma-fig02-dse-performance.pdf"), [`10K` random mappings for one VGG16 layer cover radically different hardware outcomes]),
+#vboxs(
+  img(
+    asset("gamma-fig02-dse-performance.pdf"),
+    [`10K` random mappings for one VGG16 layer cover radically different hardware outcomes],
+  ),
   width: 92%,
   fill-height: true,
 )
@@ -94,9 +102,9 @@
   *Decode:* each level becomes one `Cluster` in `MAESTRO`, with the first gene pair as `SpatialMap` and the rest as `TemporalMap`.
 ]
 
-#imgs(
-  (asset("gamma-fig03-encoding.pdf"), [Flexible genome for 1-level and 2-level mappers]),
-  (asset("gamma-fig04-decoded-mapper.pdf"), [Decoded mapping in `MAESTRO` form]),
+#vboxs(
+  img(asset("gamma-fig03-encoding.pdf"), [Flexible genome for 1-level and 2-level mappers]),
+  img(asset("gamma-fig04-decoded-mapper.pdf"), [Decoded mapping in `MAESTRO` form]),
   width: 100%,
   widths: (0.88fr, 1.12fr),
   gap: 0.8em,
@@ -123,8 +131,8 @@
   *Result:* one search loop can span `S1` to `S3` instead of hand-building a different optimizer input for each depth.
 ]
 
-#imgs(
-  (asset("gamma-fig05-ga-workflow.pdf"), [Workflow plus operator summary for GAMMA]),
+#vboxs(
+  img(asset("gamma-fig05-ga-workflow.pdf"), [Workflow plus operator summary for GAMMA]),
   width: 98%,
   fill-height: true,
 )
@@ -150,14 +158,14 @@
     ]
   ],
   [
-    #imgs(
-      (asset("gamma-table02-hw-resources.pdf"), [Edge and Cloud hardware budgets]),
+    #vboxs(
+      img(asset("gamma-table02-hw-resources.pdf"), [Edge and Cloud hardware budgets]),
       width: 100%,
       fill-height: false,
     )
     #v(0.5em)
-    #imgs(
-      (asset("gamma-table03-target-systems.pdf"), [Target systems `S1`, `S2`, and `S3`]),
+    #vboxs(
+      img(asset("gamma-table03-target-systems.pdf"), [Target systems `S1`, `S2`, and `S3`]),
       width: 100%,
       fill-height: false,
     )
@@ -199,8 +207,11 @@
   *Anchor numbers:* `S1` Edge `224x-440x`, `S2` Edge `209x-1,035x`, `S2` Edge energy `11x-36x`, and `S3` Edge `241x-644x` better than alternatives.
 ]
 
-#imgs(
-  (asset("gamma-fig06-optimization-suite.pdf"), [Optimization results across `S1`, `S2`, and `S3` on Edge and Cloud]),
+#vboxs(
+  img(
+    asset("gamma-fig06-optimization-suite.pdf"),
+    [Optimization results across `S1`, `S2`, and `S3` on Edge and Cloud],
+  ),
   width: 100%,
   fill-height: true,
 )
@@ -215,8 +226,11 @@
   *Pattern:* early layers favor `Y/X`, the middle layer uses a `Y/K/C` three-level mapping, and late layers move toward `C/K`.
 ]
 
-#imgs(
-  (asset("gamma-fig07-found-mappings.pdf"), [Found mappings for early, medium, and late ResNet-18 layers]),
+#vboxs(
+  img(
+    asset("gamma-fig07-found-mappings.pdf"),
+    [Found mappings for early, medium, and late ResNet-18 layers],
+  ),
   width: 86%,
   fill-height: true,
 )
@@ -252,9 +266,9 @@
   *Examples:* the search settles at `9.67E+05` cycles on MobileNet-V2 and `8.31E+05` on MnasNet under `S3` Edge.
 ]
 
-#imgs(
-  (asset("gamma-fig09-mobilenet.jpeg"), [MobileNet-V2]),
-  (asset("gamma-fig09-mnasnet.jpeg"), [MnasNet]),
+#vboxs(
+  img(asset("gamma-fig09-mobilenet.jpeg"), [MobileNet-V2]),
+  img(asset("gamma-fig09-mnasnet.jpeg"), [MnasNet]),
   width: 100%,
   gap: 0.8em,
   fill-height: true,

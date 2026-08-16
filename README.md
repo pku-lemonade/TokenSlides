@@ -163,8 +163,8 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
 - Import the theme from `/lemonade.typ`.
 - Use `#show: lemonade-theme.with(...)` once near the top of the deck.
 - Let top-level `=` headings drive outline sections.
-- Use `#imgs(...)` for normal figure blocks instead of deck-local wrappers.
-- Put repeated image defaults in `imgs-config`, not in per-slide overrides.
+- Use `#img(...)` for figures, laid out by `#vboxs(...)`, instead of deck-local wrappers.
+- Put repeated defaults in `img-config` (one figure's look) or `vboxs-config` (the row), not in per-slide overrides.
 - Keep one generated paper per `out/<paper>/` workspace.
 
 ## Minimal Manual Deck Scaffold
@@ -179,8 +179,7 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
   title-align: "left",
   // "bar": full footer with primary fill; "plain": full footer without fill.
   footer: "bar",
-  imgs-config: (
-    fill-height: true,
+  img-config: (
     cap-size: 18pt,
     cap-weight: "bold",
   ),
@@ -200,12 +199,16 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
   *Claim:* state the takeaway directly.
 ]
 
-#imgs(
-  image("assets/figure.png"),
-  [Short caption],
+#vboxs(
+  img(image("assets/figure.png"), [Short caption]),
   width: 80%,
 )
 ```
+
+A figure is a `vboxs` row item, the same as a box or a `#code` listing, so one
+call covers every arrangement: `#vboxs(img(a), img(b))` for two at one height,
+`dir: ttb` to stack them, and `#vboxs(ibox[...], img(a))` for a figure beside a
+box. A bare `#img(...)` renders on its own at its natural size.
 
 ## VS Code Workspace Defaults
 
@@ -216,7 +219,7 @@ The repo ships shared VS Code workspace settings in `.vscode/`:
 - runs Tinymist lint on save
 - stores pasted or dragged images under `assets/` next to the current deck file
 
-For local edits, use relative paths such as `image("assets/figure.png")`. The shared `#imgs(...)` helper accepts preloaded `image(...)` content so the file still resolves relative to the deck file instead of the theme package.
+For local edits, use relative paths such as `image("assets/figure.png")`. The shared `#img(...)` helper accepts preloaded `image(...)` content so the file still resolves relative to the deck file instead of the theme package.
 
 See [`examples/images/images.typ`](examples/images/images.typ) for the compilable image API reference and layout examples.
 
