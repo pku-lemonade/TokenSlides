@@ -21,9 +21,10 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - keep the default text size; if a slide is too dense, split it into more pages
 - a figure is `#img(source)` or `#img(source, [caption])`, and it is a `vboxs` row item like a box or a `#code` listing — there is no separate image-layout call
 - use `#vboxs(img(...), ...)` as the default for normal image rows, single figures, multi-panel figure blocks, and captioned evidence; a bare `#img(...)` renders at natural size, while a row can fill the slide (`fill-height`), stack (`dir: ttb`), bleed, or carry an `after:` conclusion
-- a row measures every caption in it and reserves one band for the tallest, so figures with captions of different lengths still end on the same line
+- a row measures every item caption in it and reserves one band for the tallest, so images, code listings, and foreign row items with captions of different lengths still end on the same line
 - mix freely: `#vboxs(ibox[...], img(fig))` puts a figure beside a box at one height
-- prefer theme-level defaults instead of repeating an option on every slide — `img-config: (...)` for one figure's look (caption typography, frame, fit), `vboxs-config: (...)` for the row (gaps, `fill-height`)
+- reveal a row progressively with `step:` on the `vboxs` (`step: true`, a starting subslide, or one index per item); `#pause` inside a row is rejected, and a stepped row spends no subslides of its own, so count absolute subslide numbers when a `#pause` shares the slide
+- prefer theme-level defaults instead of repeating an option on every slide — `img-config: (...)` for shared caption typography plus one image's frame/fit, `vboxs-config: (...)` for the row (gaps, `fill-height`)
 - `img(height:)` is a fixed length; to fill a container use `fill-height` on the row, never a ratio height (it is rejected)
 - the theme overrides Touying's default presentation paper size to match standard PowerPoint canvases (`13.333in x 7.5in` for `16:9`, `10in x 7.5in` for `4:3`)
 - do not add deck-local wrappers such as `figcell` for ordinary figure layout unless you first confirmed that `theme/images.typ` cannot express the needed behavior
@@ -39,8 +40,8 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - use `#code[...]` from `theme/code.typ` with an ordinary raw fence inside it;
   never emit `#raw("line\nline", block: true, lang: ...)` — an escaped
   one-line string is unreadable and uneditable in the deck source
-- `#code` is titleless; label a listing with the box helper around it
-  (`#ebox[...]`) plus a `#tbox(size: 20pt)[Label]`, not with a title bar
+- label a listing with `#code(caption: [Label], ...)[...]`; its caption uses
+  the same shared foot band as `img`, so side-by-side frames and captions align
 - for a listing inside a box, pass `frame: false` so the surface is not drawn
   twice
 - pass `indent: 2` on every slide listing: slides are short on width, and

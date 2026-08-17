@@ -89,3 +89,51 @@
         合作机会这一列保留紫色强调样式。
     ],
 )
+
+= Stepped Rows
+
+== `step: true`, with a trailing callout
+
+#vboxs(
+    vbox([阶段一])[FPGA 仿真与编译器测试。],
+    vbox([阶段二])[芯片 V1 流片并完成 bring-up。],
+    vbox([阶段三])[围绕客户模型打磨软件栈与性能分析工具。],
+    after: callout[三个阶段揭示完毕后，结论才出现在自己的一页上],
+    step: true,
+)
+
+== `step: 2`, offsetting a row behind a pause
+
+一个 `#pause` 已经用掉了第一页，所以这一行从第二页开始。
+
+#pause
+
+#vboxs(
+    vhbox([第二页])[本行第一列。],
+    vibox([第三页])[本行第二列。],
+    step: 2,
+    fill-height: false,
+)
+
+== `step: (1, 1, 2)`, uneven groups in a stack
+
+#vboxs(
+    vbox([同时出现])[数组的前两项共用第一页。],
+    vbox([同时出现])[所以这两栏一起揭示。],
+    vbox([随后出现])[第三项留到第二页。],
+    dir: ttb,
+    step: (1, 1, 2),
+    fill-height: false,
+)
+
+// Steps follow the order the items were WRITTEN, so an `rtl` row reveals from
+// the right — the reverse of `widths`, which names tracks in drawing order.
+== `step` with `dir: rtl` reveals right to left
+
+#vboxs(
+    vbox([先写的])[画在最右，第一页揭示。],
+    vbox([后写的])[画在左侧，第二页揭示。],
+    dir: rtl,
+    step: true,
+    fill-height: false,
+)

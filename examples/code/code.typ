@@ -60,10 +60,58 @@ The gutter is on by default, two digits wide, so the line numbers `hl:` and
     after: hbox[Same snippet with the gutter on and off.],
 )
 
+== Captions
+
+`caption:` uses the same foot band as `img`, so listings end on one line even
+when one caption wraps.
+
+#vboxs(
+    code(caption: [Short caption], scale: 90%)[
+        ```python
+        x = load(X)
+        y = compute(x)
+        ```
+    ],
+    code(
+        caption: [A longer caption that wraps while both code frames stay aligned],
+        scale: 90%,
+    )[
+        ```python
+        x = load(X)
+        y = compute(x)
+        ```
+    ],
+)
+
+== Natural-height frames
+
+A listing's frame fills the height its row hands down, so side-by-side frames
+match whatever their snippets do. `stretch: false` draws the frame at its
+natural height instead; the cell still holds the row's, so a caption under it
+stays on the shared band.
+
+#vboxs(
+    code(stretch: false, scale: 90%)[
+        ```python
+        x = load(X)
+        y = compute(x)
+        ```
+    ],
+    code(stretch: false, scale: 90%)[
+        ```python
+        x = load(X)
+        y = compute(x)
+        z = activate(y)
+        store(Z, z)
+        ```
+    ],
+    after: hbox[The visible frames stay natural; the row geometry does not move.],
+)
+
 == Wrapped lines
 
 A line too long for the frame wraps, and its continuation hangs under its own
-first code column — so a wrap reads as one line, and the accent band covers
+first code column — so a wrap reads as one line, and the highlight band covers
 every row of it.
 
 #code(hl: (2,))[
@@ -153,16 +201,16 @@ does not, because the `1` is a number run and the mark crosses it.
     after: hbox[Left: the mark misses. Right: `lang: none` marks it.],
 )
 
-== Unframed, inside a box
+== Code inside boxes
 
-`frame: false` keeps the typography and every emphasis treatment but drops the
-surface, for listings already sitting inside a box helper. `scale:` shrinks the
-listing so two of them fit one slide.
+The box takes the row slot; the listing inside keeps its natural height and
+still draws its own caption. Left: no surface twice — the box's is the
+listing's. Right: a framed listing, with a partial `body-inset` trimming the
+box padding its frame reaches past.
 
 #vboxs(
     ebox[
-        #tbox(size: 20pt)[Operational sync]
-        #code(frame: false, scale: 80%, mark: ("wait_ready",))[
+        #code(caption: [Operational sync], frame: false, scale: 80%, mark: ("wait_ready",))[
             ```python
             x = async_load(X[i])
             y = async_load(Y[i])
@@ -172,9 +220,8 @@ listing so two of them fit one slide.
             ```
         ]
     ],
-    ibox[
-        #tbox(size: 20pt)[Declarative timing]
-        #code(frame: false, scale: 80%, mark: ("@ t",))[
+    pbox(body-inset: (right: 0pt))[
+        #code(caption: [Declarative timing], scale: 80%, mark: ("@ t",))[
             ```python
             def axpy[t: Time](
                 x: Tile @ t,
@@ -221,21 +268,12 @@ buys a slide listing a larger font.
 
 == Palette and font
 
-The palette styles faces, not hues: give a `syntax` row a `fill` to bring a
-color back. A `theme:` dict is a whole palette, so it brings its own surface
-too; `theme: none` drops highlighting entirely.
-
-#let colorful = code-config.palettes.light + (
-    syntax: code-config.palettes.light.syntax + (
-        keyword: (fill: rgb("#A6272B"), weight: "bold"),
-        string: (fill: rgb("#0A6E3C")),
-        number: (fill: rgb("#B45309")),
-        name: (fill: rgb("#0B5FA5")),
-    ),
-)
+The default palette assigns restrained semantic colors while retaining the
+current mode's surface. A `theme:` dict can still replace the whole palette;
+`theme: none` drops highlighting entirely.
 
 #vboxs(
-    code(scale: 90%, indent: 2, theme: colorful)[
+    code(scale: 90%, indent: 2)[
         ```python
         # two taps, one logical time
         def axpy(x, y, alpha=1.0):
@@ -249,7 +287,7 @@ too; `theme: none` drops highlighting entirely.
             return tm.fma(alpha, x, y)
         ```
     ],
-    after: hbox[Left: a palette with `fill`s restored. Right: `theme: none` in Menlo.],
+    after: hbox[Left: the shared semantic palette. Right: `theme: none` in Menlo.],
 )
 
 == A language of one's own

@@ -210,6 +210,23 @@ call covers every arrangement: `#vboxs(img(a), img(b))` for two at one height,
 `dir: ttb` to stack them, and `#vboxs(ibox[...], img(a))` for a figure beside a
 box. A bare `#img(...)` renders on its own at its natural size.
 
+A row reveals itself with `step:`, not with `#pause` inside it:
+
+```typst
+#vboxs(
+  vbox([Phase 1])[...], vbox([Phase 2])[...], vbox([Phase 3])[...],
+  after: hbox[Only then, the conclusion.],
+  step: true,          // one item per subslide; `after` lands one past the last
+)
+```
+
+`step: 2` starts the same sequence on subslide 2, and `step: (1, 1, 2)` gives an
+index per item — the first two together, then the third. Indices are absolute
+subslide numbers and a row spends none of its own, so a `#pause` before the row
+means `step: 2`, and a `#pause` after it keeps counting the pauses alone. Items
+reveal in the order written, even in an `rtl` row, and an item still on its way
+is covered rather than dropped, so nothing in the row moves between subslides.
+
 ## VS Code Workspace Defaults
 
 The repo ships shared VS Code workspace settings in `.vscode/`:
@@ -247,10 +264,10 @@ Write snippets as ordinary Typst raw fences inside `#code[...]` — never as
   `number-digits` / `number-gap` / `number-tint` size and shade it. A listing of
   more than 99 lines widens its own gutter.
 - A long line wraps with its continuation hanging under its own first code
-  column, and an accent band covers every row of it. `code-config.wrap-indent`
-  pushes continuations deeper still. A single token wider than the frame has no
-  break opportunity and overflows visibly — shorten it, or reach for `indent:`
-  and then `scale:`.
+  column, and the highlight band covers every row of it.
+  `code-config.wrap-indent` pushes continuations deeper still. A single token
+  wider than the frame has no break opportunity and overflows visibly — shorten
+  it, or reach for `indent:` and then `scale:`.
 - A listing is as wide as the text column. The gap to its right is the slide's
   `layout-config.margins.right` (base.typ), which moves prose and tables with
   it; `code-config.inset` is the code-local part and the one to reach for first.
@@ -271,18 +288,25 @@ Write snippets as ordinary Typst raw fences inside `#code[...]` — never as
 - Syntect cuts at every token, so a listing it highlights turns highlighting off
   as soon as it has a mark — a mark that quietly fails to show is worse than a
   listing without color.
+- `caption: [Label]` labels a listing under its frame, in the same style and on
+  the same reserved band as an `#img` caption — so listings and figures side by
+  side in one row all end on the same line, however long a caption runs.
 - `frame: false` drops the surface for listings already inside a box helper;
   `scale: 80%` shrinks one so two fit side by side.
+- In a row, a listing's frame fills the height the row hands it, which is what
+  keeps side-by-side frames matching. `stretch: false` draws the frame at its
+  natural height instead, while the cell keeps the row's — the captions stay
+  aligned either way.
 - `indent: 2` re-indents the snippet from its own indent unit (the smallest
   non-zero indent in the source) down to two spaces per level. Slides are short
   on width, so this is usually what buys a listing a larger font — reach for it
   before `scale:`.
 - The surface and the token styling both come from a palette dict —
   `light-code-palette` / `dark-code-palette` in `theme/code.typ`, picked per
-  mode through `code-config.palettes`. The default styles faces rather than
-  hues: keywords bold, comments grey, everything else body ink. Give a `syntax`
-  row a `fill` to bring a color back. Pass `theme:` your own palette dict for
-  one listing, or `theme: none` for a single flat ink.
+  mode through `code-config.palettes`. The default uses restrained semantic
+  colors for comments, keywords, decorators, names, strings, numbers, and
+  other syntax while preserving each mode's surface. Pass `theme:` your own
+  palette dict for one listing, or `theme: none` for a single flat ink.
 - `font:` sets the listing font, defaulting to `code-config.font`. It is a
   separate knob from `font-config.mono`, which dresses footers, outlines,
   tables, and inline `raw` in prose.
@@ -323,14 +347,14 @@ For a full language rather than a slide-sized one, syntect will load a real
 grammar: `#set raw(syntaxes: read("x.sublime-syntax", encoding: none))` at the
 top of a deck reaches inside `#code` as well.
 
-The block is titleless. Label a listing with the box helper around it or a
-`tbox` above it. A bare `#code` is also a `vboxs` row item, so two unlabelled
-listings can be the columns of one equal-height row:
+A listing has no title bar: label it with `caption:`, or with a box helper
+around it when the box's own accent carries meaning. A bare `#code` is a `vboxs`
+row item, so two listings can be the columns of one equal-height row:
 
 ```typst
 #vboxs(
-  code(indent: 2)[...],
-  code(indent: 2)[...],
+  code(caption: [Row-major], indent: 2)[...],
+  code(caption: [Blocked], indent: 2)[...],
   after: hbox[Same recurrence, two loop structures.],
 )
 ```

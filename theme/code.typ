@@ -1,5 +1,6 @@
 #import "base.typ": cur-colors, cur-font-sizes, cur-mode
 #import "boxes.typ": box-item
+#import "images.typ": caption-foot
 
 // USER CONFIG
 // - Frame geometry, typography, and the listing font: edit `code-config` below.
@@ -30,7 +31,7 @@
 //     ]
 //
 // Emphasis inside a listing:
-//   `hl: (2, 3)`      accent band behind those lines
+//   `hl: (2, 3)`      neutral band behind those lines
 //   `focus: (2, 3)`   the band, plus every other line muted to one flat ink
 //   `dim: (1,)`       mute these lines, leave the rest alone
 //   `mark: ("@ t",)`  accent the token wherever it appears
@@ -60,10 +61,14 @@
 // own `layout-config.margins.right` (base.typ), which moves prose and tables
 // with it. `code-config.inset` is the code-local part of that gap.
 //
-// The block is deliberately titleless. Label a listing with the box helper
-// around it (`#nbox([Row-major])[...]`) or a `tbox` above it. A bare `#code`
-// is also a `vboxs` row item, so an unlabelled listing can be a column of an
-// equal-height row directly.
+// `caption:` labels a listing below its frame in the shared row-item caption
+// style (`img-config`, images.typ); a `vboxs` row aligns every caption in it on
+// one reserved band. A bare `#code` is a row item, so an unlabelled listing can
+// be a column of an equal-height row directly, and its frame fills the height
+// the row hands down — `stretch: false` leaves the visible frame at its natural
+// height while the cell still holds the row's, which keeps the captions aligned.
+// A listing inside a box helper is handed no row height at all: pass
+// `frame: false` there and the box's own surface is the listing's.
 
 // How a listing reads, per mode. `bg` / `border` are the frame; `fg` is the ink
 // for prose in the code body, for every token the palette does not repaint, and
@@ -111,21 +116,21 @@
 // weight itself. Every bucket needs a row; adding one to `_classifier` without
 // one here fails at render.
 //
-// The default is faces, not hues: bold marks the keywords, one grey pushes the
-// comments back, and everything else is body ink. Give a row a `fill` to bring
-// a color back for a deck that wants one.
+// The default uses a restrained semantic palette: comments recede, declarations
+// and names stay cool, literals stay distinct, and keywords carry the strongest
+// warm accent. The light and dark rows keep the same roles at suitable contrast.
 #let light-code-palette = (
     bg: rgb("#F5F5F5"),
     border: rgb("#D4D4D4"),
     fg: rgb("#1F2328"),
     syntax: (
-        comment: (fill: rgb("#6E7781")),
-        keyword: (weight: "bold"),
-        decorator: (weight: "bold"),
-        name: (:),
-        string: (:),
-        number: (:),
-        other: (:),
+        comment: (fill: rgb("#667085")),
+        keyword: (fill: rgb("#A3194A"), weight: "bold"),
+        decorator: (fill: rgb("#0759A6"), weight: "bold"),
+        name: (fill: rgb("#006B76")),
+        string: (fill: rgb("#2E7D32")),
+        number: (fill: rgb("#A34B00")),
+        other: (fill: rgb("#6D28D9")),
         plain: (:),
     ),
 )
@@ -136,12 +141,12 @@
     fg: rgb("#EDEDED"),
     syntax: (
         comment: (fill: rgb("#8B949E")),
-        keyword: (weight: "bold"),
-        decorator: (weight: "bold"),
-        name: (:),
-        string: (:),
-        number: (:),
-        other: (:),
+        keyword: (fill: rgb("#E86A98"), weight: "bold"),
+        decorator: (fill: rgb("#62A5EA"), weight: "bold"),
+        name: (fill: rgb("#4FB8C2")),
+        string: (fill: rgb("#69B972")),
+        number: (fill: rgb("#DB8948")),
+        other: (fill: rgb("#A987E8")),
         plain: (:),
     ),
 )
@@ -319,6 +324,10 @@
     // which is how side-by-side listings are shrunk to fit one slide.
     size: auto,
     scale: 100%,
+    // Whether a bare listing's visible surface stretches to the equal height its
+    // `vboxs` row assigns. `false` keeps the row geometry (and caption baseline)
+    // but draws the frame only at its natural height.
+    stretch: true,
     leading: 0.5em,
     // Gap between the listing and any prose sharing the same `#code[...]`.
     gap: 0.9em,
@@ -338,8 +347,9 @@
     // `.tmTheme` path is not accepted: the palette styles the buckets in
     // `_classifier`, which only the built-in theme produces.
     palettes: (light: light-code-palette, dark: dark-code-palette),
-    // `hl:` — accent band behind emphasized lines, bled to the frame edge.
-    hl-tint: 85%,
+    // `hl:` — a quiet neutral band behind emphasized lines, bled to the frame
+    // edge. The accent remains reserved for `mark:` tokens.
+    hl-tint: 92%,
     hl-weight: "bold",
     // Vertical growth of the band past the line box, so consecutive
     // highlighted lines read as one continuous band.
@@ -628,12 +638,12 @@
     })
 
     if banded {
-        // A `block`, so the accent covers every row of a wrapped line and not
+        // A `block`, so the band covers every row of a wrapped line and not
         // just its first. The `y` outset makes consecutive banded lines meet.
         block(
             width: 100%,
             spacing: 0pt,
-            fill: cfg.accent.transparentize(code-config.hl-tint),
+            fill: cfg.palette.fg.transparentize(code-config.hl-tint),
             outset: (x: cfg.pad, y: code-config.hl-outset),
             row,
         )
@@ -797,7 +807,6 @@
             show raw.line: _line-rule((
                 hl-lines: hl-lines,
                 dim-lines: dims,
-                accent: accent,
                 dim-ink: dim-ink,
                 num-ink: num-ink,
                 pad: pad,
@@ -816,13 +825,16 @@
         _apply-marks(spec.body, marks, accent)
     }
 
-    let above = if outer-spacing { auto } else { 0pt }
-    let below = if outer-spacing { auto } else { 0pt }
-
-    if spec.frame {
+    // A listing on its own takes the uniform flow rhythm; inside a row the row
+    // owns the spacing, so the item adds none of its own.
+    let outer = if outer-spacing { auto } else { 0pt }
+    // The visible listing, at whatever height it is asked for. Spacing is the
+    // caller's, since a natural-height surface is wrapped in the block that
+    // carries it.
+    let surface = (target-height, above: 0pt, below: 0pt) => if spec.frame {
         block(
             width: 100%,
-            height: height,
+            height: target-height,
             above: above,
             below: below,
             breakable: spec.breakable,
@@ -832,16 +844,32 @@
             inset: inset,
         )[#inner]
     } else {
-        block(width: 100%, height: height, above: above, below: below, breakable: spec.breakable)[#inner]
+        block(width: 100%, height: target-height, above: above, below: below, breakable: spec.breakable)[#inner]
+    }
+
+    if spec.stretch or height == auto {
+        surface(height, above: outer, below: outer)
+    } else {
+        // Keep consuming the row's assigned height so a following caption stays
+        // on the shared foot band; only the visible code surface stays natural.
+        block(width: 100%, height: height, above: outer, below: outer, spacing: 0pt)[
+            #surface(auto)
+        ]
     }
 }
 
-// Titleless code block. `frame: false` keeps the typography and every emphasis
-// treatment but drops the surface, for listings already inside a box helper.
-// The result is a `vboxs` row item, so a bare listing can be one column of an
-// equal-height row; inside a row its frame stretches to the row height.
+// Code block with an optional caption. `frame: false` keeps the typography and
+// every emphasis treatment but drops the surface, for a listing already sitting
+// inside a box helper. The result is a `vboxs` row item, so a bare listing can be
+// one column of an equal-height row; inside a row its frame stretches to the row
+// height unless `stretch: false` holds it at its natural one.
 #let code(
     body,
+    caption: none,
+    cap-size: auto,
+    cap-weight: auto,
+    cap-color: auto,
+    cap-gap: auto,
     frame: true,
     hl: (),
     dim: (),
@@ -856,6 +884,7 @@
     font: code-config.font,
     size: code-config.size,
     scale: code-config.scale,
+    stretch: code-config.stretch,
     leading: code-config.leading,
     gap: code-config.gap,
     indent: code-config.indent,
@@ -879,10 +908,18 @@
         assert(_holds-raw(body), message: "code: `indent` found no raw fence directly in the body")
         body = _reindent(body, indent)
     }
+    let foot = caption-foot(
+        caption,
+        cap-size: cap-size,
+        cap-weight: cap-weight,
+        cap-color: cap-color,
+        cap-gap: cap-gap,
+    )
     box-item(
         (
             kind: "code",
             render: _render-code,
+            foot: foot,
             frame: frame,
             hl: hl,
             dim: dim,
@@ -894,6 +931,7 @@
             font: font,
             size: size,
             scale: scale,
+            stretch: stretch,
             leading: leading,
             gap: gap,
             indent: indent,

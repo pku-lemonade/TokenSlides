@@ -67,7 +67,7 @@
     email: auto,
     website: auto,
     github: auto,
-    // Per-figure defaults for `#img` (caption typography, frame, fit).
+    // Shared row-caption typography plus image-only frame/fit defaults.
     img-config: (:),
     // Defaults for `#vboxs`, which lays out every equal-height row in the theme
     // — figures and listings as well as boxes (`gap`, `fill-height`, ...).

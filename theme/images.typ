@@ -3,9 +3,9 @@
 #import "boxes.typ": box-item
 
 // CONFIG
-// Default options for one figure; deck-level overrides merge in via
-// `lemonade-theme(img-config: ...)`. `cap-size: auto` resolves to the current
-// aspect ratio's `small` font size.
+// Default image options plus the caption style shared by every row item;
+// deck-level overrides merge in via `lemonade-theme(img-config: ...)`.
+// `cap-size: auto` resolves to the current aspect ratio's `small` font size.
 //
 // How a figure is PLACED is not here: `img` is a `vboxs` row item, so the row
 // owns width, direction, gaps, bleed, and whether it fills the slide — see
@@ -48,6 +48,31 @@
         #show raw: set text(..cap-text-args)
         #caption
     ]
+}
+
+// Shared row-item caption. The row measures this `foot` across every item and
+// reserves one band for the tallest, keeping media bottoms and caption baselines
+// aligned. `img`, `code`, and foreign row items all use this one path.
+#let caption-foot(
+    caption,
+    cap-size: auto,
+    cap-weight: auto,
+    cap-color: auto,
+    cap-gap: auto,
+) = if caption == none { none } else {
+    context {
+        v(if cap-gap == auto { cur-img-config.get().cap-gap } else { cap-gap })
+        block(width: 100%, spacing: 0pt)[
+            #align(center)[
+                #_caption-block(
+                    caption,
+                    cap-size: cap-size,
+                    cap-weight: cap-weight,
+                    cap-color: cap-color,
+                )
+            ]
+        ]
+    }
 }
 
 // Floating figure anchored to a slide corner. `source` is an image path or a
@@ -179,6 +204,15 @@
         pos.len() == 1 or pos.len() == 2,
         message: "img: use #img(source) or #img(source, [caption])",
     )
+    // The sink is here only to take one or two positionals; every option this
+    // figure has is a named parameter above. Without this an unknown named
+    // argument would land in the sink and be silently dropped.
+    let unknown = args.named().keys()
+    if unknown.len() > 0 {
+        // Revealing belongs to the row, not to one figure in it (see `vboxs`).
+        let hint = if "step" in unknown { " — `step` belongs on the row: `vboxs(img(..), .., step: ..)`" } else { "" }
+        panic("img: unknown option `" + unknown.first() + "`" + hint)
+    }
     // A ratio has nothing to resolve against here: in a filling row the row
     // hands down a length and this is ignored, and in a non-filling one the row
     // measures the figure at its natural size first, where `50%` of an
@@ -194,16 +228,13 @@
     let body = if type(source) == str or type(source) == bytes { image(source) } else { source }
     // The caption travels as the item's `foot`, so the ROW can measure every
     // caption in it together and give the figures above them one shared height.
-    let foot = if caption == none { none } else {
-        context {
-            v(if cap-gap == auto { cur-img-config.get().cap-gap } else { cap-gap })
-            block(width: 100%, spacing: 0pt)[
-                #align(center)[
-                    #_caption-block(caption, cap-size: cap-size, cap-weight: cap-weight, cap-color: cap-color)
-                ]
-            ]
-        }
-    }
+    let foot = caption-foot(
+        caption,
+        cap-size: cap-size,
+        cap-weight: cap-weight,
+        cap-color: cap-color,
+        cap-gap: cap-gap,
+    )
     box-item(
         (
             kind: "img",

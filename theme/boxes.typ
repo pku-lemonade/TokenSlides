@@ -1,4 +1,7 @@
-#import "base.typ": bleed as bleed-block, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-spacing
+#import "base.typ": (
+    bleed as bleed-block, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-spacing,
+    touying-fn-wrapper,
+)
 #import "emph.typ": apply-emph-style, on-primary
 
 // USER CONFIG
@@ -8,7 +11,9 @@
 // - Body and title font sizes: edit `body` / `body-title` in base.typ.
 // - Soft body fills are enabled with `lemonade-theme(box-fill: true)`.
 //
-// Per-box `compact`, `title-size`, and `title-inset` override these defaults.
+// Per-box `compact`, `body-inset`, `title-size`, and `title-inset` override
+// these defaults. A dictionary `body-inset` is merged over the selected normal
+// or compact inset, so `body-inset: (right: 0pt)` changes only that side.
 // A vboxs `title-size` applies to the row unless a box sets its own title size.
 // Outer box spacing is not configured here: boxes take the uniform `flow`
 // rhythm (see `layout-config` in base.typ) via `auto` block spacing.
@@ -109,16 +114,28 @@
     #spec.body
 ]
 
+#let _body-inset(spec, metrics) = {
+    let override = spec.at("body-inset", default: none)
+    if override == none {
+        metrics.body-inset
+    } else if type(override) == dictionary and type(metrics.body-inset) == dictionary {
+        metrics.body-inset + override
+    } else {
+        override
+    }
+}
+
 // Plain boxes use a separate accent/title column. Keeping it separate from the
 // body frame avoids diagonal joins between thick colored and thin neutral rules.
 #let _plain-grid(spec, visuals, metrics, font-sizes, height: auto, row-title-size: none) = {
     let has-title = spec.title != none
     let title-inset = spec.at("title-inset", default: box-config.title-inset)
+    let body-inset = _body-inset(spec, metrics)
     grid(
         columns: if has-title { (auto, 1fr) } else { (box-config.accent-width, 1fr) },
         rows: if height == auto { (auto,) } else { (1fr,) },
         column-gutter: 0pt,
-        inset: (x, y) => if x == 0 { if has-title { title-inset } else { 0pt } } else { metrics.body-inset },
+        inset: (x, y) => if x == 0 { if has-title { title-inset } else { 0pt } } else { body-inset },
         fill: (x, y) => if x == 0 { visuals.accent } else { visuals.fill },
         stroke: (x, y) => if x == 0 { none } else { visuals.frame-no-left },
         align: (x, y) => if x == 0 { box-config.title-align + horizon } else { left + top },
@@ -144,24 +161,27 @@
     outset: (left: box-config.frame-width / 2, right: box-config.frame-width / 2),
 )
 
-#let _top-grid(spec, visuals, metrics, font-sizes, height: auto, row-title-size: none) = grid(
-    columns: (1fr,),
-    rows: if height == auto { (auto, auto) } else { (auto, 1fr) },
-    row-gutter: 0pt,
-    inset: 0pt,
-    if spec.title == none {
-        _top-accent(visuals)
-    } else {
-        _title-bar(spec, visuals, font-sizes, row-title-size: row-title-size)
-    },
-    block(
-        width: 100%,
-        height: if height == auto { auto } else { 100% },
-        fill: visuals.fill,
-        inset: metrics.body-inset,
-        stroke: visuals.frame,
-    )[#_body-content(spec, font-sizes)],
-)
+#let _top-grid(spec, visuals, metrics, font-sizes, height: auto, row-title-size: none) = {
+    let body-inset = _body-inset(spec, metrics)
+    grid(
+        columns: (1fr,),
+        rows: if height == auto { (auto, auto) } else { (auto, 1fr) },
+        row-gutter: 0pt,
+        inset: 0pt,
+        if spec.title == none {
+            _top-accent(visuals)
+        } else {
+            _title-bar(spec, visuals, font-sizes, row-title-size: row-title-size)
+        },
+        block(
+            width: 100%,
+            height: if height == auto { auto } else { 100% },
+            fill: visuals.fill,
+            inset: body-inset,
+            stroke: visuals.frame,
+        )[#_body-content(spec, font-sizes)],
+    )
+}
 
 // One item at a given height. A spec carrying `render:` belongs to another
 // module and is rendered by that function; everything else is a box, and its
@@ -259,7 +279,15 @@
 #let _make-box(kind, style, name, ..args) = {
     let pos = args.pos()
     let named = args.named()
-    let options = ("compact", "title-size", "title-inset")
+    let options = ("compact", "body-inset", "title-size", "title-inset")
+    // Revealing is the ROW's job, never an item's: a stepped row is emitted as a
+    // Touying mark that only survives outside a `context` (see `vboxs`), and a box
+    // standing on its own is drawn by a show rule, long after Touying parsed the marks.
+    assert(
+        "step" not in named,
+        message: name + ": `step` belongs on the row — `vboxs(.., step: ..)`; "
+            + "a box on its own reveals with `#pause`",
+    )
     for key in named.keys() {
         assert(key in ("title",) + options, message: name + ": unknown option `" + key + "`")
     }
@@ -318,7 +346,49 @@
 // THE ROW
 // -----------------------------------------------------------------------------
 
+// One subslide index per item, or `none` for a row that does not step at all
+// (`step: none` / `step: false`). See `vboxs` below for what an index means.
+#let _resolve-steps(step, count) = {
+    if step == none or step == false { return none }
+    if step == true { return range(1, count + 1) }
+    if type(step) == int {
+        assert(step >= 1, message: "vboxs: `step` must be 1 or more, got " + repr(step))
+        return range(step, step + count)
+    }
+    assert(
+        type(step) == array,
+        message: "vboxs: `step` takes `true`, a starting subslide, or one index per item, got " + repr(step),
+    )
+    assert(
+        step.len() == count,
+        message: "vboxs: `step` length must match item count (" + str(step.len()) + " vs " + str(count) + ")",
+    )
+    for at in step {
+        assert(
+            type(at) == int and at >= 1,
+            message: "vboxs: every `step` index must be 1 or more, got " + repr(at),
+        )
+    }
+    step
+}
+
 // The theme's one row layout: every item gets the same height, whatever it is.
+//
+// `step` reveals the row a subslide at a time, and is the ONLY way to do it —
+// `#pause` inside a row is a hard error, not an oversight (see `_resolve-steps`
+// and the `touying-fn-wrapper` at the end of this function).
+//
+//   step: true          one item per subslide, `after` on the one past the last
+//   step: 2             the same, but the row starts on subslide 2
+//   step: (1, 1, 2)     an index per item — the first two together, then the third
+//
+// Indices are absolute subslide numbers, the way Touying's own `uncover("2-")`
+// counts, and a row spends none of its own: a `#pause` before it has already
+// taken subslide 1, so the row starts at `step: 2`, and a `#pause` after it goes
+// on counting the pauses alone. They attach to items in the order WRITTEN,
+// unlike `widths`, which names tracks in the order drawn. An item that has not
+// arrived yet is covered, not dropped, so the row's geometry is identical on
+// every subslide.
 #let vboxs(
     ..items,
     dir: ltr,
@@ -331,6 +401,7 @@
     fill-pad: auto,
     bleed: false,
     title-size: none,
+    step: none,
 ) = {
     let specs = items
         .pos()
@@ -346,6 +417,20 @@
 
     assert(dir in (ltr, rtl, ttb, btt), message: "vboxs: `dir` must be one of ltr, rtl, ttb, btt")
     let is-vertical = dir == ttb or dir == btt
+
+    // Indices are folded in BEFORE `ordered` reverses an `rtl` / `btt` row, which
+    // is what makes them follow the order the items were written.
+    let steps = _resolve-steps(step, count)
+    if steps != none {
+        specs = specs.zip(steps).map(((spec, at)) => spec + (step: at))
+    }
+    // The row's `after` lands on its own subslide once the row steps at all: one
+    // past the last item. There is no separate knob — `step` owns the whole row's
+    // timing, so a reader counts subslides in one place.
+    let last-step = if steps == none { 1 } else { calc.max(..steps) }
+    let after-step = if steps == none or after == none { none } else { last-step + 1 }
+    let max-step = if after-step == none { last-step } else { after-step }
+
     // `rtl` / `btt` reverse the items themselves, so `widths` keeps naming the
     // tracks in the order they are drawn rather than the order written.
     let ordered = if dir == rtl or dir == btt { specs.rev() } else { specs }
@@ -366,7 +451,20 @@
     // Measure and render the same block so paragraph spacing cannot change its flow height.
     let after-block = if after != none { block(width: 100%, spacing: 0pt)[#after] }
 
-    context {
+    // A stepped row is rendered once per subslide, so everything below is a
+    // function of Touying's `self`. A row that does not step is called once with
+    // `self: none` and never touches it.
+    let render(self: none) = context {
+        // Not yet revealed: covered, never dropped. Cover is the deck's own method
+        // (`hide` unless a deck configured otherwise), so the cell keeps its exact
+        // size and no track, foot band, or caption baseline moves between
+        // subslides — the whole point of revealing inside an equal-height row.
+        let veil(at, cont) = if at == none or self == none or self.subslide >= at {
+            cont
+        } else {
+            (self.methods.cover)(self: self, cont)
+        }
+
         // An argument left `auto` defers to the deck's `vboxs-config`; that
         // dict's own `after-gap: auto` in turn means the uniform flow gap.
         let cfg = cur-vboxs-config.get()
@@ -409,12 +507,15 @@
                 row-gutter: if is-vertical { gap } else { 0pt },
                 inset: 0pt,
                 align: left + top,
-                ..ordered.map(spec => _render-cell(
-                    spec,
-                    height: item-height,
-                    foot-height: band,
-                    outer-spacing: false,
-                    row-title-size: title-size,
+                ..ordered.map(spec => veil(
+                    spec.at("step", default: none),
+                    _render-cell(
+                        spec,
+                        height: item-height,
+                        foot-height: band,
+                        outer-spacing: false,
+                        row-title-size: title-size,
+                    ),
                 )),
             )
         ]
@@ -433,7 +534,9 @@
             ]
             if bleed { bleed-block(align(center)[#placed]) } else { align(center)[#placed] }
         }
-        let trailer = if after != none { v(after-gap) + after-block }
+        // The gap is never covered: reserving it keeps the row above at the same
+        // height whether or not the trailer has arrived yet.
+        let trailer = if after != none { v(after-gap) + veil(after-step, after-block) }
 
         if fill-height {
             // A stack splits the height it is given between its items; a
@@ -476,6 +579,18 @@
                 #trailer
             ]
         }
+    }
+
+    // Touying resolves `#pause` by walking the content tree BEFORE layout, and it
+    // cannot see into a `context` — which is every part of this row, since equal
+    // heights need `measure` and `layout`. `touying-fn-wrapper` is the way in: it
+    // is a mark Touying resolves by CALLING `render` with the current `self`, so
+    // the mark sits outside the `context` and `self` arrives inside it.
+    // `last-subslide` is what tells the slide how many subslides to repeat for.
+    if max-step > 1 {
+        touying-fn-wrapper(render, last-subslide: max-step)
+    } else {
+        render()
     }
 }
 
