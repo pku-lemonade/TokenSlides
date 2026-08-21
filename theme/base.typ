@@ -31,8 +31,8 @@
         font-sizes: (
             small: 18pt,
             body: 26pt,
-            body-title: 28pt,
-            title: 40pt,
+            body-title: 32pt,
+            title: 48pt,
             slide-title: 40pt,
             section: 44pt,
             callout: 36pt,
@@ -130,16 +130,13 @@
     footer-fg: rgb("#0D0D0D"),
 )
 
-// Glass look: accents at OKLCH L 0.52 (white title text stays >= 4.5:1 on
-// every bar); fills are near-white panes at OKLCH L 0.975 / C 0.013 so the
-// hue is felt more than seen. Frame hairlines take the accent at low alpha
-// (see `frame-tint` in boxes.typ), which is what sells the tinted-glass edge.
-// Exception: a yellow dark enough for white ink can only read as brown, so
-// highlight rides at OKLCH L 0.67 (max sRGB chroma, >= 3:1 against the white
-// page) and swaps in near-black title ink via `title-text-fill` — the same
-// move the dark-mode footer makes on its light primary.
+// Glass look: saturated accents carry white title ink; fills are near-white
+// panes at OKLCH L 0.975 / C 0.013 so the hue is felt more than seen. Frame
+// hairlines take the accent at low alpha (see `frame-tint` in boxes.typ), which
+// is what sells the tinted-glass edge. Highlight runs a little brighter and
+// cleaner than before while keeping white large-title text at 3:1 contrast.
 #let light-box-styles = (
-    highlight: (border: rgb("#c18a04"), fill: rgb("#fbf6ed"), title-text-fill: rgb("#0D0D0D")),
+    highlight: (border: rgb("#C58900"), fill: rgb("#fbf6ed"), title-emph-fill: white),
     info: (border: rgb("#3a65b8"), fill: rgb("#f2f7ff")),
     error: (border: rgb("#ae3b47"), fill: rgb("#fff3f3")),
     success: (border: rgb("#327b38"), fill: rgb("#f2f9f1")),
@@ -149,7 +146,7 @@
 
 // Same accents as light mode; fills share OKLCH L 0.235 / C 0.014.
 #let dark-box-styles = (
-    highlight: (border: rgb("#c18a04"), fill: rgb("#221d17"), title-text-fill: rgb("#0D0D0D")),
+    highlight: (border: rgb("#C58900"), fill: rgb("#221d17"), title-emph-fill: white),
     info: (border: rgb("#3a65b8"), fill: rgb("#1a1e25")),
     error: (border: rgb("#ae3b47"), fill: rgb("#241c1c")),
     success: (border: rgb("#327b38"), fill: rgb("#1a201a")),

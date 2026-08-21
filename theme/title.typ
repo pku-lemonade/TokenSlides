@@ -66,7 +66,7 @@
     ),
     placement: (
         venue-dy: 2em,
-        title-dy: -1em,
+        title-dy: 0em,
         bottom-dy: -2em,
     ),
     // Han glyph handling, stated once: the decorative face for the bottom

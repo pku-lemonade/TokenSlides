@@ -88,4 +88,5 @@ Rules:
 - Assign source-grounded evidence before drafting a slide.
 - Do not rely on captions alone to carry the main takeaway.
 - Keep figures readable at slide scale. Split dense slides or split evidence before shrinking text.
+- Emit theme defaults. No per-row `gap`, no near-equal `widths`, no text-size override, no restated default — see `references/lemonade-theme.md` → `Style Overrides`.
 - Reuse theme image helpers before adding deck-local layout helpers.

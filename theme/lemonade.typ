@@ -6,8 +6,12 @@
     cur-box-fill, cur-colors, cur-font-sizes, cur-mode, cur-title-align, font-config,
     mode-config, title-alignments,
 )
+// `appendix` freezes Touying's last-slide counter, so backup slides kept after
+// the closing slide stop inflating the `n / total` the footer shows on the
+// slides that are actually presented.
 #import "base.typ": (
-    config-colors, config-common, config-info, config-page, meanwhile, pause, speaker-note, touying-slides,
+    appendix, config-colors, config-common, config-info, config-page, meanwhile, pause, speaker-note,
+    touying-slides,
 )
 
 #import "artifact-badges.typ": *

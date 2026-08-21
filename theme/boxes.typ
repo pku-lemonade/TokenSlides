@@ -87,6 +87,7 @@
         } else {
             style.at("title-text-fill", default: box-config.title-text-fill)
         },
+        title-emph: if style == none { none } else { style.at("title-emph-fill", default: none) },
         frame: _frame-stroke(frame-paint),
         frame-no-left: _frame-stroke(frame-paint, left: false),
     )
@@ -94,10 +95,12 @@
 
 #let _title-content(spec, visuals, font-sizes, row-title-size: none) = {
     let default-size = if row-title-size == none { font-sizes.body-title } else { row-title-size }
-    // White ink gets the usual on-primary emphasis (secondary accent); a
-    // style-supplied dark ink keeps emphasis in the ink — the secondary
-    // yellow would vanish on the light accent that forced the dark ink.
-    let title = if visuals.title-ink == box-config.title-text-fill {
+    // A style may pin emphasis to its title ink when the usual on-primary
+    // accent would lose contrast. Otherwise white ink gets the shared
+    // on-primary emphasis, while a style-supplied dark ink keeps that ink.
+    let title = if visuals.title-emph != none {
+        apply-emph-style(spec.title, emph-fill: visuals.title-emph, strong-fill: visuals.title-emph)
+    } else if visuals.title-ink == box-config.title-text-fill {
         on-primary(spec.title)
     } else {
         apply-emph-style(spec.title, emph-fill: visuals.title-ink, strong-fill: visuals.title-ink)
@@ -186,8 +189,14 @@
 // One item at a given height. A spec carrying `render:` belongs to another
 // module and is rendered by that function; everything else is a box, and its
 // two shapes differ only in which grid goes inside the same outer block.
+//
+// The row's `title-size` rides along IN THE SPEC rather than as an argument, so
+// no renderer has to declare a parameter it does not care about — an extra dict
+// key is invisible to one that reads only the keys it knows. `vstack` is what
+// reads it back: it hands the size to the row nested in its cell, so a row-level
+// `title-size` reaches boxes at any depth instead of stopping at the stack.
 #let _render-spec(spec, height: auto, outer-spacing: true, row-title-size: none) = if "render" in spec {
-    (spec.render)(spec, height: height, outer-spacing: outer-spacing)
+    (spec.render)(spec + (row-title-size: row-title-size), height: height, outer-spacing: outer-spacing)
 } else {
     context {
         let visuals = _box-visuals(spec, cur-colors.get())
@@ -247,6 +256,19 @@
 }
 
 #let _with-body(spec, body) = spec + (body: body)
+
+// Everything in a row is a `box-item`; a bare `[...]`, a `table`, or a raw
+// `vboxs` is rejected here rather than measured into a baffling layout. `name`
+// is the caller, so a `vstack` reports itself at its own call site instead of
+// failing later as the `vboxs` it forwards to.
+#let _assert-row-items(name, items) = {
+    for item in items {
+        assert(
+            type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
+            message: name + ": items must be Lemonade row items — a box helper, `img`, `code`, or `vstack`",
+        )
+    }
+}
 
 // One cell: the item, and its `foot` under it. `height` is the cell's total and
 // `foot-height` the band the row reserved for the tallest foot in it, so the
@@ -372,7 +394,13 @@
     step
 }
 
-// The theme's one row layout: every item gets the same height, whatever it is.
+// The theme's one row layout. Side by side, every item gets the SAME height,
+// whatever it is — that is what makes columns line up. Stacked (`ttb` / `btt`)
+// they get their OWN heights instead, in proportion to what each one measures:
+// filling, those proportions are scaled up to the height the row was given; not
+// filling, each item is simply its natural height. `heights:` replaces the
+// measured proportions with named ones, and `heights: (1fr,) * n` is how a stack
+// asks for the even split that measuring would not have produced.
 //
 // `step` reveals the row a subslide at a time, and is the ONLY way to do it —
 // `#pause` inside a row is a hard error, not an oversight (see `_resolve-steps`
@@ -394,6 +422,7 @@
     dir: ltr,
     width: 100%,
     widths: auto,
+    heights: auto,
     gap: auto,
     after: none,
     after-gap: auto,
@@ -403,15 +432,13 @@
     title-size: none,
     step: none,
 ) = {
-    let specs = items
-        .pos()
-        .map(item => {
-            assert(
-                type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
-                message: "vboxs: items must be Lemonade row items — a box helper, `img`, or `code`",
-            )
-            _with-body(_figure-spec(item), item.body)
-        })
+    let unknown = items.named().keys()
+    if unknown.len() > 0 {
+        panic("vboxs: unknown option `" + unknown.first() + "`")
+    }
+    let given = items.pos()
+    _assert-row-items("vboxs", given)
+    let specs = given.map(item => _with-body(_figure-spec(item), item.body))
     let count = specs.len()
     if count == 0 { return [] }
 
@@ -445,6 +472,32 @@
         )
         assert(widths.len() == count, message: "vboxs: widths length must match item count")
         widths
+    }
+
+    // `heights` is the vertical counterpart of `widths`, and mirrors it: named
+    // in the order tracks are DRAWN, rejected on the axis that has only one
+    // track. Left `auto`, a stack takes its proportions from what its items
+    // measure. The values are weights rather than grid tracks — they are
+    // normalized against each other and resolved to lengths before layout,
+    // because an item that scales itself to fit needs a real height, not a `1fr`
+    // that the grid alone would know how to divide.
+    let tall-tracks = if heights == auto {
+        auto
+    } else {
+        assert(type(heights) == array, message: "vboxs: heights must be an array")
+        assert(
+            is-vertical,
+            message: "vboxs: `heights` names stacked tracks; a side-by-side row has one row — "
+                + "sizing its items apart is `widths`",
+        )
+        assert(heights.len() == count, message: "vboxs: heights length must match item count")
+        for h in heights {
+            assert(
+                type(h) == fraction and h > 0fr,
+                message: "vboxs: every `heights` entry must be a positive fraction such as `2fr`, got " + repr(h),
+            )
+        }
+        heights
     }
 
     let feet = ordered.map(_item-foot)
@@ -499,26 +552,67 @@
             ).height
         }
 
-        let row = (item-height, band) => block(width: 100%, spacing: 0pt)[
+        // `item-heights` is one height PER ITEM. A side-by-side row passes the
+        // same value throughout — equal height is the point there, since the
+        // columns have to line up — while a stack passes each item its own, so
+        // a short figure above a tall one no longer has to pretend to match it.
+        // The value is handed to the grid track AND to the renderer, which is
+        // why it must be a resolved length: a `1fr` track is not known until
+        // layout, and an item that scales itself to fit needs a number now.
+        let row = (item-heights, band) => block(width: 100%, spacing: 0pt)[
             #grid(
                 columns: if is-vertical { (1fr,) } else { tracks },
-                rows: if is-vertical { (item-height,) * count } else { (item-height,) },
+                rows: if is-vertical { item-heights } else { (item-heights.first(),) },
                 column-gutter: if is-vertical { 0pt } else { gap },
                 row-gutter: if is-vertical { gap } else { 0pt },
                 inset: 0pt,
                 align: left + top,
-                ..ordered.map(spec => veil(
-                    spec.at("step", default: none),
-                    _render-cell(
-                        spec,
-                        height: item-height,
-                        foot-height: band,
-                        outer-spacing: false,
-                        row-title-size: title-size,
-                    ),
-                )),
+                ..ordered
+                    .zip(item-heights)
+                    .map(((spec, item-height)) => veil(
+                        spec.at("step", default: none),
+                        _render-cell(
+                            spec,
+                            height: item-height,
+                            foot-height: band,
+                            outer-spacing: false,
+                            row-title-size: title-size,
+                        ),
+                    )),
             )
         ]
+
+        // Every cell at its own natural height, measured at the width the row
+        // really got. A stack's proportions come from these, so they are
+        // measured once and used whole rather than folded to a maximum.
+        //
+        // A cell's natural height is its BODY plus the band the row reserves —
+        // not the item's own foot. Measuring the whole cell would count that
+        // foot instead, and the render pass subtracts the full band from
+        // whatever height it is handed: a one-line caption in a row whose band
+        // is two lines would come back one line short, and the body would be
+        // squeezed by the difference (a caption drawn over the last code line).
+        // A footless item is handed the height whole, so it takes no band.
+        let naturals = (band, w) => ordered.map(spec => {
+            let body = measure(
+                _render-spec(spec, outer-spacing: false, row-title-size: title-size),
+                width: w,
+            ).height
+            if _item-foot(spec) == none { body } else { body + band }
+        })
+
+        // The weight each item carries when a stack divides its height:
+        // `heights` if the deck named them, else what the content measures.
+        // Normalized here so both paths are plain floats summing to 1.
+        let weights = (band, w) => if tall-tracks == auto {
+            let hs = naturals(band, w)
+            let sum = hs.fold(0pt, (a, b) => a + b)
+            // Nothing to go on — an empty or zero-height stack divides evenly.
+            if sum == 0pt { (1.0 / count,) * count } else { hs.map(h => h / sum) }
+        } else {
+            let sum = tall-tracks.fold(0fr, (a, b) => a + b)
+            tall-tracks.map(h => h / sum)
+        }
 
         // The item height and the foot band both depend on the width the row
         // really gets, so both are settled inside one `layout` over the box.
@@ -539,11 +633,16 @@
         let trailer = if after != none { v(after-gap) + veil(after-step, after-block) }
 
         if fill-height {
-            // A stack splits the height it is given between its items; a
-            // side-by-side row gives every item all of it.
-            let share = total => if is-vertical {
-                calc.max(0pt, total - measure(v(gap)).height * (count - 1)) / count
-            } else { total }
+            // A stack splits the height it is given between its items, in
+            // proportion to what each one measures — so two figures scale by the
+            // SAME factor and keep their relative sizes while together filling
+            // the column. An even split would blow the short one up to match the
+            // tall one; `heights:` is how a deck overrides the proportions.
+            // A side-by-side row gives every item all of the height instead.
+            let share = (total, band, w) => if is-vertical {
+                let inner = calc.max(0pt, total - measure(v(gap)).height * (count - 1))
+                weights(band, w).map(f => inner * f)
+            } else { (total,) * count }
 
             block(width: 100%, height: 1fr)[
                 #layout(size => {
@@ -553,25 +652,41 @@
                     let available = calc.max(0pt, size.height - measure(v(fill-pad)).height)
                     let row-height = calc.max(0pt, available - trailer-height)
                     block(width: 100%, height: available)[
-                        #laid-out((band, w) => share(row-height))
+                        #laid-out((band, w) => share(row-height, band, w))
                         #trailer
                     ]
                 })
             ]
         } else {
-            // Equal heights with no height to fill: the tallest item at its
-            // natural size sets the others. A stack measures its cells one by
-            // one, since a single-column grid would report their sum instead of
-            // the largest.
+            // Nothing to fill: a stack simply gives every item the height it
+            // measures, which is the closest this row comes to plain stacking.
+            // Named `heights:` still take over, sized against the total those
+            // naturals add up to. A side-by-side row still equalizes — it takes
+            // the whole grid's natural height, which is already the tallest
+            // item's, and hands it to every column.
             let natural = (band, w) => if is-vertical {
-                ordered
-                    .map(spec => measure(
-                        _render-cell(spec, foot-height: band, outer-spacing: false, row-title-size: title-size),
-                        width: w,
-                    ).height)
-                    .fold(0pt, calc.max)
+                let hs = naturals(band, w)
+                if tall-tracks == auto {
+                    hs
+                } else {
+                    let total = hs.fold(0pt, (a, b) => a + b)
+                    weights(band, w).map(f => total * f)
+                }
             } else {
-                measure(row(auto, band), width: w).height
+                // Measure each BODY at its actual track width, then reserve the
+                // shared band under every captioned body. Measuring `_render-cell`
+                // here would count each caption's own height, then the render pass
+                // would subtract the tallest band from all of them — shrinking a
+                // valid body whenever another caption wrapped taller.
+                let cells = ordered.map(spec => block(width: 100%, spacing: 0pt)[
+                    #_render-spec(spec, outer-spacing: false, row-title-size: title-size)
+                    #if _item-foot(spec) != none { block(height: band) }
+                ])
+                let row-height = measure(
+                    grid(columns: tracks, column-gutter: gap, inset: 0pt, ..cells),
+                    width: w,
+                ).height
+                (row-height,) * count
             }
 
             block(width: 100%)[
@@ -592,6 +707,113 @@
     } else {
         render()
     }
+}
+
+// A STACK IN ONE CELL
+// -----------------------------------------------------------------------------
+
+// A row item that draws NOTHING of its own — no frame, no title, no fill, no
+// caption. It exists so one cell of a row can hold a second row, which is
+// otherwise impossible: every `vboxs` item must be a `box-item`, so neither
+// plain content nor a nested `vboxs` can go in a cell directly.
+//
+// Everything below is a forward to that nested row, so all four directions,
+// `widths`, foot bands, and equal heights are `vboxs`'s doing, not a second
+// implementation of them. Defined after `vboxs` because it closes over it.
+#let _render-vstack(spec, height: auto, outer-spacing: true) = {
+    let outer = if outer-spacing { auto } else { 0pt }
+    block(width: 100%, height: height, above: outer, below: outer, spacing: 0pt)[
+        #vboxs(
+            ..spec.items,
+            dir: spec.dir,
+            width: spec.width,
+            widths: spec.widths,
+            heights: spec.heights,
+            gap: spec.gap,
+            after: spec.after,
+            after-gap: spec.after-gap,
+            // ON, a stack splits the cell the row gave it BETWEEN its items,
+            // in proportion to what each one measures — which is what lets a
+            // figure that scales to its slot (`img`, and any foreign renderer
+            // that fits itself to the height handed down) actually use the
+            // column. OFF, every item is exactly its own natural height and
+            // whatever the cell has left over stays empty. OFF is the default:
+            // most stacks hold boxes, prose, or listings, which have nothing to
+            // scale into extra height and only stretch their frames when they
+            // are given it. A stack of FIGURES is what asks for
+            // `fill-height: true` — without it a scale-to-fit item renders at
+            // roughly 1× in a column with room to spare. `height == auto` — a
+            // bare `#vstack` outside any row — has nothing to fill either way.
+            fill-height: spec.fill-height and height != auto,
+            // `fill-pad` keeps a filling row clear of the footer, and the outer
+            // row already reserved it. Padding again would only shrink the cell
+            // this stack was handed.
+            fill-pad: 0pt,
+            title-size: spec.at("row-title-size", default: none),
+        )
+    ]
+}
+
+// `#vstack(img(a), img(b))` — a column of items inside one cell of a row:
+//
+//   #vboxs(
+//       code(caption: [Source], indent: 2)[...],
+//       vstack(img(a, [Target A]), img(b, [Target B]), fill-height: true),
+//   )
+//
+// `dir` is the nested row's, not the outer one's, so a `ttb` outer row can hold
+// a cell of items side by side. A `vstack` is itself a row item, so stacks nest.
+//
+// `fill-height: true` for a stack of figures, which need a real height to scale
+// into; the default is off, since filling a stack of boxes, prose, or listings
+// only stretches their frames.
+#let vstack(
+    ..items,
+    dir: ttb,
+    width: 100%,
+    widths: auto,
+    heights: auto,
+    gap: auto,
+    after: none,
+    after-gap: auto,
+    fill-height: false,
+) = {
+    // The sink takes positionals only; every option is a named parameter above.
+    // Without this check a stray named argument would land in the sink and be
+    // silently dropped — the same trap `img` guards against.
+    let unknown = items.named().keys()
+    if unknown.len() > 0 {
+        let key = unknown.first()
+        let hint = if key in ("step", "bleed") {
+            // A nested row is rendered inside a `context`, and a Touying mark
+            // emitted there is never resolved — so revealing belongs to the
+            // outer row, which covers this whole cell as one item. Bleed reaches
+            // through the slide's side margins, which a cell cannot do either.
+            " — `" + key + "` belongs on the outer row: `vboxs(vstack(..), .., " + key + ": ..)`"
+        } else if key == "fill-pad" {
+            " — how big the cell is stays the outer row's call; `fill-height` only says whether to fill it"
+        } else { "" }
+        panic("vstack: unknown option `" + key + "`" + hint)
+    }
+    let stacked = items.pos()
+    assert(stacked.len() > 0, message: "vstack: expected at least one row item")
+    _assert-row-items("vstack", stacked)
+    box-item(
+        (
+            kind: "vstack",
+            render: _render-vstack,
+            items: stacked,
+            dir: dir,
+            width: width,
+            widths: widths,
+            heights: heights,
+            gap: gap,
+            after: after,
+            after-gap: after-gap,
+            fill-height: fill-height,
+        ),
+        [],
+    )
 }
 
 #let tbox(

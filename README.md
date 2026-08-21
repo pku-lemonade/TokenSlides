@@ -175,10 +175,7 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
 #set text(lang: "en")
 
 #show: lemonade-theme.with(
-  aspect-ratio: "16-9",
   title-align: "left",
-  // "bar": full footer with primary fill; "plain": full footer without fill.
-  footer: "bar",
   img-config: (
     cap-size: 18pt,
     cap-weight: "bold",
@@ -209,6 +206,30 @@ A figure is a `vboxs` row item, the same as a box or a `#code` listing, so one
 call covers every arrangement: `#vboxs(img(a), img(b))` for two at one height,
 `dir: ttb` to stack them, and `#vboxs(ibox[...], img(a))` for a figure beside a
 box. A bare `#img(...)` renders on its own at its natural size.
+
+A cell of a row takes only row items, so a second row goes in one through
+`#vstack(...)` — an item that draws nothing itself and just stacks what it is
+given:
+
+```typst
+#vboxs(
+  code(caption: [Source], indent: 2)[...],
+  vstack(img(a, [Target A]), img(b, [Target B]), fill-height: true),
+)
+```
+
+Its `dir` is the nested row's, so a `dir: ttb` outer row can hold a cell of items
+side by side, and stacks nest. The outer row still owns the timing — one `step`
+index covers a whole stack, and `step:`/`bleed:` on the stack itself are rejected
+with a message pointing back at the row.
+
+A stack divides its cell **in proportion to what each item measures**, so a short
+figure above a tall one is not blown up to match it. `heights: (2fr, 1fr)` names
+those proportions instead, the way `widths` names side-by-side tracks, and
+`heights: (1fr, 1fr)` asks for an even split. The default `fill-height: false`
+keeps boxes or prose at natural height instead of stretching their frames. Pass
+`fill-height: true` for figures, which need a real height to scale into; the
+proportions are the same either way.
 
 A row reveals itself with `step:`, not with `#pause` inside it:
 

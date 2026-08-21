@@ -921,7 +921,7 @@ def build_escape_fragment_payload(
             "#ebox",
             "#pbox",
             "#code",
-            "#mbox",
+            "#vbox",
             "#table",
             "#v",
             "#align",
@@ -1318,8 +1318,11 @@ def render_figure_row(
     *,
     width: str = "100%",
     widths: list[Any] | None = None,
-    gap: str = "0.8em",
+    gap: str | None = None,
 ) -> list[str]:
+    # Style knobs stay unset unless a caller has a reason: `width: 100%` is
+    # already `vboxs`'s default and `gap` belongs to `vboxs-config`. See
+    # AGENTS.md -> "Deck style overrides".
     visible = [entry for entry in asset_entries if entry.get("expr")]
     if not visible:
         return []
@@ -1330,8 +1333,9 @@ def render_figure_row(
             lines.append(f"  img({entry['expr']}, [{caption}]),")
         else:
             lines.append(f"  img({entry['expr']}),")
-    lines.append(f"  width: {width},")
-    if len(visible) > 1:
+    if width != "100%":
+        lines.append(f"  width: {width},")
+    if gap is not None and len(visible) > 1:
         lines.append(f"  gap: {gap},")
     if widths and len(visible) > 1:
         lines.append(f"  widths: ({typst_tuple(widths, default_unit='fr')}),")
@@ -1352,8 +1356,6 @@ def render_stacked_images(asset_entries: list[dict[str, Any]]) -> list[str]:
         else:
             lines.append(f"  img({entry['expr']}),")
     lines.append("  dir: ttb,")
-    lines.append("  width: 100%,")
-    lines.append("  gap: 0.6em,")
     lines.append(")")
     lines.append("")
     return lines
@@ -1449,13 +1451,14 @@ def render_card_body(card: dict[str, Any]) -> list[str]:
 def render_cards_grid(cards: list[dict[str, Any]]) -> list[str]:
     if not cards:
         return []
-    panels: list[list[str]] = []
+    lines = ["#vboxs("]
     for card in cards:
-        panel = [f"#mbox(title: [{typst_escape(card.get('title') or 'Card')}], body-size: 18pt)["]
-        panel.extend(f"  {line}" if line else "  " for line in render_card_body(card))
-        panel.append("]")
-        panels.append(panel)
-    return render_grid([1] * len(cards), panels)
+        lines.append(f"  vbox(title: [{typst_escape(card.get('title') or 'Card')}])[")
+        lines.extend(f"    {line}" if line else "    " for line in render_card_body(card))
+        lines.append("  ],")
+    lines.append(")")
+    lines.append("")
+    return lines
 
 
 def resolve_equations(slide: dict[str, Any], assets_by_id: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1980,24 +1983,31 @@ def cmd_emit_deck(args: argparse.Namespace) -> None:
     date = typst_escape(paper.get("date") or deck.get("date") or "")
     lang = "zh" if str(deck.get("language", "")).lower().startswith("zh") else "en"
 
+    theme_args = [
+        '  title-align: "left",',
+        "  box-compact: true,",
+        f"  title: [{title}],",
+    ]
+    theme_args.extend(
+        f"  {name}: [{value}],"
+        for name, value in (
+            ("venue", venue),
+            ("author", authors),
+            ("institution", institution),
+        )
+        if value
+    )
+    theme_args.append(f"  short-title: [{short_title}],")
+    if date:
+        theme_args.append(f"  date: [{date}],")
+
     lines = [
         '#import "/lemonade.typ": *',
         "",
         f'#set text(lang: "{lang}")',
         "",
         "#show: lemonade-theme.with(",
-        '  aspect-ratio: "16-9",',
-        '  title-align: "left",',
-        "  box-compact: true,",
-        '  footer: "bar",',
-        "  config-info(",
-        f"    title: [{title}],",
-        f"    venue: [{venue}],",
-        f"    author: [{authors}],",
-        f"    institution: [{institution}],",
-        f"    short-title: [{short_title}],",
-        f"    date: [{date}],",
-        "  ),",
+        *theme_args,
         ")",
         "",
         "#title-slide()",

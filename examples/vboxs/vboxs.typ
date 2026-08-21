@@ -137,3 +137,124 @@
     step: true,
     fill-height: false,
 )
+
+= Nested Stacks
+
+// `vstack` draws nothing of its own; it only lets one cell hold a second row.
+// A stack divides its cell IN PROPORTION to what each item measures, so the two
+// boxes below get shares matching their text, not one half each.
+== A stack as one column of a filling row
+
+#vboxs(
+    ibox([单独一栏])[
+        这一栏是一个普通行项，占满整行高度。
+    ],
+    vstack(
+        vhbox([上])[右栏内部的第一项。],
+        vsbox([下])[右栏内部的第二项，内容更长，因此分到更高的一格。],
+    ),
+    widths: (0.55fr, 0.45fr),
+)
+
+// `heights` names stacked tracks the way `widths` names side-by-side ones.
+// `(1fr, 1fr)` is how a row asks for the even split that measuring would not
+// have produced.
+== `heights:` overrides the measured proportions
+
+#vboxs(
+    vstack(
+        vhbox([2fr])[这一格拿到三分之二。],
+        vsbox([1fr])[这一格拿到三分之一。],
+        heights: (2fr, 1fr),
+        fill-height: true,
+    ),
+    vstack(
+        vhbox([1fr])[内容长短不再影响高度，],
+        vsbox([1fr])[两格严格等分。],
+        heights: (1fr, 1fr),
+        fill-height: true,
+    ),
+)
+
+// Both stacks below size their items by the same measured proportions; the only
+// difference is whether those proportions are then scaled up to fill the cell.
+// Filling is right for figures, which scale into whatever height they are given.
+// A stack of boxes has nothing to scale, so filling only stretches the frames —
+// that is what `fill-height: false` is for: every box at exactly its own height.
+== `fill-height: false` for a stack of boxes
+
+#vboxs(
+    ibox([填满])[
+        默认铺满整格：右侧两栏的高度比例相同，只差是否撑满。
+    ],
+    vstack(
+        vhbox([上])[按比例放大后撑满。],
+        vsbox([下])[内容更长，这一格也更高。],
+        fill-height: true,
+    ),
+    vstack(
+        vhbox([上])[各自保持自然高度。],
+        vsbox([下])[比例不变，但不再撑满，框也不被拉伸。],
+        fill-height: false,
+    ),
+)
+
+== A stack keeps the row's `title-size`
+
+// The row's title size crosses the stack boundary: `title-size` is threaded
+// through the item spec, so nested boxes take it too.
+#vboxs(
+    vibox([外层])[标题字号来自这一行。],
+    vstack(
+        vebox([内层一])[嵌套后标题字号不变。],
+        vpbox([内层二], title-size: 20pt)[单个盒子的 `title-size` 仍然优先。],
+    ),
+    title-size: 15pt,
+    fill-height: false,
+)
+
+== `dir: ltr` inside a `dir: ttb` row
+
+#vboxs(
+    vstack(
+        vhbox([左])[这一格里的两项并排。],
+        vibox([右])[方向属于嵌套行，不是外层行。],
+        dir: ltr,
+    ),
+    vnbox([整行])[外层是纵向堆叠，所以这一项自己占一整行。],
+    dir: ttb,
+    fill-height: false,
+)
+
+== A stack is one item of a stepped row
+
+// Revealing belongs to the OUTER row: a stack is covered and uncovered whole,
+// so one `step` index covers everything inside it.
+#vboxs(
+    vbox([第一页])[本行第一列。],
+    vstack(
+        vsbox([第二页])[整个 `vstack` 一起揭示。],
+        vsbox([第二页])[内部各项没有自己的 `step`。],
+    ),
+    after: callout[堆叠仍然算作一项，所以结论落在第三页],
+    step: true,
+    fill-height: false,
+)
+
+== `after:` puts plain content inside a cell
+
+// A row item is the only thing a cell takes, so a stack's `after:` is the way
+// to get plain content (a callout, a line of prose) into one column.
+//
+// Turn a callout's `bleed` off inside a cell: bleed is measured in the SLIDE's
+// side margins, so a bleeding callout in a narrow column spills that far past
+// the column instead of widening by a share of it.
+#vboxs(
+    vstack(
+        vhbox([证据一])[堆叠里的第一项。],
+        vhbox([证据二])[堆叠里的第二项。],
+        after: callout(config: (bleed: false))[小结留在这一栏内部],
+    ),
+    vnbox([另一栏])[对照列，与左栏等高。],
+    fill-height: false,
+)
