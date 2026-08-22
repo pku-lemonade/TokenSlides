@@ -27,7 +27,7 @@
 #import "footer.typ": footer as footer-fn, footer-band, footer-parts, footer-presets, resolve-footer
 #import "slide.typ": slide
 #import "table.typ": apply-table-style, vtable, vtable-colors, vtable-styles
-#import "title.typ": title-slide
+#import "title.typ": han-config, title-slide
 #import "thank-you.typ": thank-you-slide
 #import "outline.typ": outline-slide
 

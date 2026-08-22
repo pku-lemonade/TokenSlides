@@ -6,7 +6,7 @@ deck's aspect ratio, and emits a policy JSON whose allowed point sizes are the
 theme's effective sizes for that aspect:
 
 - every size in `layout-config.<aspect>.font-sizes`;
-- CJK-adjusted title sizes (`title-config.han.size-delta` applied to the
+- CJK-adjusted title sizes (`han-config.size-delta` applied to the
   `title` and `body-title` roles);
 - any `--extra-size` for sizes derived in module code rather than configs
   (see references/lemonade-calibration.md for the known list).
@@ -67,9 +67,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     sizes = {to_points(value, f"font-sizes.{role}") for role, value in font_sizes.items()}
-    han_delta = profile.get("title-config", {}).get("han", {}).get("size-delta")
+    han_delta = profile.get("han-config", {}).get("size-delta")
     if han_delta is not None:
-        delta = to_points(han_delta, "title-config.han.size-delta")
+        delta = to_points(han_delta, "han-config.size-delta")
         for role in ("title", "body-title"):
             if role in font_sizes:
                 sizes.add(to_points(font_sizes[role], f"font-sizes.{role}") + delta)

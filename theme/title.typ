@@ -58,6 +58,14 @@
 )
 
 // CONFIG
+// Han glyph handling shared by the title and bottom metadata bands. The title
+// keeps the body font stack while the bottom band uses `font`; both receive
+// the same size compensation unless the title preset opts out.
+#let han-config = (
+    font: ("FZFW ZhuZi GuDianS LH", "Source Han Sans SC"),
+    size-delta: 6pt,
+)
+
 #let title-config = (
     // Title-slide page margins per aspect ratio.
     layouts: (
@@ -67,14 +75,10 @@
     placement: (
         venue-dy: 2em,
         title-dy: 0em,
-        bottom-dy: -2em,
+        bottom-dy: 0em,
     ),
-    // Han glyph handling, stated once: the decorative face for the bottom
-    // band, and the size compensation for Han reading smaller than Latin at
-    // the same size (applied in both bands unless a band opts out).
-    han: (font: "FZFW ZhuZi GuDianS LH", size-delta: 6pt),
     // `size-delta` adds to the aspect ratio's `title` font size.
-    // `han-size-delta`: `auto` = the shared `han.size-delta`, `none` keeps Han
+    // `han-size-delta`: `auto` = `han-config.size-delta`, `none` keeps Han
     // glyphs at the title size, a length overrides per band.
     title: (size-delta: 0pt, han-size-delta: auto),
     // Metadata lines under the title. `lines` renders like footer slots:
@@ -99,6 +103,7 @@
 #let title-slide(
     config: (:),
     preset: title-config,
+    han: han-config,
     title: auto,
     extra: none,
 ) = touying-slide-wrapper(self => context {
@@ -112,7 +117,7 @@
     let display-title = if title == auto { self.info.at("title", default: none) } else { title }
     let display-venue = self.info.at("venue", default: none)
     let title-size = font-sizes.title + cfg.title.size-delta
-    let title-han-delta = if cfg.title.han-size-delta == auto { cfg.han.size-delta } else { cfg.title.han-size-delta }
+    let title-han-delta = if cfg.title.han-size-delta == auto { han.size-delta } else { cfg.title.han-size-delta }
     let title-han-args = (font: font-config.body)
     if title-han-delta != none {
         title-han-args.insert("size", title-size + title-han-delta)
@@ -142,8 +147,8 @@
         place(bottom + center, dy: cfg.placement.bottom-dy)[
             #set par(leading: bottom-cfg.leading)
             #show regex("[\p{Han}]+"): set text(
-                size: bottom-size + cfg.han.size-delta,
-                font: cfg.han.font,
+                size: bottom-size + han.size-delta,
+                font: han.font,
             )
             #{
                 display-lines

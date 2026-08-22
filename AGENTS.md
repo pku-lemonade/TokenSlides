@@ -6,7 +6,7 @@ IMPORTANT: When unsure about Typst/Touying APIs, always use Context7 + web searc
 - `theme/lemonade.typ`: main theme wrapper; wires Touying config + global `set/show` rules
 - `theme/base.typ`: global knobs (`layout-config` = per-aspect font sizes/spacing/margins/page size, `font-config`, `accent-config`, `mode-config`) + runtime state (`cur-ar`, `cur-mode`, `cur-colors`, `cur-box`)
 - `theme/slide.typ`: default slide template
-- `theme/title.typ`: title slide template (`title-config`)
+- `theme/title.typ`: title slide template (`title-config`) + Han typography (`han-config`)
 - `theme/thank-you.typ`: thank-you slide template (`thank-you-config`)
 - `theme/footer.typ`: footer config + footer renderer (`footer`)
 - `theme/outline.typ`: outline slide + outline layout + numbering/title config
@@ -23,7 +23,7 @@ Every user-tweakable style dict is a top-level `#let <feature>-config` in the mo
 
 - flat keys for aspect-independent knobs;
 - aspect-ratio variants (`"16-9"` / `"4-3"`) under a `layouts:` key (see `footer-config.layouts`);
-- related knob groups as nested sub-dicts (see `title-config.han`).
+- related knob groups as nested sub-dicts (see `title-config.bottom`).
 
 Unsuffixed dicts (`light-colors`, `outline-titles`) are internal building blocks or content tables. The `-config` suffix is a machine contract: export tooling (e.g. the `convert-typst-to-editable-pptx` skill) scans `theme/*.typ` for top-level `#let <name>-config` to build its design-system profile, so keep the suffix when adding or renaming a config and fold new user-facing knobs into the module's `-config` instead of adding unsuffixed dicts.
 

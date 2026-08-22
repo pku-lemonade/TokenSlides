@@ -33,14 +33,14 @@ update this file (and only then the conversion) when a render check disagrees.
 | body (CJK) | Source Han Sans SC, medium | Source Han Sans SC Medium |
 | bold emphasis | same stacks, bold | Inter Bold / Source Han Sans SC Bold |
 | code / footer / page number | Inconsolata | Inconsolata (Regular/Bold per weight) |
-| title-slide CJK display | `title-config.han.font` | FZFW ZhuZi GuDianS LH |
+| title-slide CJK metadata/contact | `han-config.font`, medium | Source Han Sans SC Medium |
 
 A Regular fallback changes color density and wrapping even when `sz` is exact.
 
 ## Sizes derived in module code (not in any config)
 
 `make_typography_policy.py` covers `layout-config.<aspect>.font-sizes` plus
-`title-config.han.size-delta` applied to `title` and `body-title`. These extra
+`han-config.size-delta` applied to `title` and `body-title`. These extra
 sizes are hardcoded in theme modules — pass them with `--extra-size` when the
 deck uses the corresponding slides:
 
