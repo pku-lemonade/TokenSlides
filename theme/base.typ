@@ -42,7 +42,7 @@
         ),
         spacing: (leading: 0.65em, flow: 0.3em),
         margins: (top: 0.75em, bottom: 0em, left: 1.5em, right: 1em),
-        page-size: (width: 13.333in, height: 7.5in),
+        page-size: (width: 960pt, height: 540pt),
     ),
     "4-3": (
         font-sizes: (
