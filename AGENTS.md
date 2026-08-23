@@ -29,6 +29,12 @@ Unsuffixed dicts (`light-colors`, `outline-titles`) are internal building blocks
 
 Generated design-system profiles are disposable build artifacts. Conversion tooling must write them to the task's external scratch directory with an explicit `--output`; do not add or update a profile snapshot under `.agents/skills/*/references/`.
 
+## One-way workflow skills
+
+- `academic-paper-to-slides` is `paper -> new slide material`. Do not invoke it for routine edits to an existing deck; follow this file and the deck's canonical artifacts directly. For emitter-managed decks, keep `notes/slides.json`, referenced escape fragments, and the emitted `.typ` synchronized; Markdown notes are derived.
+- `convert-typst-to-editable-pptx` is `Typst -> PPTX`. Do not invoke it for later Typst-only or PPTX-only edits unless the user asks to regenerate PowerPoint from Typst.
+- During post-handoff work, record only reusable corrections or workflow failures under `.agents/skill-feedback/<skill>/YYYY-MM-DD-<slug>.md` with a status, `Observed`, `Expected`, `Scope`, and optional `Evidence`. Do not load these notes during normal work; review them together only when explicitly maintaining the skill.
+
 ## Deck style overrides
 
 A deck file decides CONTENT — which items sit in which row, in what order, with what words. Style is the theme's job, and every knob already has a default chosen per aspect ratio. Pass a style argument only when you can name the rendered defect it fixes; an argument no one asked for and no page needed is noise that hides the two or three overrides that do matter. A knob the user asked for by name is not noise — this section is about the ones nobody requested.

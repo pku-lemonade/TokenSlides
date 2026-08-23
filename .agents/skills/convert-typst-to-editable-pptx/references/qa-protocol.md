@@ -30,9 +30,10 @@ Check slide count, object order, recurring margins, title alignment, footer beha
 ## 3. Render the Exported PPTX
 
 Use the installed presentation skill's renderer. Derive the render size from
-the deck's slide dimensions (`layout-config.<aspect>.page-size` in the theme
-profile) — e.g. `1600x900` for a 16-9 deck, `1600x1200` for 4-3. Rendering a
-4-3 deck at a 16-9 viewport invalidates every visual comparison.
+the deck's slide dimensions. For Lemonade, read
+`layout-config.<aspect>.page-size` from the live profile. For example, use
+`1600x900` for 16-9 or `1600x1200` for 4-3. A mismatched viewport invalidates
+the visual comparison.
 
 ```bash
 python <presentations-skill-dir>/container_tools/render_slides.py \
@@ -56,9 +57,12 @@ Fix all:
 
 Run the presentation skill's `slides_test.py` or equivalent:
 
+Use the Python executable returned by `load_workspace_dependencies`; do not
+install an alternate runtime:
+
 ```bash
-uv run --with python-pptx --with pdf2image \
-  python <presentations-skill-dir>/container_tools/slides_test.py <output.pptx>
+<workspace-python> \
+  <presentations-skill-dir>/container_tools/slides_test.py <output.pptx>
 ```
 
 Treat this as one signal only. It does not detect semantic omissions, text clipped inside its own box, orphan punctuation, visual overlaps, or incorrect arrows.
@@ -112,8 +116,8 @@ Use `--allow-full-slide-pictures` only when the user explicitly accepts a legiti
 
 ## 7. Audit Serialized Typography
 
-First verify that the disposable profile still matches the live theme, then
-generate the policy from that exact profile and audit:
+For Lemonade decks, verify that the disposable profile still matches the live
+theme, generate the policy from that exact profile, and run both audits:
 
 ```bash
 python <this-skill-dir>/scripts/make_theme_profile.py \
@@ -127,20 +131,25 @@ python <this-skill-dir>/scripts/audit_pptx_lemonade.py \
   <output.pptx> --profile <scratch>/theme-profile.json
 ```
 
-Add `--extra-size` for module-derived sizes (see lemonade-calibration.md).
+Add `--extra-size` for module-derived sizes listed in
+[lemonade-calibration.md](lemonade-calibration.md).
 Chart parts are audited for explicit sizes; charts reported under
 `chart_parts_without_explicit_sizes` must be inspected visually.
 
+For non-Lemonade decks, write a scratch typography policy from the source
+manifest using the generic path in
+[point-safe-typography.md](point-safe-typography.md), then run
+`audit_pptx_typography.py`. Do not run the profile or Lemonade contract audits.
+
 Require explicit point sizes, forbid shrinking AutoFit, and use targeted
-expectations for mixed-size or role-critical text. Read
-[point-safe-typography.md](point-safe-typography.md) for the policy schema and
-CSS-pixel conversion contract.
+expectations for mixed-size or role-critical text.
 
 ## 8. Apply the Acceptance Gate
 
 Pass only when all are true:
 
-- `make_theme_profile.py --root <project-root> --output <scratch>/theme-profile.json --check` passes;
+- the live profile and Lemonade contract audits pass for a Lemonade deck, or a
+  source-derived design manifest and typography policy cover a non-Lemonade deck;
 - final slide count and order match the intended compiled states;
 - every slide has been inspected at full size from the actual PPTX;
 - all text that should be editable is native text;
@@ -149,7 +158,8 @@ Pass only when all are true:
 - no undeclared full-slide image exists;
 - no visible clipping, overlap, bad wrapping, or incorrect connector remains;
 - final DrawingML point sizes match the effective Typst typography policy;
-- centered content-title widths and outline weights pass the Lemonade contract audit;
+- centered content-title widths and outline weights pass the Lemonade contract
+  audit when the source uses Lemonade;
 - no text is visually resized by AutoFit unless explicitly required and documented;
 - the final deck re-imports successfully;
 - overflow diagnostics pass or every false positive is explained.

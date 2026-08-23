@@ -123,8 +123,8 @@ band. Never use shrink-to-fit to preserve a one-line source label.
 
 ## Source Manifest
 
-Generate the deck-wide allowlist from the current conversion's scratch profile
-instead of writing it by hand:
+For Lemonade, generate the deck-wide allowlist from the current conversion's
+scratch profile:
 
 ```bash
 python <this-skill-dir>/scripts/make_typography_policy.py \
@@ -143,6 +143,11 @@ via `--extra-size`, see lemonade-calibration.md):
   "forbid_autofit": true
 }
 ```
+
+For non-Lemonade decks, collect every effective Typst point size in the source
+manifest and write the same JSON shape directly to scratch. Set
+`allowed_point_sizes` to that complete set; keep `require_explicit_size` and
+`forbid_autofit` true. This path does not use a Lemonade profile.
 
 For stronger role-level verification, give generated objects stable names and
 add targeted expectations:
