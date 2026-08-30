@@ -1,7 +1,8 @@
 *.pdf
 *.pptx
+*.docx
 .DS_Store
-.tmp/
+.tmp*/
 tmp/
 __pycache__/
 out/
