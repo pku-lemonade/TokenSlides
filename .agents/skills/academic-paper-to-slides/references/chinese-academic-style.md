@@ -42,6 +42,15 @@ This file is only about wording and sentence style.
 - In short takeaway boxes, prefer compact Chinese phrasing over long mixed-language labels or code-like tokens when meaning can be preserved.
 - 把低信息量表述当作版面负担处理，优先删除诸如 `图 3 展示了`、`从图中可以看出`、`我们可以发现` 这类起手句。
 
+## Slide Microtypography
+
+- Slide bullets normally omit terminal full stops and semicolons. Keep internal punctuation only when it clarifies a multi-part item.
+- Use natural Chinese classifiers and conjunctions: write `三个模块`, `两类约束`, and `建模与生成`, rather than compressed forms such as `三模块` or middle-dot-separated keyword strings.
+- Reserve the middle dot for formal names that require it. For ordinary parallel concepts, use a natural conjunction, enumeration punctuation, or separate lines.
+- Keep parallel box labels grammatically parallel: use the same noun-phrase, verb-object, or judgment structure across siblings.
+- Rewrite box copy before forcing a line break. If a manual break is still needed, keep cohesive phrases together, avoid hanging indentation, and make neighboring lines visually comparable without padding or distorting the Chinese.
+- Avoid an isolated one-word or 1-4-character final line in a primary box when a natural rewrite or modest width change can remove it.
+
 ## Avoid
 
 - process-narration openers such as `接下来我们来看`
