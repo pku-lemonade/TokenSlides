@@ -1,60 +1,134 @@
 # Slides theme (Typst)
 
-IMPORTANT: When unsure about Typst/Touying APIs, always use Context7 + web search.
+IMPORTANT: When unsure about Typst or Touying APIs, use Context7 and web search before changing behavior.
 
-- Entry: `lemonade.typ` (re-exports `theme/lemonade.typ`)
-- `theme/lemonade.typ`: main theme wrapper; wires Touying config + global `set/show` rules
-- `theme/base.typ`: global knobs (`layout-config` = per-aspect font sizes/spacing/margins/page size, `font-config`, `accent-config`, `mode-config`) + runtime state (`cur-ar`, `cur-mode`, `cur-colors`, `cur-box`)
-- `theme/slide.typ`: default slide template
-- `theme/title.typ`: title slide template (`title-config`) + Han typography (`han-config`)
-- `theme/thank-you.typ`: thank-you slide template (`thank-you-config`)
-- `theme/footer.typ`: footer config + footer renderer (`footer`)
-- `theme/outline.typ`: outline slide + outline layout + numbering/title config
-- `theme/boxes.typ`: box helpers (`hbox/ibox/...`) + `tbox`, each taking per-box `compact` / `body-inset` / `title-size` / `title-inset` (a dictionary `body-inset` merges over the normal or compact inset, so `body-inset: (right: 0pt)` trims one side — that is what lets a framed listing nested in a box reach the box edge); `vboxs` is the theme's ONE row layout — it carries figures (`img`) and listings (`code`) as well as boxes, and owns `dir` (`ltr/rtl/ttb/btt`), `width`, `widths`, `heights`, `gap`, `bleed`, `after`, `step`, and `fill-height`/`fill-pad` (deck defaults in `vboxs-config`, overridable via `lemonade-theme(vboxs-config:)`; a `vboxs` argument left `auto` takes the config value). A SIDE-BY-SIDE row gives every item the same height, which is what lines the columns up; a STACK (`ttb`/`btt`) gives each item its own, in proportion to what it measures — filling, those proportions are scaled up to the height the row was given, and not filling, each item is simply its natural height. That is why an even split is no longer what a stack does: it blew a short item up to match a tall one, and a listing or figure that fits itself to its slot then wasted the difference. `heights:` is the vertical counterpart of `widths` and mirrors it — an array of fractions naming tracks in the order DRAWN, rejected on the axis with only one track, length checked against the item count. They are WEIGHTS, not grid tracks: normalized against each other and resolved to lengths before layout, because an item that scales itself needs a real height, not a `1fr` only the grid could divide. `heights: (1fr,) * n` is how a stack asks for the even split that measuring would not produce. `step` is the ONLY way to reveal a row progressively, and `#pause` inside one is a hard error rather than a gap to close: Touying resolves `#pause` by walking the content tree BEFORE layout and cannot see into a `context`, which is every part of this row (equal heights need `measure`/`layout`). A stepped row is therefore emitted as a `touying-fn-wrapper` — a mark Touying resolves by CALLING the row with the current `self`, so the mark sits outside the `context` and `self` arrives inside it, and its `last-subslide` raises the slide's `repeat`. Forms: `step: true` (one item per subslide), `step: <int>` (the same, starting at that subslide — the offset a row behind a `#pause` needs), `step: <array>` (one index per item, length must match). Indices are ABSOLUTE subslide numbers like Touying's `uncover("2-")`, and they attach to items in the order WRITTEN, the reverse of `widths`, which names tracks in the order drawn. A stepped row spends no subslide of its own — `touying-fn-wrapper` only raises `last-subslide`, it does not advance the `#pause` counter — so a `#pause` before a row is what the `<int>` form offsets past, and a `#pause` after one keeps counting the pauses alone. `after:` lands one subslide past the last item; there is deliberately no separate knob, so one argument accounts for the whole row's timing. An item that has not arrived is COVERED, never dropped — with the deck's own cover method, so `config-methods(cover:)` reaches rows too — which is what keeps every track edge, foot band, and caption baseline identical on every subslide. `step` on an item rather than the row is rejected with a message pointing back here; a box standing on its own is drawn by a show rule, long after Touying parsed the marks, so it reveals with `#pause` instead. `vstack(..items, dir: ttb, width:, widths:, heights:, gap:, after:, after-gap:, fill-height:)` is the row item that holds a NESTED row — it draws nothing of its own (no frame, title, fill, or caption) and forwards every argument to a `vboxs` inside one cell, so all four directions, `widths`, foot bands, and equal heights are the nested row's doing rather than a second implementation. It exists because a cell takes only row items: without it neither plain content nor a second row can go in one, which is also what a stack's `after:` is for — the only way to put a callout or a line of prose in a column, and turn that callout's `bleed` OFF, since bleed is measured in the SLIDE's side margins and would spill that far past a narrow column. How big the cell is stays the outer row's call; `fill-height` (default `false`, unlike a `vboxs` row) only says whether to fill it, and `fill-pad: 0pt` is forced because the outer row already reserved that clearance and padding twice only shrinks the cell the stack was handed. Both settings size the items by the same measured proportions — filling only decides whether those are scaled up to the cell, so the default gives every item exactly its natural height and leaves the rest of the cell empty. A stack of FIGURES is what asks for `fill-height: true`, since a figure needs a real height to scale into; boxes, prose, and listings have nothing to scale and filling only stretches their frames, which is why filling is not what a stack does unless asked. `step` and `bleed` are rejected by name pointing back at the outer row — a nested row renders inside a `context`, where a Touying mark is never resolved, so a stack is covered and uncovered WHOLE by one index in the outer row's `step`. A `vstack` is itself a row item, so stacks nest. `box-item(spec, body)` is the row-item constructor — a spec carrying a `render:` function is rendered by that function, which is how a foreign module joins a `vboxs` row without boxes.typ knowing about it. The row's `title-size` rides along IN THE SPEC rather than as a renderer argument (`_render-spec`), so no renderer has to declare a parameter it ignores and an extra dict key stays invisible to one that reads only the keys it knows; `vstack` reads it back and hands the size to its nested row, which is what keeps a row-level `title-size` reaching boxes at any depth instead of stopping at the stack. A spec may also carry `foot:` (content pinned under the item): the ROW measures every foot in it, reserves ONE band for the tallest, and hands each renderer a correspondingly smaller `height` — that is what keeps figures whose captions wrap to different line counts ending on the same line, and it is why a renderer never draws its own foot. An item with no foot takes the full row height, so a captionless box reaches the bottom beside a captioned figure. `box-item` is a `figure` purely to carry that spec alongside the body, which drags in the figure's placement rule: a figure is placed as ONE UNBREAKABLE UNIT and Typst silently DROPS one that does not fit its region — no warning, no partial render, just an empty slide. `apply-box-style` therefore sets `block(breakable: true)` on the box figure kind, so an over-tall box spills onto the next page instead of vanishing; the set rule also reaches blocks inside a box, but a block that passes `breakable:` explicitly still wins (hence `code-config.breakable: true`). Do not make box items unbreakable again without replacing the loss with something visible
-- `theme/code.typ`: code block (`code`) with optional `caption:` using the same `foot` band and `img-config` caption typography as `img` (in a row the frame fills the height the row hands down; `stretch: false` draws it at its natural height while the cell still holds the row's, so captions stay on the band either way), plus `hl`/`focus`/`dim`/`mark` emphasis, a two-digit line-number gutter on by default (`numbers:`, suppressed for inline `raw` in prose via `it.block`; zero-padded rather than boxed to a width, so the mono font does the aligning), and `indent:` re-indentation; a bare `code` is a `vboxs` row item (via `box-item`); owns the whole look of a listing — `code-config.font` (its own knob, not `font-config.mono`) and `light-code-palette` / `dark-code-palette`, selected per mode by `code-config.palettes`. LAYOUT: each `raw.line` is rendered as its own `block` holding its own `par(hanging-indent:)`, NOT as part of the one paragraph a raw block would lay its lines out in — that is the only way to give a wrapped line a hanging indent (`par` set on the whole listing does nothing), and it is why the `hl:` band is a `block` and why nothing in a line may be wrapped in a `box` (a box lays out on one line and takes the wrap away). TWO HIGHLIGHTERS: a fence whose tag is in `code-config.langs` (merged with `lemonade-theme(code-langs:)` through `cur-code-langs`) is tokenized here by `code-lang` rules — ordered `(bucket, pattern)` pairs, first match wins, so comment/string rules shadow keywords inside them; patterns are SOURCE STRINGS because a `regex` value cannot be spliced into the combined alternation, there is no look-around in Typst's engine (capture instead: the capture takes the bucket and the rest of the match is re-tokenized), and lines are rebuilt from `it.text` as styled runs of sentinel-`lang` raw. `mark:` stays a separate `show regex` pass (`_apply-marks`) layered over whichever highlighter ran, so a mark only matches when it falls inside ONE of the pieces the highlighter cut the line into — it does outrank comment/string ink there, but a mark crossing a boundary (`while q < Q` over the `while` keyword) silently never matches, and the escape hatch is `lang: none` on that listing. `_resolve-highlighter` is the whole decision: `theme: none` → flat; a spec → spec (marks layer on, since a spec only cuts out what it describes, leaving big plain runs); else syntect, but only with no marks at all, since syntect cuts at every token and most marks would then fail. Folding marks into the rule list as a first rule was built and then deliberately reverted as too clever for the gain — do not re-add it without asking. Everything else falls back to syntect, which does NOT get a theme passed to it: its only color input is a TextMate plist, so Typst's built-in theme classifies and `_syntax-rule` repaints the spans, reading each span's color back with `context text.fill` (the field `it.fill` is not readable). `_classifier` is the built-in theme's 8 observed colors — a Typst implementation detail, re-derivable with the `query(metadata)` recipe in the comment there; its keys are also `_buckets`, the vocabulary both highlighters share. Consequence for the syntect path only: buckets are coarse (keyword+operator+`None` share one; function+type+class names share another) and the built-in theme's own colors leak through if a Typst upgrade moves them. (`raw(theme: bytes(...))` does accept a generated tmTheme with full scope granularity — deliberately not used: it pulls in TextMate/syntect behavior that cannot be controlled from Typst.)
-- `theme/images.typ`: uniform `place-xx` family (`place-image` + `place-logo`/`place-qr` presets, same API) + `img`, one figure as a `vboxs` row item (via `box-item`). There is NO image-layout call of its own: `#vboxs(img(a), img(b))` is a figure row, `dir: ttb` a stack, `#vboxs(ibox[..], img(a))` a figure beside a box, and a bare `#img(...)` renders at natural size exactly as a bare `#code` does. Placement (width, direction, gap, bleed, fill-height) and reveal timing (`step`) belong to the row; the figure owns only itself (height, fit, border, caption typography — `img-config`). `img`'s `..args` sink exists only to take the one or two positionals, so it rejects every named argument it does not declare — otherwise a stray option (`step:` above all) would land in the sink and be silently dropped. A caption is the item's `foot`, so the ROW lays it out: see `box-item` above for why. `img(height:)` rejects a ratio — in a filling row the row's length wins and in a non-filling one the row measures the figure first, where `50%` of an unknown height measures as nothing and the figure would silently vanish; filling a container is `fill-height` on the row
-- `theme/assets.typ`: common figures as exported path values (`pku-logo`, `thu-logo`, `nsfc-logo`, `lemonade-qr`; files under `assets/logos/`, `assets/qr/`; values optionally per-mode `(light:, dark:)` resolved by `place-xx`)
-- `theme/table.typ`: table styling (`apply-table-style`)
-- Validate: `typst compile --root . examples/<file>.typ /tmp/out.pdf`
+## Scope and source of truth
 
-## Config convention
+- The public entry point is `lemonade.typ`, which re-exports `theme/lemonade.typ`.
+- A deck file owns content: claims, wording, item order, and which visual belongs on each slide. The theme owns reusable layout, typography, spacing, colors, and component behavior.
+- Before editing a named slide, locate its current source and map it to the physical PDF page. Rebuild before trusting old page numbers because Touying overlays and inserted slides can shift them.
+- For theme internals, the owning module's comments are the detailed implementation reference. Keep this file focused on behavior and acceptance criteria.
+- `out/` is ignored. Treat an existing source there as authoritative only after checking the current workflow, and inspect its changes explicitly rather than relying on `git status`.
 
-Every user-tweakable style dict is a top-level `#let <feature>-config` in the module it styles (e.g. `slide-config`, `box-config`, `footer-config`; base.typ holds the global `layout-config`, `font-config`, `accent-config`, `mode-config`). Structure inside a config:
+## Repository map
 
-- flat keys for aspect-independent knobs;
-- aspect-ratio variants (`"16-9"` / `"4-3"`) under a `layouts:` key (see `footer-config.layouts`);
-- related knob groups as nested sub-dicts (see `title-config.bottom`).
+- `theme/lemonade.typ`: theme wrapper; wires Touying config and global `set`/`show` rules
+- `theme/base.typ`: global layout, font, accent, mode, and runtime color state
+- `theme/slide.typ`, `theme/title.typ`, `theme/thank-you.typ`, `theme/outline.typ`, `theme/footer.typ`: slide shells and navigation
+- `theme/boxes.typ`: box families plus `vboxs`, `vstack`, and the row-item protocol
+- `theme/images.typ`: `img` plus `place-image`, `place-logo`, and `place-qr`
+- `theme/code.typ`: listings, captions, line emphasis, numbering, and language rules
+- `theme/arrows.typ`: `solid-arrow`, `connector-arrow`, and `arrow-config`
+- `theme/table.typ`: table styling and `vtable`
+- `theme/assets.typ`: common logo and QR asset paths
+- `examples/`: compilable component references; add or update an example when changing a public theme API
 
-Unsuffixed dicts (`light-colors`, `outline-titles`) are internal building blocks or content tables. The `-config` suffix is a machine contract: export tooling (e.g. the `convert-typst-to-editable-pptx` skill) scans `theme/*.typ` for top-level `#let <name>-config` to build its design-system profile, so keep the suffix when adding or renaming a config and fold new user-facing knobs into the module's `-config` instead of adding unsuffixed dicts.
+## Workflow boundaries
 
-Generated design-system profiles are disposable build artifacts. Conversion tooling must write them to the task's external scratch directory with an explicit `--output`; do not add or update a profile snapshot under `.agents/skills/*/references/`.
+- `academic-paper-to-slides` is one-way: paper -> new slide material or an explicit source-driven rebuild. Do not invoke it for routine edits to an existing deck, theme work, validation-only work, or PowerPoint export.
+- `convert-typst-to-editable-pptx` is one-way: Typst -> editable PowerPoint. Do not invoke it for later Typst-only or PPTX-only edits unless the user asks to regenerate PowerPoint from Typst.
+- For routine post-handoff deck maintenance, edit the delivered `.typ` directly. Synchronize planning JSON, fragments, notes, or derived files only when the active workflow requires it or the user asks.
+- Keep narrow visible fixes narrow. Do not turn a page-specific edit into regeneration, research, note maintenance, or unrelated cleanup.
+- Record reusable skill failures under `.agents/skill-feedback/<skill>/YYYY-MM-DD-<slug>.md` only when maintaining that skill. Do not load feedback notes during ordinary deck work.
 
-## One-way workflow skills
+## Configuration contract
 
-- `academic-paper-to-slides` is `paper -> new slide material`. Do not invoke it for routine edits to an existing deck; follow this file and the deck's canonical artifacts directly. For emitter-managed decks, keep `notes/slides.json`, referenced escape fragments, and the emitted `.typ` synchronized; Markdown notes are derived.
-- `convert-typst-to-editable-pptx` is `Typst -> PPTX`. Do not invoke it for later Typst-only or PPTX-only edits unless the user asks to regenerate PowerPoint from Typst.
-- During post-handoff work, record only reusable corrections or workflow failures under `.agents/skill-feedback/<skill>/YYYY-MM-DD-<slug>.md` with a status, `Observed`, `Expected`, `Scope`, and optional `Evidence`. Do not load these notes during normal work; review them together only when explicitly maintaining the skill.
+- Every user-tweakable theme dictionary is a top-level `#let <feature>-config` in the module it styles. The `-config` suffix is a machine contract used by design-system export tooling.
+- Keep aspect-independent values flat, aspect-ratio variants under `layouts:`, and coherent groups in nested dictionaries.
+- Put repeated style choices in the owning config or theme module. A value repeated on three or more slides is usually a missing theme default.
+- Generated design-system profiles are disposable. Write them to an external scratch directory with an explicit `--output`; do not store snapshots under `.agents/skills/<skill>/references/`.
 
-## Deck composition and copy
+## Theme component contracts
 
-- Prefer the theme's existing primitives and visual language: `vboxs`, `vstack`, the established box styles, tables, bullets, figures, and listings. A one-off box family, decorative container, or custom composition is justified only when it communicates a relationship the existing primitives cannot. When a plain box or bullet layout carries the hierarchy, keep it plain.
-- Judge whitespace at two levels. Space BETWEEN groups should make the hierarchy legible; space INSIDE a box should support the text rather than dwarf it. Do not leave a small text block stranded in one corner of a large frame, but do not remove the visible padding that keeps glyphs away from the border.
-- Primary box copy should render at least as large as the slide's normal body copy unless it is genuinely secondary metadata. Box titles at the same semantic level use one visual size and treatment. Short bodies are vertically centered unless top alignment itself communicates structure.
-- A primary box needs another pass when it has an avoidable one-word or 1-4-character final line, a manually wrapped line less than roughly half the length of its neighbor, unexplained hanging indentation, text touching the frame, or a large empty side caused by a poor box width. Rewrite or rebalance the box before forcing more line breaks; preserve phrase boundaries rather than equalizing line length mechanically.
-- For an underfilled slide, repair in this order: rebalance rows, columns, and box dimensions; remove redundant wrappers or helper labels; reduce only excessive internal padding; then adjust the owning theme/component or deck-local CeTZ canvas so primary text and boxes use the available area. Do not scale the entire composition down and leave the recovered space at the page edges. For an overfull slide, compact the wording or split the slide before shrinking text.
-- Treat connectors as semantic content. Every claimed relationship needs its edge; decorative edges need none. Connectors should meet deliberate anchors on box boundaries, remain visible at slide scale, use proportional arrowheads, and keep one color/line convention per relationship type. Prefer short direct routes; rearrange nodes before accepting long curves, crossings, or near-miss endpoints. Keep edge labels concise, legible, and clear of boxes and other lines.
-- In Chinese deck copy, bullets omit terminal full stops and semicolons by default; retain internal punctuation only where it clarifies the item. Use natural classifiers and conjunctions (`三个模块`, not compressed `三模块`). Use the middle dot only when it belongs to a formal name, not as a generic separator.
-- For intentional manual line breaks in Typst markup, prefer `\` over `#linebreak()` so the source remains easy to edit. Do not use forced breaks to compensate for the wrong box width, and do not introduce hanging indentation unless the content is an actual list.
+### Rows and nested layout
+
+- Use `vboxs` as the normal row for boxes, figures, and code. Side-by-side items receive equal-height cells; omit `widths` when tracks are equal.
+- `dir: ttb` or `btt` creates a stack. Without explicit `heights`, stacked items keep proportions based on their measured natural heights. `heights` are normalized weights in drawn order; use equal weights only when an even split is intentional.
+- Use `vstack` when one outer cell needs its own nested row or stack. It has no visual surface. Its default `fill-height: false` keeps text and boxes natural; use `fill-height: true` for figures that must scale into the cell.
+- Row captions are one shared foot band. Images, code, and foreign row items supply `foot:`; their renderers must not draw a second caption.
+- Progressive reveal belongs to the outer `vboxs` through `step:`. Do not put `#pause` inside a row. Unrevealed items stay covered so geometry does not move; a `vstack` is revealed as one outer-row item.
+- Preserve visible failure behavior when editing row internals. An over-tall row item must spill, report an error, or remain visible; it must never disappear silently.
+
+### Figures and code
+
+- A bare `#img(...)` or `#code[...]` renders at natural size. Put it in `vboxs` when the row should own width, gap, direction, equal height, fill behavior, or reveal timing.
+- `img` owns only figure appearance: source, fit, fixed height, border, and caption. A ratio `height:` is invalid because it can measure to zero; fill a container with the row's `fill-height`.
+- Use `place-image` only for deliberate floating placement; use the logo and QR presets for those assets.
+- Use `#code[...]` with an ordinary raw fence. Start with `indent: 2` for slide listings. Use `scale:` only after indentation and content reduction fail.
+- A listing nested in a box uses `frame: false` so the surface is not drawn twice. Use `hl:`, `focus:`, `dim:`, or `mark:` instead of a separate annotation panel.
+- A code mark cannot span a boundary created by syntax highlighting. If a required mark crosses tokens and fails, use `lang: none` for that listing instead of adding another highlighter workaround.
+
+### Arrows and connectors
+
+- Use `#solid-arrow()` only for a short filled process arrow between adjacent stages. Set `dir: ltr/rtl/ttb/btt` for direction and use `fill:` only for a semantic color. Use a connector for long, curved, anchored, or labeled relationships.
+- Align a solid arrow with its neighboring shapes and size it to their actual gap and scale. Its defaults are a starting point: adjust `length` along `dir` and `thickness` across it so it neither floats nor crowds the boxes. Preserve the standard silhouette.
+- Use `connector-arrow(color)` inside CeTZ for anchored relationships: `let edge = connector-arrow(color); line(a, b, ..edge)`.
+- A connector line starts on the source boundary and its arrowhead tip lands on the target boundary; it must not stop short, float beside a shape, or penetrate it.
+- The connector's `1.05pt` stroke and `0.72` head scale are baseline values. Scale `thickness` and `head-scale` together for the local node size, path length, canvas scale, and final projected size.
+- Path geometry, endpoint clipping, and semantic color remain the diagram's responsibility. Use `dash:` only for a distinct relationship state. Prefer short direct routes; rearrange nodes before accepting avoidable crossings or long curves.
+
+## Visual composition
+
+### Hierarchy and structure
+
+- Each slide has one main point. The title names the topic; the body develops it; a conclusion or takeaway states the judgment when the body does not already make it explicit.
+- Visual weight follows semantic importance. Give the primary claim or evidence the strongest position and scale; keep context and metadata quieter.
+- Start with the theme's boxes, rows, tables, bullets, figures, and listings. Add a custom surface or shape family only when it communicates a relationship those primitives cannot.
+- Keep one visual grammar within a slide sequence: corresponding pages use compatible tracks, title treatments, colors, and diagram conventions.
+- Avoid competing emphasis. Several saturated fills, thick borders, banners, or callouts at the same level flatten the hierarchy instead of strengthening it.
+
+### Geometry, whitespace, and density
+
+- Align related objects to shared edges, centers, tracks, or baselines. Items with the same semantic role should normally have the same dimensions and treatment.
+- Size components from the available body area, not from arbitrary constants copied from another page. Recheck proportions after text, captions, or titles change.
+- Distinguish inner and outer whitespace. Text needs visible padding from a frame; gaps between unrelated groups should be larger than gaps within one group.
+- Use the body area intentionally. A small cluster stranded in one corner, a short image centered in a tall empty column, or a narrow track wrapping beside unused width is a layout defect.
+- Density should support scanning. Do not maximize occupancy by eliminating hierarchy, but do not leave large dead regions while primary text or evidence is undersized.
+- Nothing may overlap, clip, touch a frame unintentionally, collide with the footer, or create an accidental continuation page.
+
+### Typography, boxes, and copy
+
+- Primary body and box copy should render at least at the deck's normal body size. Smaller type is for genuinely secondary metadata, captions, citations, or dense diagram labels.
+- Titles and box headings at the same semantic level use consistent size, weight, fill, and inset. Shorten or wrap a long label instead of shrinking only that heading.
+- A short box body is vertically centered unless top alignment communicates a sequence or list. Padding must be visible without dwarfing the content.
+- Rewrite or rebalance before forcing line breaks. Treat an avoidable one-word or 1-4-character final line, a very short line beside a long neighbor, unexplained hanging indentation, or text touching a frame as a defect.
+- Avoid nested framed surfaces. When content must sit inside a box, remove its redundant frame and let the outer box own the surface.
+- In Chinese deck copy, bullets normally omit terminal full stops and semicolons. Use natural classifiers and conjunctions; use the middle dot only in a formal name.
+- Prefer `\` for an intentional Typst line break. Do not use manual breaks to compensate for the wrong track width.
+
+### Figures, tables, diagrams, and color
+
+- A main figure must be readable at screenshot and projected slide scale. If it reads as a thumbnail or footer illustration, enlarge, crop, split, or replace it.
+- Prefer native/vector assets when available. A raster asset must remain sharp at its final rendered size; do not solve a low-resolution crop by enlarging it until it blurs.
+- Crop source figures reproducibly. Remove page chrome and unrelated panels, but preserve axes, legends, labels, endpoints, and annotations required to understand the evidence.
+- Captions should normally fit on one line. Count title, boxes, caption, and footer together; supporting text must not squeeze the evidence into a narrow strip.
+- A table-plus-figure or side-by-side composition passes only when both sides remain readable and the columns look intentional. Otherwise change the archetype or split the slide.
+- Diagram semantics outrank polish. For schedules and event diagrams, enumerate the promised reads, writes, dispatches, hops, destinations, and compute events, then verify that each appears in the rendered figure.
+- Keep one color, line style, direction convention, and label treatment per relationship type. Color should encode role or state, not decorate arbitrary objects.
+- Check contrast in the active light/dark mode and at final scale. Muted elements may recede; required evidence, labels, and arrowheads may not.
+
+### Repair order
+
+- Underfilled slide: rebalance rows and columns -> resize boxes or evidence -> remove redundant wrappers or labels -> reduce only excessive inner padding -> adjust the owning component or canvas.
+- Overfull or tiny-evidence slide: compact wording -> improve the crop or asset -> change the layout archetype -> split the slide -> only then add a justified theme/helper override.
+- Do not shrink the entire composition or primary type merely to make a page fit.
 
 ## Deck style overrides
 
-A deck file decides CONTENT — which items sit in which row, in what order, with what words. Style is the theme's job, and every knob already has a default chosen per aspect ratio. Pass a style argument only when you can name the rendered defect it fixes; an argument no one asked for and no page needed is noise that hides the two or three overrides that do matter. A knob the user asked for by name is not noise — this section is about the ones nobody requested.
+- Write the plain component call first. Add a style argument only after a rendered page shows the defect it fixes.
+- Leave `gap`, `after-gap`, `fill-height`, and `fill-pad` off ordinary `vboxs` calls unless the page needs a deliberate exception. Set a repeated gap once through `vboxs-config`.
+- Omit `widths` for equal tracks. Near-equal ratios such as `0.48fr / 0.52fr` encode draft text length, not a meaningful hierarchy.
+- Do not set ad hoc text sizes in ordinary deck body code. Fix content, tracks, the owning component, or the theme rather than shrinking one page.
+- `scale:` on code and per-box `inset`, `body-inset`, `compact`, or `title-size` are last resorts. `body-inset: (right: 0pt)` remains the routine exception for a frameless listing that must meet a box edge.
+- Never restate defaults such as `width: 100%` or `widths: auto`.
+- Deck-local CeTZ geometry is content: node positions, local gaps, and arrow lengths must fit that diagram. Theme defaults still govern the shared visual language.
 
-- Leave `gap`, `after-gap`, `fill-height`, `fill-pad` off a `vboxs` — the `auto` default takes the deck value from `vboxs-config`. A deck that genuinely reads better at another gap sets it ONCE through `lemonade-theme(vboxs-config:)`, never row by row.
-- Omit `widths` unless the tracks are deliberately and visibly unequal (`(2fr, 1fr)`, text beside a figure at `(0.6fr, 0.4fr)`). Ratios within a few percent of equal — `(0.48fr, 0.52fr)`, `(0.96fr, 1.04fr)` — are noise: they encode one draft's text length as if it were a design decision, and equal tracks render the same. Write nothing and every track is `1fr`.
-- Do not set ad hoc text sizes in ordinary deck body code: no `#set text(size:)`, no `#text(size: 20pt)[...]`, and no row-by-row `title-size` / `text-size` / `body-size` overrides. Default sizes belong to `layout-config` and the module configs. Never shrink text merely to make an overfull slide fit; cut words or split the slide. If primary box copy is visibly smaller than body copy on an underfilled slide, fix the owning theme/component or the internals of a deck-local CeTZ canvas instead of scaling the whole composition. (`#set text(lang:)` is not a size and stays.)
-- `scale:` on `#code`, and `inset` / `body-inset` / `compact` / `title-size` on a box, are last resorts reached only after `indent: 2` (listings) or shorter content (boxes) failed on a rendered page. `body-inset: (right: 0pt)` for a framed listing that must reach the box edge is the one routine exception.
-- Never restate a default: `width: 100%` and `widths: auto` are what `vboxs` already does.
-- The same knob on three or more slides is a theme-level default in disguise. Change `vboxs-config` / `img-config` / `code-config` / the module, not the slides.
+## Validation
 
-This governs deck files, not `theme/`, and not the internals of a deck-local `cetz` canvas (`x-gap`, node sizes) — a canvas inherits no theme default, so its numbers are content.
+- Compile from the repository root: `typst compile --root . <source>.typ <output.pdf>`.
+- After every rebuild, confirm the page count and remap the named slide to its physical PDF page. Touying logical counters and physical pages can differ.
+- Inspect the rendered target page at screenshot scale. For a page-specific edit, also inspect adjacent pages; for a repeated component or sequence, inspect every affected page or a readable contact sheet.
+- Check for overflow, accidental continuation pages, clipping, overlap, footer collisions, unreadable figures, unstable captions, and inconsistent repeated elements.
+- Audit semantic completeness separately from visual polish. Compilation and clean bounds do not prove that every required relationship, event, label, note, source, or claim is present.
+- Report compile success, artifact checks, and visual inspection as separate evidence. Treat non-fatal parser/font warnings separately from a failed build.
+- Do not claim visual QA unless the rendered pages were actually opened and inspected.
