@@ -47,6 +47,31 @@
     [Best result], [206 tok/s], [*1.61x*],
 )
 
+== Row spans inside a row
+
+#vboxs(
+    vstack(
+        ibox[*Model*\ Calibrate and validate],
+        ebox[*Compile*\ Generate and integrate],
+        heights: (1fr, 1fr),
+        fill-height: true,
+    ),
+    vtable(
+        columns: (1fr, 1.8fr, 0.8fr),
+        header: ([Track], [Milestone], [Year]),
+        center-cols: (0, 2),
+        first-column: true,
+        row-stretch: "equal",
+        table.cell(rowspan: 2, fill: rgb("#DCE7F5"), align: center + horizon)[Model],
+        [Calibrate], [2027],
+        [Validate], [2028],
+        table.cell(rowspan: 2, fill: rgb("#F4E3E1"), align: center + horizon)[Compile],
+        [Generate], [2029],
+        [Integrate], [2030],
+    ),
+    widths: (0.28fr, 0.72fr),
+)
+
 == Reusable full-height preset
 
 #let schedule-table = vtable.with(

@@ -1,6 +1,7 @@
 // Table styling.
 
 #import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, layout-config
+#import "boxes.typ": box-item
 #import "emph.typ": apply-emph-style
 
 // CONFIG
@@ -93,11 +94,12 @@
     ),
 )
 
-// Presentation table preset with Excel-style table options.
-// Cell colors resolve as palette < style preset < `fills:`; `fills` takes any
-// `vtable-colors` key, and the string value "palette" restores the palette
-// entry that a style preset masks (e.g. grid + palette header).
-#let vtable(
+// Presentation table preset with Excel-style table options. Cells may use
+// `table.cell(rowspan: n)`; Typst owns placement and the scoped cell rule styles
+// the resolved coordinates without wrapping cells a second time.
+#let _layout-vtable(
+    item-height,
+    outer-spacing,
     columns: auto,
     header: none,
     style: table-config.vtable.style,
@@ -144,6 +146,7 @@
 
     let colors = cur-colors.get()
     let column-count = columns.len()
+    assert(column-count > 0, message: "vtable: `columns` cannot be empty")
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
     let palettes = _vtable-palettes(colors)
     // `red` is a historical alias from when the primary accent was red.
@@ -180,16 +183,45 @@
     if header-row {
         assert(header.len() == column-count, message: "vtable: `header` length must match `columns`")
     }
+    let cell-field = (cell, key, default) => if type(cell) == content and cell.func() == table.cell {
+        cell.fields().at(key, default: default)
+    } else {
+        default
+    }
+
+    let check-cell = (cell, header: false) => {
+        assert(cell-field(cell, "x", auto) == auto, message: "vtable: explicit cell `x` is not supported")
+        assert(cell-field(cell, "y", auto) == auto, message: "vtable: explicit cell `y` is not supported")
+        assert(cell-field(cell, "colspan", 1) == 1, message: "vtable: `colspan` is not supported")
+        let rowspan = cell-field(cell, "rowspan", 1)
+        assert(type(rowspan) == int and rowspan >= 1, message: "vtable: `rowspan` must be a positive integer")
+        assert(not header or rowspan == 1, message: "vtable: header cells cannot span rows")
+    }
+    if header-row { for cell in header { check-cell(cell, header: true) } }
+    for cell in body-cells { check-cell(cell) }
+
+    // With vertical spans only, each column is one occupied prefix. Native
+    // row-major placement therefore picks the shortest column, leftmost on a tie.
+    let column-heights = (0,) * column-count
+    let anchors = ()
+    for cell in body-cells {
+        let rowspan = cell-field(cell, "rowspan", 1)
+        let y = calc.min(..column-heights)
+        let x = column-heights.position(height => height == y)
+        anchors.push((cell: cell, x: x, y: y, rowspan: rowspan))
+        column-heights.at(x) += rowspan
+    }
+
+    let body-row-count = calc.max(..column-heights)
     assert(
-        calc.rem(body-cells.len(), column-count) == 0,
-        message: "vtable: body cell count must be a multiple of `columns`",
+        column-heights.all(height => height == body-row-count),
+        message: "vtable: body cells and rowspans must fill complete rows",
     )
 
-    let all-cells = if header-row { header + body-cells } else { body-cells }
-    let row-count = calc.floor(all-cells.len() / column-count)
     let header-offset = if header-row { 1 } else { 0 }
-    let body-row-count = row-count - header-offset
+    let row-count = body-row-count + header-offset
     let total-row-index = row-count - 1
+    let has-rowspans = anchors.any(anchor => anchor.rowspan > 1)
     if row-weights != auto {
         assert(row-weights.len() == body-row-count, message: "vtable: `row-weights` length must match body row count")
     }
@@ -248,10 +280,12 @@
         }
     }
 
-    let render-cell-at = (col, local-row, global-row, cell) => {
+    let style-cell(cell, row-offset: 0) = {
+        let col = cell.x
+        let row = cell.y + row-offset
         let style = col-style(col)
-        let is-header = header-row and global-row == 0
-        let is-total = total-row and global-row == total-row-index
+        let is-header = header-row and row == 0
+        let is-total = total-row and row == total-row-index
         let is-first-column = first-column and not is-header and col == 0
         let is-last-column = last-column and not is-header and col == column-count - 1
         let is-emphasis = is-header or is-total or is-first-column or is-last-column
@@ -290,76 +324,60 @@
         } else {
             style-value(style, "leading", leading)
         }
-        table.cell(x: col, y: local-row)[
-            #block(width: 100%)[
-                #set par(leading: cell-leading) if cell-leading != auto
-                #show: apply-emph-style.with(emph-fill: fill, strong-fill: fill)
-                #text(size: size, weight: weight, fill: fill)[#cell]
-            ]
-        ]
-    }
-
-    let render-cell = ((i, cell)) => {
-        let row = calc.floor(i / column-count)
-        let col = calc.rem(i, column-count)
-        render-cell-at(col, row, row, cell)
-    }
-
-    let rendered-cells = all-cells.enumerate().map(render-cell)
-    let table-cells = if header-row {
-        let header-cells = (table.header(repeat: header-repeat, ..rendered-cells.slice(0, column-count)),)
-        header-cells + rendered-cells.slice(column-count)
-    } else {
-        rendered-cells
-    }
-
-    show table.cell: cell => {
-        show raw: set text(
-            font: font-config.mono,
-            size: if header-row and cell.y == 0 { header-text-size } else { text-size },
-        )
+        set text(size: size, weight: weight, fill: fill)
+        if cell-leading != auto { set par(leading: cell-leading) }
+        show raw: set text(font: font-config.mono, size: size)
+        show: apply-emph-style.with(emph-fill: fill, strong-fill: fill)
         cell
     }
 
-    let render-table = row-tracks => {
+    let table-cells = if header-row {
+        (table.header(repeat: header-repeat, ..header),) + body-cells
+    } else {
+        body-cells
+    }
+    let render-table = (body, row-tracks: auto, row-offset: 0) => {
+        show table.cell: style-cell.with(row-offset: row-offset)
+        let options = (
+            columns: columns,
+            inset: (x, y) => cell-inset(x, y + row-offset),
+            align: (x, y) => cell-align(x, y + row-offset),
+            fill: (x, y) => cell-fill(x, y + row-offset),
+            stroke: stroke,
+        )
         if row-tracks == auto {
-            table(
-                columns: columns,
-                inset: cell-inset,
-                align: cell-align,
-                fill: cell-fill,
-                stroke: stroke,
-                ..table-cells,
-            )
+            table(..options, ..body)
         } else {
-            table(
-                columns: columns,
-                rows: row-tracks,
-                inset: cell-inset,
-                align: cell-align,
-                fill: cell-fill,
-                stroke: stroke,
-                ..table-cells,
-            )
+            table(rows: row-tracks, ..options, ..body)
         }
     }
 
     let render-measure-row = global-row => {
-        let start = global-row * column-count
-        let row-cells = all-cells.slice(start, start + column-count)
-        let rendered-row-cells = row-cells
-            .enumerate()
-            .map(((col, cell)) => {
-                render-cell-at(col, 0, global-row, cell)
-            })
-        table(
-            columns: columns,
-            rows: (auto,),
-            inset: (x, y) => cell-inset(x, global-row),
-            align: (x, y) => cell-align(x, global-row),
-            fill: (x, y) => cell-fill(x, global-row),
-            stroke: stroke,
-            ..rendered-row-cells,
+        let row-cells = if header-row and global-row == 0 {
+            header
+        } else {
+            let body-row = global-row - header-offset
+            body-cells.slice(body-row * column-count, (body-row + 1) * column-count)
+        }
+        render-table(row-cells, row-tracks: (auto,), row-offset: global-row)
+    }
+
+    let render-measure-cell = anchor => {
+        let fields = if type(anchor.cell) == content and anchor.cell.func() == table.cell {
+            anchor.cell.fields()
+        } else {
+            (body: anchor.cell,)
+        }
+        let body = fields.body
+        let placed = if "inset" in fields {
+            table.cell(x: anchor.x, y: 0, inset: fields.inset)[#body]
+        } else {
+            table.cell(x: anchor.x, y: 0)[#body]
+        }
+        render-table(
+            (placed,),
+            row-tracks: (auto,),
+            row-offset: anchor.y + header-offset,
         )
     }
 
@@ -374,13 +392,35 @@
     }
 
     let stretch-row-tracks = (target-height, available-width) => {
-        let natural-row-heights = range(row-count).map(row => measure-clean(render-measure-row(row), available-width))
-        let natural-table-height = measure-clean(render-table(auto), available-width)
-        if natural-table-height >= target-height or row-count == 0 {
+        let natural-table-height = measure-clean(render-table(table-cells), available-width)
+        let header-height = if header-row {
+            measure-clean(render-measure-row(0), available-width)
+        } else {
+            0pt
+        }
+        let body-heights = if has-rowspans {
+            // Measure each cell at its real column width. A spanning cell's
+            // minimum is shared by the rows it covers; per-row maxima then form
+            // safe lower bounds without reimplementing Typst's table layout.
+            let minima = (0pt,) * body-row-count
+            for anchor in anchors {
+                let share = measure-clean(render-measure-cell(anchor), available-width) / anchor.rowspan
+                for dy in range(anchor.rowspan) {
+                    let row = anchor.y + dy
+                    minima.at(row) = calc.max(minima.at(row), share)
+                }
+            }
+            minima
+        } else {
+            range(body-row-count).map(row => (
+                measure-clean(render-measure-row(row + header-offset), available-width)
+            ))
+        }
+        // One-cell proxies cannot reproduce an `auto` track sized from the whole table.
+        let span-widths-unknown = has-rowspans and auto in columns
+        if natural-table-height >= target-height or row-count == 0 or span-widths-unknown {
             auto
         } else {
-            let header-height = if header-row { natural-row-heights.at(0) } else { 0pt }
-            let body-heights = natural-row-heights.slice(header-offset)
             let body-target-height = calc.max(0pt, target-height - header-height)
             let weights = if row-weights != auto {
                 row-weights
@@ -404,8 +444,7 @@
                 weights
                     .enumerate()
                     .map(((i, weight)) => {
-                        let natural-height = body-heights.at(i, default: 0pt)
-                        calc.max(natural-height, body-target-height * (weight / weight-sum))
+                        calc.max(body-heights.at(i), body-target-height * (weight / weight-sum))
                     })
             }
             if header-row {
@@ -416,7 +455,22 @@
         }
     }
 
-    if fill-height {
+    let outer = if outer-spacing { auto } else { 0pt }
+    let natural = block(width: 100%, above: outer, below: outer, spacing: 0pt)[
+        #show table: it => it
+        #render-table(table-cells)
+    ]
+    let fitted = (target-height, available-width) => {
+        let row-tracks = stretch-row-tracks(target-height, available-width)
+        block(width: 100%, height: target-height, above: outer, below: outer, spacing: 0pt)[
+            #show table: it => it
+            #render-table(table-cells, row-tracks: row-tracks)
+        ]
+    }
+
+    if item-height != auto {
+        layout(size => fitted(item-height, size.width))
+    } else if fill-height and outer-spacing {
         layout(size => context {
             let slide-margins = layout-config.at(cur-ar.get()).margins
             let top-margin = measure(v(slide-margins.top)).height
@@ -424,13 +478,23 @@
             let pad-height = measure(v(fill-pad)).height
             let remaining-height = calc.max(0pt, size.height + top-margin - pos.y)
             let target-height = calc.max(0pt, remaining-height - pad-height)
-            let row-tracks = stretch-row-tracks(target-height, size.width)
-            block(width: 100%, height: target-height)[
-                #show table: it => it
-                #render-table(row-tracks)
-            ]
+            fitted(target-height, size.width)
         })
     } else {
-        render-table(auto)
+        natural
     }
 }
+
+// A `vtable` is also a `vboxs` row item. Rendering stays deferred so the row can
+// hand it a definite height; a bare table uses the same row-item show rule as
+// boxes, figures, and listings.
+#let _render-vtable(spec, height: auto, outer-spacing: true) = _layout-vtable(
+    height,
+    outer-spacing,
+    ..spec.args,
+)
+
+#let vtable(..args) = box-item(
+    (kind: "vtable", render: _render-vtable, args: args),
+    [],
+)

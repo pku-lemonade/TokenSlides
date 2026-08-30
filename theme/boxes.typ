@@ -265,7 +265,7 @@
     for item in items {
         assert(
             type(item) == content and item.func() == figure and item.kind == _box-figure-kind,
-            message: name + ": items must be Lemonade row items — a box helper, `img`, `code`, or `vstack`",
+            message: name + ": items must be Lemonade row items — a box helper, `img`, `code`, `vtable`, or `vstack`",
         )
     }
 }
