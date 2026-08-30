@@ -17,6 +17,8 @@
                 + (
                     font: font-config.mono,
                     size: "body",
+                    // Han author/contact text is 6pt larger than its Latin base.
+                    han-size-delta: 6pt,
                     min-lines: 4,
                     lines: (
                         title-parts.author,

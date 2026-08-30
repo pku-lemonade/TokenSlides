@@ -30,7 +30,7 @@
     "16-9": (
         font-sizes: (
             small: 18pt,
-            body: 26pt,
+            body: 24pt,
             body-title: 32pt,
             title: 48pt,
             slide-title: 40pt,
@@ -137,21 +137,21 @@
 // cleaner than before while keeping white large-title text at 3:1 contrast.
 #let light-box-styles = (
     highlight: (border: rgb("#C58900"), fill: rgb("#fbf6ed"), title-emph-fill: white),
-    info: (border: rgb("#3a65b8"), fill: rgb("#f2f7ff")),
-    error: (border: rgb("#ae3b47"), fill: rgb("#fff3f3")),
+    info: (border: accent-config.berkeley-blue, fill: rgb("#f2f7ff")),
+    error: (border: accent-config.dark-red, fill: rgb("#fff3f3")),
     success: (border: rgb("#327b38"), fill: rgb("#f2f9f1")),
     neutral: (border: rgb("#585858"), fill: rgb("#f7f7f4")),
-    purple: (border: rgb("#7652ac"), fill: rgb("#f8f5ff")),
+    purple: (border: accent-config.tsinghua-purple, fill: rgb("#f8f5ff")),
 )
 
 // Same accents as light mode; fills share OKLCH L 0.235 / C 0.014.
 #let dark-box-styles = (
     highlight: (border: rgb("#C58900"), fill: rgb("#221d17"), title-emph-fill: white),
-    info: (border: rgb("#3a65b8"), fill: rgb("#1a1e25")),
-    error: (border: rgb("#ae3b47"), fill: rgb("#241c1c")),
+    info: (border: accent-config.berkeley-blue, fill: rgb("#1a1e25")),
+    error: (border: accent-config.dark-red, fill: rgb("#241c1c")),
     success: (border: rgb("#327b38"), fill: rgb("#1a201a")),
     neutral: (border: rgb("#585858"), fill: rgb("#1f1e1c")),
-    purple: (border: rgb("#7652ac"), fill: rgb("#1f1d24")),
+    purple: (border: accent-config.tsinghua-purple, fill: rgb("#1f1d24")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.

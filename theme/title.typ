@@ -62,8 +62,8 @@
 // keeps the body font stack while the bottom band uses `font`; both receive
 // the same size compensation unless the title preset opts out.
 #let han-config = (
-    font: ("FZFW ZhuZi GuDianS LH", "Source Han Sans SC"),
-    size-delta: 6pt,
+    font: ("Source Han Sans SC", "FZFW ZhuZi GuDianS LH"),
+    size-delta: 2pt,
 )
 
 #let title-config = (
@@ -79,7 +79,7 @@
     ),
     // `size-delta` adds to the aspect ratio's `title` font size.
     // `han-size-delta`: `auto` = `han-config.size-delta`, `none` keeps Han
-    // glyphs at the title size, a length overrides per band.
+    // glyphs at the title size, a length overrides this band only.
     title: (size-delta: 0pt, han-size-delta: auto),
     // Metadata lines under the title. `lines` renders like footer slots:
     // parts resolve against the deck info, absent ones drop out, and the
@@ -88,7 +88,10 @@
     bottom: (
         font: font-config.body,
         size: "body-title",
-        weight: "medium",
+        // `auto` = `han-config.size-delta`, `none` keeps Han glyphs at the
+        // bottom-band size, a length overrides this band only.
+        han-size-delta: auto,
+        weight: "bold",
         leading: 0.75em,
         min-lines: 3,
         lines: (title-parts.author, title-parts.institution, title-parts.date),
@@ -125,6 +128,11 @@
 
     let bottom-cfg = cfg.bottom
     let bottom-size = if type(bottom-cfg.size) == str { font-sizes.at(bottom-cfg.size) } else { bottom-cfg.size }
+    let bottom-han-delta = if bottom-cfg.han-size-delta == auto { han.size-delta } else { bottom-cfg.han-size-delta }
+    let bottom-han-args = (font: han.font)
+    if bottom-han-delta != none {
+        bottom-han-args.insert("size", bottom-size + bottom-han-delta)
+    }
     let lines = bottom-cfg
         .lines
         .map(part => if type(part) == function { part(self) } else { part })
@@ -146,15 +154,9 @@
         ]
         place(bottom + center, dy: cfg.placement.bottom-dy)[
             #set par(leading: bottom-cfg.leading)
-            #show regex("[\p{Han}]+"): set text(
-                size: bottom-size + han.size-delta,
-                font: han.font,
-            )
-            #{
-                display-lines
-                    .map(line => text(size: bottom-size, font: bottom-cfg.font, weight: bottom-cfg.weight)[#line])
-                    .join(linebreak())
-            }
+            #set text(size: bottom-size, font: bottom-cfg.font, weight: bottom-cfg.weight)
+            #show regex("[\p{Han}]+"): set text(..bottom-han-args)
+            #display-lines.join(linebreak())
         ]
         if extra != none { extra }
     }
