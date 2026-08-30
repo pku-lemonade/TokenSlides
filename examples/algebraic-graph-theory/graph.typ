@@ -21,7 +21,8 @@
 
 #outline-slide()
 
-= Graph Cuts
+= Graph Cuts \
+#speaker-note[Introduce graph cuts and the community-detection motivation.]
 
 == Finding a Community in a Graph
 

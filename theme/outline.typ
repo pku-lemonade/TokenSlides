@@ -194,6 +194,7 @@
     numbered: true,
     level: none,
     variant: auto,
+    body: none,
 ) = touying-slide-wrapper(self => context {
     let colors = cur-colors.get()
     let font-sizes = cur-font-sizes.get()
@@ -253,6 +254,8 @@
                 #outline-content
             ]
         }
+        // Preserve Touying section content such as speaker-note wrappers.
+        body
     }
 
     touying-slide(self: self, config: config, main-body)

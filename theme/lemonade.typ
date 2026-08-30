@@ -129,7 +129,7 @@
     ).pairs() {
         if value != auto { info.insert(key, value) }
     }
-    let section-slide-fn = body => outline-slide(level: 1)
+    let section-slide-fn = body => outline-slide(level: 1, body: body)
 
     cur-ar.update(aspect-ratio)
     cur-mode.update(mode)
