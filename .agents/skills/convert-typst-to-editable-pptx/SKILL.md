@@ -1,6 +1,6 @@
 ---
 name: convert-typst-to-editable-pptx
-description: Rebuild a Typst, Touying, or Lemonade deck as a visually faithful, fully editable .pptx with native PowerPoint objects. Use only to create or regenerate editable PowerPoint from Typst. Do not use for Typst-only work, PDF or flattened export, or PPTX-only work.
+description: Rebuild a Typst, Touying, or Lemonade deck as a visually faithful, fully editable .pptx with native PowerPoint objects. Use only when object-level editability is required. For a faster flattened conversion that preserves the compiled PDF's appearance, use convert-pdf-to-pptx instead.
 ---
 
 # Typst to Editable PowerPoint
@@ -10,6 +10,7 @@ Rebuild a Typst deck as native PowerPoint. The compiled PDF is a visual referenc
 ## Boundary
 
 - Input is a Typst source deck; output is a verified editable `.pptx`.
+- If the user values exact visual reproduction or turnaround more than object-level editing, stop and route to `$convert-pdf-to-pptx`; do not reconstruct the deck unnecessarily.
 - After handoff, use the presentation skill for PPTX-only edits and normal repo guidance for Typst-only edits.
 - Re-enter this skill only when the user asks to create or regenerate PowerPoint from Typst.
 

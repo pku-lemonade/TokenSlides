@@ -1,0 +1,4 @@
+interface:
+  display_name: "PDF to PowerPoint"
+  short_description: "Convert PDF pages into a visually faithful PowerPoint"
+  default_prompt: "Use $convert-pdf-to-pptx to convert this PDF into a visually faithful flattened PowerPoint."
