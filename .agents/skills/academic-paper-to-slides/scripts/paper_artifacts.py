@@ -1886,6 +1886,7 @@ def render_slide_typst(
     disable_escape: bool = False,
 ) -> tuple[list[str], list[str], dict[str, Any]]:
     title = typst_escape(slide.get("title", "Untitled Slide"))
+    hide_title = bool(slide.get("hide_title"))
     archetype = str(slide.get("archetype", "") or "")
     spec = get_archetype_spec(archetype)
     asset_entries, unresolved_assets = resolve_slide_assets(slide, assets_by_id, deck_path, workspace)
@@ -1939,16 +1940,23 @@ def render_slide_typst(
             body_lines.extend(rendered_lines)
             warnings.extend(rendered_warnings)
 
-    lines = [f"== {title}", ""]
-    lines.extend(body_lines)
-    lines.extend(
-        render_support_metadata(
-            slide,
-            unresolved_assets,
-            render_mode=normalize_render_mode(slide.get("render_mode")),
-            escape_report=escape_report,
-        )
+    support_lines = render_support_metadata(
+        slide,
+        unresolved_assets,
+        render_mode=normalize_render_mode(slide.get("render_mode")),
+        escape_report=escape_report,
     )
+    if hide_title:
+        lines = ["#slide(title: [])["]
+        for line in body_lines:
+            lines.append(f"  {line}" if line else "")
+        for line in support_lines:
+            lines.append(f"  {line}" if line else "")
+        lines.extend(["]", ""])
+    else:
+        lines = [f"== {title}", ""]
+        lines.extend(body_lines)
+        lines.extend(support_lines)
     return lines, warnings, escape_report
 
 

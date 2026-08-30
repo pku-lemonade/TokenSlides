@@ -33,21 +33,16 @@ update this file (and only then the conversion) when a render check disagrees.
 | body (CJK) | Source Han Sans SC, medium | Source Han Sans SC Medium |
 | bold emphasis | same stacks, bold | Inter Bold / Source Han Sans SC Bold |
 | code / footer / page number | Inconsolata | Inconsolata (Regular/Bold per weight) |
-| title-slide CJK metadata/contact | `han-config.font`, medium | Source Han Sans SC Medium |
+| title-slide CJK metadata/contact | `han-config.font`, medium | FZFW ZhuZi GuDianS LH |
 
 A Regular fallback changes color density and wrapping even when `sz` is exact.
 
 ## Sizes derived in module code (not in any config)
 
-`make_typography_policy.py` covers `layout-config.<aspect>.font-sizes` plus
-`han-config.size-delta` applied to `title` and `body-title`. These extra
-sizes are hardcoded in theme modules — pass them with `--extra-size` when the
-deck uses the corresponding slides:
-
-| Source | Derived size |
-| --- | --- |
-| `thank-you.typ` title | `font-sizes.title + 12pt` |
-| `thank-you.typ` CJK contact lines | `font-sizes.body + 6pt` |
+`make_typography_policy.py` covers `layout-config.<aspect>.font-sizes` plus the
+effective title and bottom-band sizes from `title-config` and
+`thank-you-config`, including per-band Han deltas. Use `--extra-size` only for
+sizes derived elsewhere in module code.
 
 ## OpenType shaping
 

@@ -6,8 +6,8 @@ deck's aspect ratio, and emits a policy JSON whose allowed point sizes are the
 theme's effective sizes for that aspect:
 
 - every size in `layout-config.<aspect>.font-sizes`;
-- CJK-adjusted title sizes (`han-config.size-delta` applied to the
-  `title` and `body-title` roles);
+- title and bottom-band sizes from `title-config` and `thank-you-config`,
+  including their Han deltas resolved against `han-config.size-delta`;
 - any `--extra-size` for sizes derived in module code rather than configs
   (see references/lemonade-calibration.md for the known list).
 
@@ -31,6 +31,20 @@ def to_points(value: object, context: str) -> float:
         if match:
             return float(match.group(1))
     raise SystemExit(f"error: {context} is not a point length: {value!r}")
+
+
+def resolve_size(value: object, font_sizes: dict[str, object], context: str) -> float:
+    if isinstance(value, str) and value in font_sizes:
+        return to_points(font_sizes[value], f"font-sizes.{value}")
+    return to_points(value, context)
+
+
+def resolve_delta(value: object, fallback: float | None, context: str) -> float | None:
+    if value == "auto":
+        return fallback
+    if value is None:
+        return None
+    return to_points(value, context)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -67,12 +81,35 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     sizes = {to_points(value, f"font-sizes.{role}") for role, value in font_sizes.items()}
-    han_delta = profile.get("han-config", {}).get("size-delta")
-    if han_delta is not None:
-        delta = to_points(han_delta, "han-config.size-delta")
-        for role in ("title", "body-title"):
-            if role in font_sizes:
-                sizes.add(to_points(font_sizes[role], f"font-sizes.{role}") + delta)
+    han_delta_value = profile.get("han-config", {}).get("size-delta")
+    han_delta = None if han_delta_value is None else to_points(han_delta_value, "han-config.size-delta")
+    for config_name in ("title-config", "thank-you-config"):
+        config = profile.get(config_name, {})
+
+        title = config.get("title", {})
+        if title:
+            title_size = to_points(font_sizes["title"], "font-sizes.title")
+            title_size += to_points(title.get("size-delta", "0pt"), f"{config_name}.title.size-delta")
+            sizes.add(title_size)
+            delta = resolve_delta(
+                title.get("han-size-delta", "auto"),
+                han_delta,
+                f"{config_name}.title.han-size-delta",
+            )
+            if delta is not None:
+                sizes.add(title_size + delta)
+
+        bottom = config.get("bottom", {})
+        if bottom:
+            bottom_size = resolve_size(bottom.get("size"), font_sizes, f"{config_name}.bottom.size")
+            sizes.add(bottom_size)
+            delta = resolve_delta(
+                bottom.get("han-size-delta", "auto"),
+                han_delta,
+                f"{config_name}.bottom.han-size-delta",
+            )
+            if delta is not None:
+                sizes.add(bottom_size + delta)
     sizes.update(args.extra_size)
 
     policy = {
