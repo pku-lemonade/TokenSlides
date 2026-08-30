@@ -7,6 +7,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - `lemonade.typ` re-exports `theme/lemonade.typ`
 - `theme/base.typ` controls global sizes, spacing, colors, and runtime state
 - `theme/slide.typ` and `theme/title.typ` own the main slide layouts
+- `theme/arrows.typ` owns `#solid-arrow(...)` for short filled process arrows and `connector-arrow(...)` for CeTZ relationship-edge styling
 - `theme/images.typ` owns the figure item `#img(...)` and the floating `#place-xx` helpers
 - `theme/assets.typ` exports common figure paths (`pku-logo`, `thu-logo`, `nsfc-logo`, `lemonade-qr`); place them with `#place-logo(pku-logo)` top-right or `#place-qr()` bottom-right (typical on the thank-you slide)
 - validate with `typst compile --root . <deck>.typ /tmp/out.pdf`
@@ -19,6 +20,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - no need to wrap normal slide content in `#slide[...]`
 - keep a stable scaffold: theme import, optional `#set text(lang: ...)`, local helpers if needed, then `#show: lemonade-theme.with(...)`
 - emit theme defaults, not overrides — see `Style Overrides` below before passing any style argument
+- use `#solid-arrow()` only as a short standalone process symbol between adjacent stages, aligned and sized to the neighboring shapes and their actual gap; its defaults are a starting point, so scale it when the local geometry requires while preserving the standard silhouette. For an anchored CeTZ relationship, spread `connector-arrow(color)` into `line` or `bezier`, clip the line from the source boundary to the target boundary, and scale stroke/head together for the local canvas and final slide visibility
 - a figure is `#img(source)` or `#img(source, [caption])`, and it is a `vboxs` row item like a box or a `#code` listing — there is no separate image-layout call
 - use `#vboxs(img(...), ...)` as the default for normal image rows, single figures, multi-panel figure blocks, and captioned evidence; a bare `#img(...)` renders at natural size, while a row can fill the slide (`fill-height`), stack (`dir: ttb`), bleed, or carry an `after:` conclusion
 - a row measures every item caption in it and reserves one band for the tallest, so images, code listings, and foreign row items with captions of different lengths still end on the same line
@@ -44,7 +46,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - `widths` is for deliberately unequal tracks (`(2fr, 1fr)`, `(0.6fr, 0.4fr)`). Never emit a near-equal split such as `(0.48fr, 0.52fr)` or `(0.96fr, 1.04fr)`; it looks measured, means nothing, and renders like `1fr, 1fr`
 - never emit a text size: no `#set text(size:)`, no `#text(size:)`, no `title-size` / `text-size` / `body-size`. A slide that does not fit gets fewer words or becomes two slides — that decision belongs in `notes/slides.json`, not in a font size
 - `scale:` on a listing comes after `indent: 2`; box `inset` / `compact` / `body-inset` come after shortening the body. `body-inset: (right: 0pt)` for a framed listing at a box edge stays routine
-- if the same argument would repeat on three or more slides, it is a deck default: set it once in `lemonade-theme(vboxs-config: ..., img-config: ..., code-config: ...)`
+- if the same argument would repeat on three or more slides, it is a theme/module default: change the owning `vboxs-config`, `img-config`, `code-config`, or `arrow-config` instead of repeating it in deck calls
 - deck-local `cetz` canvas numbers are content, not overrides — this section does not restrict them
 
 ## Code Snippets

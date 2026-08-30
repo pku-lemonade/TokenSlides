@@ -15,6 +15,7 @@
 )
 
 #import "artifact-badges.typ": *
+#import "arrows.typ": *
 #import "assets.typ": lemonade-qr, nsfc-logo, pku-logo, thu-logo
 #import "boxes.typ": *
 #import "callout.typ": *
