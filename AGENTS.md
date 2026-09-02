@@ -21,7 +21,8 @@ IMPORTANT: When unsure about Typst or Touying APIs, use Context7 and web search 
 - `theme/arrows.typ`: `solid-arrow`, `connector-arrow`, and `arrow-config`
 - `theme/table.typ`: table styling and `vtable`
 - `theme/assets.typ`: common logo and QR asset paths
-- `examples/`: compilable component references; add or update an example when changing a public theme API
+- `docs/`: one compilable reference deck per theme module; every public function and config key appears in exactly one of them. Update the owning deck when changing a public theme API
+- `examples/`: complete sample decks (`paper-reading`, `seminar-zh`, `lecture`) that use only the public API
 
 ## Workflow boundaries
 

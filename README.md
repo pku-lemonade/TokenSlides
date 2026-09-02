@@ -17,7 +17,8 @@ This repo is set up to be driven from Codex, not only edited by hand. The main u
 - `.codex/skills/academic-paper-to-slides/`: paper-to-deck workflow and writing guidance
 - `.codex/skills/figure-extraction/`: figure recovery workflow for PDFs and slide decks
 - `out/<paper>/`: one workspace per generated deck
-- `examples/`: checked-in sample decks and references
+- `docs/`: one compilable reference deck per theme module (boxes, tables, code, images, arrows, slides, theme)
+- `examples/`: complete sample decks to copy from: an English paper reading, a Chinese seminar deck, a 4:3 lecture
 
 ## Quick Start With Codex
 
@@ -37,14 +38,14 @@ Make the slides Chinese and use a seminar / reading-report style.
 Revise an existing deck:
 
 ```text
-Revise examples/tokencake/tokencake.typ.
+Revise examples/paper-reading/paper-reading.typ.
 Tighten the boxes, keep captions to one line when possible, and revalidate.
 ```
 
 Change the shared theme:
 
 ```text
-Update the theme so outline slides use mono text and validate tokencake again.
+Update the theme so outline slides use mono text and validate the lecture example again.
 ```
 
 Extract figures without building a deck:
@@ -259,7 +260,7 @@ The repo ships shared VS Code workspace settings in `.vscode/`:
 
 For local edits, use relative paths such as `image("assets/figure.png")`. The shared `#img(...)` helper accepts preloaded `image(...)` content so the file still resolves relative to the deck file instead of the theme package.
 
-See [`examples/images/images.typ`](examples/images/images.typ) for the compilable image API reference and layout examples.
+See [`docs/images.typ`](docs/images.typ) for the compilable image API reference and layout examples.
 
 ## Code Snippets
 
@@ -380,16 +381,16 @@ row item, so two listings can be the columns of one equal-height row:
 )
 ```
 
-See [`examples/code/code.typ`](examples/code/code.typ).
+See [`docs/code.typ`](docs/code.typ).
 
 ## Where To Edit
 
 - Generated deck content: `out/<paper>/<paper>.typ`
-- Checked-in sample decks: `examples/<paper>/<paper>.typ`
+- Sample decks: `examples/<name>/<name>.typ`; module references: `docs/<module>.typ`
 - Shared theme behavior: `theme/*.typ`
 - Paper-to-deck workflow: `.codex/skills/academic-paper-to-slides/`
 - Figure recovery workflow: `.codex/skills/figure-extraction/`
 
 ## Live Example
 
-- [examples/tokencake/tokencake.typ](examples/tokencake/tokencake.typ)
+- [examples/paper-reading/paper-reading.typ](examples/paper-reading/paper-reading.typ)

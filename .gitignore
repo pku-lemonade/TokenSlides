@@ -9,3 +9,8 @@ out/
 **/review/
 third_party/
 .claude/settings.local.json
+
+# Build outputs next to example and reference decks
+examples/**/*.pdf
+examples/**/*.pptx
+docs/**/*.pdf

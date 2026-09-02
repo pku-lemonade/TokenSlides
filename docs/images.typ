@@ -16,16 +16,16 @@
 //
 // `source` is a path or ready-made `image(...)` content. Prefer `image(...)` for
 // deck-relative paths; a bare string is resolved from the theme module, so use a
-// root-absolute string such as "/examples/images/assets/a.png" instead.
+// root-absolute string such as "/examples/paper-reading/assets/a.png" instead.
 
 #import "/lemonade.typ": *
 
 // These assets already live in the repository, so this example adds no copied
 // binaries. Each `image(...)` path resolves relative to this source file.
-#let workflow = image("../graph-hls/assets/fig1-workflow.pdf")
-#let baselines = image("../graph-hls/assets/fig7-vs-thundergp.pdf")
-#let architecture = image("../graph-hls/assets/fig3-overview.pdf")
-#let stack-design = image("../graph-hls/assets/fig4-hierarchy.pdf")
+#let workflow = image("/examples/paper-reading/assets/fig1-workflow.pdf")
+#let baselines = image("/examples/paper-reading/assets/fig7-vs-thundergp.pdf")
+#let architecture = image("/examples/paper-reading/assets/fig3-overview.pdf")
+#let stack-design = image("/examples/paper-reading/assets/fig4-hierarchy.pdf")
 
 #set text(lang: "en")
 
@@ -177,7 +177,7 @@ The design separates request routing, scheduling, and memory management.
 #block(width: 100%, height: 330pt)[
     #place-logo(pku-logo, width: 8%)
     #place-image(
-        "/examples/graph-hls/assets/fig3-overview.pdf",
+        "/examples/paper-reading/assets/fig3-overview.pdf",
         caption: "architecture",
         width: 24%,
         position: bottom + right,

@@ -71,7 +71,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
   `fill-height: false` pushing the whole row into the top half of the slide
 - to point at part of a snippet, use `hl:` / `focus:` (1-based line numbers) or
   `mark:` (tokens), not a separate annotation slide
-- full API and rendered reference: `examples/code/code.typ`
+- full API and rendered reference: `docs/code.typ`
 
 ## Read Next
 

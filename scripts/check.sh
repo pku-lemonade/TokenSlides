@@ -22,7 +22,7 @@ while [ $# -gt 0 ]; do
 done
 
 # A deck is a .typ file that applies the theme; component files are skipped.
-roots=(examples)
+roots=(docs examples)
 if [ "$with_out" = 1 ] && [ -d out ]; then roots+=(out); fi
 
 tmp=$(mktemp -d)
