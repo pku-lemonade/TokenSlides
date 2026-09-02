@@ -5,7 +5,7 @@
     aspect-ratio: "16-9",
     box-compact: true,
     box-fill: true,
-    title-align: "left",
+    title-align: left,
     mode: "dark",
     footer: "plain",
     title: [异构芯片与计算系统的设计与优化],

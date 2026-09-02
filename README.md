@@ -175,7 +175,7 @@ If a deck compile fails and the workspace contains escape-mode slides, the valid
 #set text(lang: "en")
 
 #show: lemonade-theme.with(
-  title-align: "left",
+  title-align: left,
   img-config: (
     cap-size: 18pt,
     cap-weight: "bold",

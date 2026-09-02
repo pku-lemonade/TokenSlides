@@ -46,8 +46,9 @@
     box-compact: false,
     // Use soft filled backgrounds for `hbox/ibox/...` instead of outline-only boxes.
     box-fill: false,
-    // Alignment for content slide titles (`== ...`), not the title/thank-you slides.
-    title-align: "center",
+    // Horizontal alignment for content slide titles (`== ...`): `left`, `center`
+    // or `right`. Not the title/thank-you slides.
+    title-align: center,
     // ACM artifact badges shown on title and thank-you slides. Use names such as
     // ("available", "functional", "reusable", "reproduced", "replicated").
     artifact-badges: (),
@@ -78,7 +79,10 @@
 ) = {
     assert(aspect-ratio in aspect-ratios)
     assert(mode in mode-config.keys())
-    assert(title-align in title-alignments)
+    assert(
+        title-align in title-alignments,
+        message: "lemonade-theme: `title-align` must be left, center or right, got " + repr(title-align),
+    )
 
     let mode-cfg = mode-config.at(mode)
     let colors = merge-config("colors-override", mode-cfg.colors, if colors-override == none { (:) } else { colors-override })

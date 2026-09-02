@@ -172,7 +172,8 @@
     dark: (colors: dark-colors, box: dark-box-styles),
 )
 
-#let title-alignments = ("left", "center")
+// Horizontal alignments a content-slide title may take (`lemonade-theme(title-align:)`).
+#let title-alignments = (left, center, right)
 
 // Runtime state: the theme as `lemonade-theme` resolved it — aspect ratio,
 // mode, colors, font sizes, spacing, margins, and every deck-level component

@@ -17,7 +17,6 @@
     body,
 ) = touying-slide-wrapper(self => context {
     let (colors, font-sizes, title-align) = theme()
-    let title-x-align = if title-align == "center" { center } else { left }
     let title-text = body => text(
         size: font-sizes.slide-title,
         weight: slide-config.title-weight,
@@ -33,13 +32,13 @@
         setting: title-text,
     )
     let display-title = if title != auto { title-text(title) } else { heading-title }
-    let title-wrap = if title-align == "center" and slide-config.centered-title-full-bleed {
+    let title-wrap = if title-align == center and slide-config.centered-title-full-bleed {
         // Full-bleed title: center across the whole page width (ignore page margins).
         body => bleed(align(center)[#body])
     } else {
         // Respect margins for non-centered titles.
         body => block(width: 100%)[
-            #align(title-x-align)[#body]
+            #align(title-align)[#body]
         ]
     }
 

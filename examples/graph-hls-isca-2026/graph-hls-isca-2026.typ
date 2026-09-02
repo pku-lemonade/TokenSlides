@@ -4,7 +4,7 @@
 
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
-    title-align: "left",
+    title-align: left,
     box-compact: true,
     footer: "bar",
     artifact-badges: ("available", "functional", "reproduced"),

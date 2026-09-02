@@ -4,7 +4,7 @@
 
 #show: lemonade-theme.with(
   aspect-ratio: "16-9",
-  title-align: "left",
+  title-align: left,
   box-compact: true,
   footer: "bar",
   title: [vStack：面向高效 LLM 推理的异构 HBM-PIM 架构与运行时],
