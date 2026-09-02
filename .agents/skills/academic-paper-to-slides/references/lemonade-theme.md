@@ -45,7 +45,7 @@ This skill is tailored to the local `lemonade.typ` slide theme.
 - on `vboxs` rows, do not pass `gap`, `after-gap`, `fill-height`, `fill-pad`, `width: 100%`, or `widths: auto` — those are the defaults already. This does not apply to the explicit `vstack(..., fill-height: true)` figure case above
 - `widths` is for deliberately unequal tracks (`(2fr, 1fr)`, `(0.6fr, 0.4fr)`). Never emit a near-equal split such as `(0.48fr, 0.52fr)` or `(0.96fr, 1.04fr)`; it looks measured, means nothing, and renders like `1fr, 1fr`
 - never emit a text size: no `#set text(size:)`, no `#text(size:)`, no `title-size` / `text-size` / `body-size`. A slide that does not fit gets fewer words or becomes two slides — that decision belongs in `notes/slides.json`, not in a font size
-- `scale:` on a listing comes after `indent: 2`; box `inset` / `compact` / `body-inset` come after shortening the body. `body-inset: (right: 0pt)` for a framed listing at a box edge stays routine
+- `scale:` on a listing comes after `indent: 2`; box `compact` / `body-inset` / `body-align` come after shortening the body. `body-inset: (right: 0pt)` for a framed listing at a box edge stays routine
 - if the same argument would repeat on three or more slides, it is a theme/module default: change the owning `vboxs-config`, `img-config`, `code-config`, or `arrow-config` instead of repeating it in deck calls
 - deck-local `cetz` canvas numbers are content, not overrides — this section does not restrict them
 

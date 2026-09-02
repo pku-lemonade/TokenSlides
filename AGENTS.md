@@ -13,11 +13,11 @@ IMPORTANT: When unsure about Typst or Touying APIs, use Context7 and web search 
 ## Repository map
 
 - `theme/lemonade.typ`: theme wrapper; wires Touying config and global `set`/`show` rules
-- `theme/base.typ`: global layout, font, accent, mode, and runtime color state
+- `theme/base.typ`: global layout, font, accent, mode, the resolved `theme()` runtime state, and shared config helpers (`layout-of`, `merge-config`, `resolve-parts`)
 - `theme/slide.typ`, `theme/title.typ`, `theme/thank-you.typ`, `theme/outline.typ`, `theme/footer.typ`: slide shells and navigation
 - `theme/boxes.typ`: box families plus `vboxs`, `vstack`, and the row-item protocol
 - `theme/images.typ`: `img` plus `place-image`, `place-logo`, and `place-qr`
-- `theme/code.typ`: listings, captions, line emphasis, numbering, and language rules
+- `theme/code.typ`: listings, captions, line emphasis, numbering, and palettes; `theme/code-langs.typ`: `code-lang` specs and the built-in Python spec
 - `theme/arrows.typ`: `solid-arrow`, `connector-arrow`, and `arrow-config`
 - `theme/table.typ`: table styling and `vtable`
 - `theme/assets.typ`: common logo and QR asset paths
@@ -119,13 +119,13 @@ IMPORTANT: When unsure about Typst or Touying APIs, use Context7 and web search 
 - Leave `gap`, `after-gap`, `fill-height`, and `fill-pad` off ordinary `vboxs` calls unless the page needs a deliberate exception. Set a repeated gap once through `vboxs-config`.
 - Omit `widths` for equal tracks. Near-equal ratios such as `0.48fr / 0.52fr` encode draft text length, not a meaningful hierarchy.
 - Do not set ad hoc text sizes in ordinary deck body code. Fix content, tracks, the owning component, or the theme rather than shrinking one page.
-- `scale:` on code and per-box `inset`, `body-inset`, `compact`, or `title-size` are last resorts. `body-inset: (right: 0pt)` remains the routine exception for a frameless listing that must meet a box edge.
+- `scale:` on code and per-box `body-inset`, `body-align`, `compact`, or `title-size` are last resorts. `body-inset: (right: 0pt)` remains the routine exception for a frameless listing that must meet a box edge.
 - Never restate defaults such as `width: 100%` or `widths: auto`.
 - Deck-local CeTZ geometry is content: node positions, local gaps, and arrow lengths must fit that diagram. Theme defaults still govern the shared visual language.
 
 ## Validation
 
-- Compile from the repository root: `typst compile --root . <source>.typ <output.pdf>`.
+- Compile from the repository root: `typst compile --root . <source>.typ <output.pdf>`. `scripts/check.sh` compiles every example deck (`--out` adds `out/`; `--png DIR` / `--diff DIR` render and compare pages for theme changes).
 - After every rebuild, confirm the page count and remap the named slide to its physical PDF page. Touying logical counters and physical pages can differ.
 - Inspect the rendered target page at screenshot scale. For a page-specific edit, also inspect adjacent pages; for a repeated component or sequence, inspect every affected page or a readable contact sheet.
 - Check for overflow, accidental continuation pages, clipping, overlap, footer collisions, unreadable figures, unstable captions, and inconsistent repeated elements.
