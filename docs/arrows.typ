@@ -9,9 +9,9 @@
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
     footer: none,
-    title: [Arrow Examples],
+    title: [Arrows],
     author: [Lemonade],
-    institution: [Theme Examples],
+    institution: [Theme Reference],
 )
 
 = Arrows

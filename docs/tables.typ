@@ -3,9 +3,9 @@
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
     footer: none,
-    title: [vtable usage],
+    title: [Tables],
     author: [Lemonade],
-    institution: [Theme examples],
+    institution: [Theme Reference],
 )
 
 = vtable

@@ -17,9 +17,9 @@
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
     box-compact: true,
-    title: [code block check],
+    title: [Code Listings],
     author: [Lemonade],
-    institution: [Theme QA],
+    institution: [Theme Reference],
     code-langs: (tdsl: tdsl),
 )
 

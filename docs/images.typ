@@ -43,7 +43,7 @@
         fill-height: false,
         fill-pad: 0.5em,
     ),
-    title: [Image Layout Examples],
+    title: [Images],
     short-title: [Image Layouts],
     author: [Lemonade],
     institution: [Theme Examples],

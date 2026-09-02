@@ -5,6 +5,7 @@
 #   scripts/check.sh --out    # examples/ plus decks under out/
 #   scripts/check.sh --png DIR   # also render PNG pages into DIR/<deck>/ for diffing
 #   scripts/check.sh --diff DIR  # render and compare page-by-page against a --png DIR
+#   scripts/check.sh --coverage  # every public theme name must appear in a docs/ deck
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -16,6 +17,7 @@ while [ $# -gt 0 ]; do
         --out) with_out=1 ;;
         --png) png_dir="$2"; shift ;;
         --diff) ref_dir="$2"; shift ;;
+        --coverage) exec python3 scripts/coverage.py ;;
         *) echo "unknown flag: $1" >&2; exit 2 ;;
     esac
     shift
