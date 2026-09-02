@@ -10,7 +10,11 @@ out/
 third_party/
 .claude/settings.local.json
 
-# Build outputs next to example and reference decks
-examples/**/*.pdf
-examples/**/*.pptx
-docs/**/*.pdf
+# Example deck directories track sources and assets only: notes, previews and
+# exports next to a deck stay local. Layout: examples/<genre>/<deck>.typ with
+# figures under examples/<genre>/assets/<deck>/.
+examples/**
+!examples/**/
+!examples/**/*.typ
+!examples/**/assets/**
+examples/**/.DS_Store
