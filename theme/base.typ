@@ -1,31 +1,17 @@
-// Shared theme configuration.
-//
-// Most module-specific configs live in their module files under `theme/`.
-// This file holds the few global knobs users tweak often.
-//
-// Naming convention (machine-exported; see AGENTS.md "Config convention"):
-// every user-tweakable style dict is a top-level `#let <feature>-config` in the
-// module it styles; aspect-ratio variants ("16-9" / "4-3") sit under a
-// `layouts:` key inside it. Unsuffixed dicts (e.g. `light-colors`) are
-// internal building blocks.
+// Shared theme configuration: layout per aspect ratio, fonts, colors and box
+// palettes. Every user-tweakable dict is a top-level `<feature>-config` in the
+// module it styles; aspect-ratio variants sit under `layouts:`.
 
 // Central Touying import: theme modules can import Touying APIs from `base.typ`
 // so we only pin the package version once.
 #import "@preview/touying:0.6.1": *
 
 // CONFIG (frequently tweaked)
-//
-// Everything `lemonade-theme(aspect-ratio: ...)` controls: font sizes,
-// vertical rhythm, slide margins, and page size per aspect ratio.
-// `margins.bottom` excludes the footer band: lemonade-theme adds the band
-// height on top when a footer style is active.
-//
-// Vertical rhythm is two tokens, resolved against the body text size:
-// - `leading`: line spacing inside paragraphs (and tight list items).
-// - `flow`: THE gap between any two flow blocks — paragraphs, boxes, vboxs
-//   rows, callouts, block math, tables, grids, code boxes. Components default
-//   their outer spacing to this token, so the rhythm stays uniform; keep
-//   `flow` >= `leading` so paragraph breaks read looser than line breaks.
+// Everything `lemonade-theme(aspect-ratio: ...)` controls. `margins.bottom`
+// excludes the footer band, which lemonade-theme adds. Vertical rhythm:
+// `leading` is line spacing inside paragraphs; `flow` is the gap between any
+// two flow blocks (paragraphs, boxes, rows, tables, listings). Keep `flow` >=
+// `leading`.
 #let layout-config = (
     "16-9": (
         font-sizes: (
@@ -132,11 +118,9 @@
     footer-fg: rgb("#0D0D0D"),
 )
 
-// Glass look: saturated accents carry white title ink; fills are near-white
-// panes at OKLCH L 0.975 / C 0.013 so the hue is felt more than seen. Frame
-// hairlines take the accent at low alpha (see `frame-tint` in boxes.typ), which
-// is what sells the tinted-glass edge. Highlight runs a little brighter and
-// cleaner than before while keeping white large-title text at 3:1 contrast.
+// Box accents and body fills per style. Fills are near-white panes (OKLCH
+// L 0.975 / C 0.013) so the hue is felt more than seen; frame hairlines take
+// the accent at low alpha (`frame-tint` in boxes.typ).
 //
 // Every style declares every key: `border` is the accent, `fill` the body pane
 // (used when `box-fill` is on), `title-text-fill: auto` takes the box-config

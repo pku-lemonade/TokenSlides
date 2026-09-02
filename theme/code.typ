@@ -4,24 +4,17 @@
 #import "code-langs.typ": check-lang, code-buckets, code-lang, python-lang, regex-escape
 
 // USER CONFIG
-// - Frame geometry, typography, and the listing font: edit `code-config` below.
-// - Surface and syntax styling: edit `light-code-palette` / `dark-code-palette`
-//   below. They are ordinary Typst dicts; nothing here reads or writes a
-//   `.tmTheme` file.
-// - Which languages this module highlights itself: `code-config.langs`, whose
-//   entries are `code-lang(...)` rule lists (`python-lang` ships below). A deck
-//   adds its own with `lemonade-theme(code-langs: (mydsl: ...))`.
-// - Base code font size per aspect ratio: `font-sizes.code` in `layout-config`
-//   (base.typ), where it stays in proportion to the body sizes it shares a
-//   slide with; `size` / `scale` here rescale a single listing.
+// - Frame geometry, typography and the listing font: `code-config` below.
+// - Surface and syntax colors: `light-code-palette` / `dark-code-palette`.
+// - Languages highlighted here rather than by syntect: `code-config.langs`,
+//   built with `code-lang(...)` (code-langs.typ). A deck adds its own with
+//   `lemonade-theme(code-langs: (mydsl: ...))`.
+// - Base code font size per aspect ratio: `font-sizes.code` in base.typ;
+//   `size` / `scale` here rescale a single listing.
+// `font-config.mono` (base.typ) dresses footers, tables and inline `raw`;
+// listings take `code-config.font`, so the two can differ.
 //
-// One knob stays outside this module on purpose: `font-config.mono` (base.typ)
-// is the shared mono family for footers, outlines, tables, page numbers, and
-// inline `raw` in prose. Listings take `code-config.font` instead, so the two
-// can differ — if you change one deliberately, look at the other.
-//
-// Snippets are ordinary Typst raw fences, so the source stays readable and any
-// markup may sit beside the listing:
+// A listing is an ordinary raw fence; prose may sit beside it:
 //
 //     #code[
 //       ```python
@@ -31,61 +24,33 @@
 //       Both operands must share one logical time.
 //     ]
 //
-// Emphasis inside a listing:
+// Emphasis (line numbers are 1-based; `range(2, 5)` works):
 //   `hl: (2, 3)`      neutral band behind those lines
-//   `focus: (2, 3)`   the band, plus every other line muted to one flat ink
-//   `dim: (1,)`       mute these lines, leave the rest alone
+//   `focus: (2, 3)`   the band, plus every other line muted (overrides `dim:`)
+//   `dim: (1,)`       mute these lines only
 //   `mark: ("@ t",)`  accent the token wherever it appears
-// Line numbers are 1-based; `range(2, 5)` works as the argument. `focus:` and
-// `dim:` are alternatives, not a pair — with `focus:` set, `dim:` is ignored,
-// because focusing already decides what every other line looks like.
+// A mark only matches inside one highlighter token; `lang: none` drops
+// highlighting so a mark can span anything. A syntect listing turns its
+// highlighting off as soon as a mark is set.
 //
-// A mark and the highlighter share the line, and a mark lands wherever it falls
-// inside one piece of what the highlighter cut up — which is most places, since a
-// spec only cuts out what it describes. A mark that crosses a boundary
-// (`while q < Q`, where `while` is a keyword) silently does not match; put
-// `lang: none` on that listing to drop highlighting and mark everything. Syntect
-// cuts at every token, so marks turn it off outright (`_resolve-highlighter`).
-//
-// The gutter is on by default, two digits wide, so `hl: (2, 3)` points at
-// something the audience can see. `numbers: false` drops it for one listing,
-// `code-config.numbers` for the deck.
-//
-// A line too long for the frame wraps, and its continuation hangs under its own
-// first code column rather than under the gutter, so a wrapped line still reads
-// as one line (`code-config.wrap-indent` pushes continuations deeper). A single
-// token wider than the frame has no break opportunity inside it and overflows
-// visibly — that is deliberate. Shorten it, or buy width with `indent:` first
-// and `scale:` second.
-//
-// A listing's width is the text column; the space to its right is the slide's
-// own `layout-config.margins.right` (base.typ), which moves prose and tables
-// with it. `code-config.inset` is the code-local part of that gap.
+// The gutter is on by default (`numbers: false` per listing,
+// `code-config.numbers` per deck). Long lines wrap with the continuation
+// hanging under the code, not the gutter; a single over-wide token overflows
+// visibly. `indent: 2` re-indents to buy width before reaching for `scale:`.
 //
 // `caption:` labels a listing below its frame in the shared row-item caption
-// style (`img-config`, images.typ); a `vboxs` row aligns every caption in it on
-// one reserved band. A bare `#code` is a row item, so an unlabelled listing can
-// be a column of an equal-height row directly, and its frame fills the height
-// the row hands down — `stretch: false` leaves the visible frame at its natural
-// height while the cell still holds the row's, which keeps the captions aligned.
-// A listing inside a box helper is handed no row height at all: pass
-// `frame: false` there and the box's own surface is the listing's.
+// style (`img-config`). A bare `#code` is a `vboxs` row item whose frame
+// fills the row height (`stretch: false` keeps it natural). Inside a box
+// helper use `frame: false`.
 
 // PALETTES
 // How a listing reads, per mode. `bg` / `border` are the frame; `fg` is the ink
 // for prose in the code body, for every token the palette does not repaint, and
 // (transparentized) for `dim:`.
 //
-// A `syntax` row styles one classifier bucket. `fill` defaults to the palette's
-// `fg`, so a bucket left bare is simply not colored — that is what keeps a
-// listing quiet. `weight` is left unset unless a row asks for one, so the bold
-// that `hl:` puts on a banded line survives on the tokens the palette does not
-// weight itself. Every bucket needs a row; adding one to `_classifier` without
-// one here fails at render.
-//
-// The default uses a restrained semantic palette: comments recede, declarations
-// and names stay cool, literals stay distinct, and keywords carry the strongest
-// warm accent. The light and dark rows keep the same roles at suitable contrast.
+// A `syntax` row styles one bucket. `fill` defaults to the palette's `fg`, so a
+// bare bucket is simply not colored; `weight` is set only where a row asks, so
+// the bold from `hl:` survives elsewhere. Every bucket needs a row.
 #let light-code-palette = (
     bg: rgb("#F5F5F5"),
     border: rgb("#D4D4D4"),
@@ -119,26 +84,17 @@
 )
 
 #let code-config = (
-    // Languages this module highlights itself, keyed by the fence tag they
-    // answer to. A fence whose tag is not here goes to syntect, so a deck only
-    // describes what it wants exact control over. Deck-level additions merge in
-    // through `lemonade-theme(code-langs: ...)`.
+    // Languages highlighted by this module, keyed by fence tag. Other tags go to syntect.
     langs: (python: python-lang),
-    // Listing font. Deliberately its own knob rather than `font-config.mono`,
-    // which also dresses footers, outlines, tables, and inline `raw` in prose.
+    // Listing font, separate from `font-config.mono`.
     font: ("Inconsolata", "Source Han Sans SC"),
-    // A ratio is resolved against the listing's own font size, so the frame
-    // keeps its proportions when `scale` shrinks the code; a length is used
-    // as given. This is the only part of a listing's right-hand gap that is
-    // code-local — the rest is the slide margin (see the header comment).
+    // A ratio resolves against the listing's font size so the frame keeps its
+    // proportions under `scale`; a length is used as given.
     inset: 40%,
     border-width: 1pt,
     radius: 0pt,
-    // On, so a listing that outgrows its slide splits and stays visible. Off,
-    // the frame is pushed to the next region whole and — being inside the
-    // figure `box-item` wraps every row item in — is dropped there without a
-    // warning (see `apply-box-style` in boxes.typ). A listing that fits is laid
-    // out identically either way.
+    // On, an over-tall listing splits across pages and stays visible; off, it is
+    // pushed whole to the next region and silently dropped there.
     breakable: true,
     // `auto` = the aspect ratio's `code` font size; `scale` multiplies it,
     // which is how side-by-side listings are shrunk to fit one slide.
@@ -151,67 +107,44 @@
     leading: 0.5em,
     // Gap between the listing and any prose sharing the same `#code[...]`.
     gap: 0.9em,
-    // Extra indent for the continuation rows of a wrapped line, past the
-    // line's own code column. `0pt` aligns a continuation with the code it
-    // belongs to; a couple of characters' worth makes the wrap more obvious.
+    // Extra indent for a wrapped line's continuation rows, past its own code column.
     wrap-indent: 0pt,
-    // Indent width, in spaces. `auto` leaves the source alone. An integer
-    // re-indents space-indented lines to that many spaces per level (the
-    // source's own unit is its smallest non-zero indent) and sets `tab-size`
-    // for tab-indented ones. Slides are short on width: `indent: 2` is often
-    // what buys a listing a larger font.
+    // Indent width in spaces. `auto` leaves the source alone; an integer re-indents
+    // space-indented lines to that many per level and sets `tab-size` for tabs.
     indent: auto,
-    // Palette per mode, picked by the deck's `mode`. A listing may override the
-    // whole palette with `theme: (bg: ..., border: ..., fg: ..., syntax: (...))`
-    // or switch highlighting off with `theme: none` (one flat `fg` ink). A
-    // `.tmTheme` path is not accepted: the palette styles the buckets in
-    // `_classifier`, which only the built-in theme produces.
+    // Palette per mode. A listing may pass its own with
+    // `theme: (bg: .., border: .., fg: .., syntax: (..))` or switch highlighting
+    // off with `theme: none`.
     palettes: (light: light-code-palette, dark: dark-code-palette),
-    // `hl:` — a quiet neutral band behind emphasized lines, bled to the frame
-    // edge. The accent remains reserved for `mark:` tokens.
+    // `hl:` — a quiet neutral band behind emphasized lines, bled to the frame edge.
     hl-tint: 92%,
     hl-weight: "bold",
-    // Vertical growth of the band past the line box, so consecutive
-    // highlighted lines read as one continuous band.
+    // Band growth past the line box, so consecutive highlighted lines meet.
     hl-outset: 0.25em,
     // `dim:` / the muted half of `focus:`.
     dim-tint: 55%,
-    // Line-number gutter. `numbers` is the deck-wide default, overridable per
-    // listing with `numbers:`. `number-digits` is the width the number is
-    // zero-padded to — two digits is enough for any slide-sized listing, and a
-    // longer one widens on its own rather than spilling into the code. The ink
-    // is `fg` pushed back by `number-tint`, so it follows any palette,
-    // `theme: none` included, without a palette key of its own.
+    // Line-number gutter. `number-digits` is the zero-padded width; a longer
+    // listing widens on its own. The ink is `fg` pushed back by `number-tint`.
     numbers: true,
     number-digits: 2,
     number-gap: 0.8em,
     number-tint: 60%,
-    // `mark:` token emphasis, over the accent. A marked token outranks whatever
-    // the highlighter would have made of it, comment and string ink included:
-    // marking says "look here", and it is the only thing on the slide that does.
+    // `mark:` token emphasis, over the accent; it outranks the highlighter's ink.
     mark-weight: "bold",
 )
 
 // SYNTECT REPAINT
 //
-// Typst highlights raw blocks with `syntect`, and syntect's only input for
-// colors is a TextMate theme. Rather than hand `raw` a theme of our own — which
-// would mean generating plist XML, since that is the only format it takes — we
-// let Typst's built-in theme do the classifying and remap what it produced:
-// the color it painted a span with is readable back out of the span with
-// `context text.fill`. That is the whole reason no `.tmTheme` file, and no code
-// that writes one, exists in this repo.
-//
-// The catch is that the built-in theme's colors are an implementation detail of
-// Typst rather than a documented API. `_classifier` below is the observed table,
-// and a Typst upgrade that changes the default theme would make every key miss
-// — listings would fall back to the built-in colors, which are tuned for a white
-// page and go unreadable on a dark `bg`. To re-derive it, render a snippet under
+// Typst highlights raw blocks with syntect, whose colors come from a TextMate
+// theme. Instead of shipping a `.tmTheme`, we let Typst's built-in theme
+// classify tokens and repaint each span by the color it was given (readable as
+// `context text.fill`). `_classifier` is that observed color table. A Typst
+// upgrade that changes the built-in theme makes every key miss and listings
+// fall back to the built-in colors; re-derive it by rendering a snippet under
 //
 //     show raw: it => { show text: t => context metadata((txt: t.text, fill: text.fill.to-hex())); it }
 //
-// and `query(metadata)` the result. (`t.fill` is not readable as a field; only
-// the contextual `text.fill` is.)
+// and querying the metadata.
 #let _classifier = (
     comment: "#74747c", // `# note`
     keyword: "#d73948", // def class if return None True and the operators
@@ -266,11 +199,8 @@
     n
 }
 
-// Rescale leading spaces from the source's own indent unit to `width`. The unit
-// is the smallest non-zero indent in the snippet, which is right for ordinary
-// code and predictable when it is not: a hanging indent finer than one level
-// makes every deeper line scale from that finer unit. Lines are rescaled rather
-// than de-levelled so continuation lines keep their relative alignment.
+// Rescale leading spaces from the source's own indent unit (its smallest
+// non-zero indent) to `width`, keeping continuation lines aligned.
 #let _reindent-text(source, width) = {
     let lines = source.split("\n")
     let indents = lines.map(_leading-spaces).filter(n => n > 0)
@@ -311,9 +241,7 @@
     }
 }
 
-// The tag of the first block fence in the body, which is the listing's own
-// language: a `#code` body holds one listing, and any other raw in it is inline
-// `raw` in the prose beside it, which is not a listing and is not highlighted.
+// The tag of the first block fence in the body: the listing's own language.
 #let _first-lang(node) = {
     if type(node) != content {
         none
@@ -358,15 +286,10 @@
     }
 }
 
-// Re-render a line as unhighlighted raw so a flat ink actually takes: syntax
-// spans set `fill` on their own text, which an outer `set text(fill: ...)`
-// cannot override. Rebuilding raw would re-enter both rules below, so the
-// rebuilt line carries a sentinel `lang` the block rule skips, and a nested
-// `raw.line` rule (defined last, so it wins) ends the line recursion.
-//
-// Nothing here is boxed. A `box` lays its content out as one unbreakable line,
-// which would take a long line's wrap out of the hands of the paragraph that
-// `_line-rule` puts every line in — and with it the hanging indent.
+// Re-render a line as unhighlighted raw so a flat ink takes (syntax spans set
+// their own fill). The rebuilt raw carries a sentinel `lang` the block rule
+// skips, and a nested `raw.line` rule ends the recursion. Nothing is boxed, so
+// long lines still wrap with their hanging indent.
 #let _flat-lang = "lemonade-code-flat"
 
 #let _flat-line(line, ink) = {
@@ -413,10 +336,8 @@
     runs
 }
 
-// Rebuild a line from its source as styled runs, by the same route as
-// `_flat-line`: raw carrying the sentinel `lang` keeps each run's spaces exactly
-// as written. A run with no `weight` row inherits the ambient one, which is what
-// lets the bold from `hl:` through, exactly as in `_syntax-rule`.
+// Rebuild a line from its source as styled runs. A run with no `weight` row
+// inherits the ambient one, which lets the bold from `hl:` through.
 #let _spec-line(source, lang, palette) = {
     show raw.line: inner => inner.body
     for run in _tokenize(source, lang) {
@@ -428,39 +349,26 @@
     }
 }
 
-// Zero-padding, rather than a fixed box width, is what aligns the gutter: every
-// number is the same number of characters and the listing font is mono, so the
-// code starts at one column without measuring anything.
+// Zero-padding aligns the gutter: the listing font is mono, so equal digit counts line up.
 #let _pad-number(n, digits) = {
     let s = str(n)
     if s.len() < digits { "0" * (digits - s.len()) + s } else { s }
 }
 
-// Plain `text`, not `raw`: the gutter is emitted from inside the raw element, so
-// it already wears the listing font, and staying out of `raw` keeps it clear of
-// both show rules below. Its ink is ours, so `_syntax-rule` leaves it alone.
+// Plain `text`, not `raw`, so the gutter stays clear of the raw show rules.
 #let _gutter(number, digits, ink) = {
     text(fill: ink, _pad-number(number, digits))
     h(code-config.number-gap)
 }
 
-// Every line is its own block holding its own paragraph, rather than all of
-// them sharing the one paragraph a raw block would lay them out in. That is
-// what buys the hanging indent: `par(hanging-indent:)` set on the whole listing
-// does nothing, because there is only ever one paragraph and its second line is
-// the listing's second line, not a wrap. `spacing: 0pt` keeps the rhythm the
-// shared paragraph had — the gap between lines stays `leading`, as before.
+// Every line is its own paragraph so `hanging-indent` can indent its wraps;
+// `spacing: 0pt` keeps the line rhythm at `leading`.
 #let _line-rule(cfg) = it => {
-    // `it.count` is the listing's own line count, so a listing longer than
-    // `number-digits` allows widens its gutter instead of pushing the code over
-    // on that one line.
+    // A listing longer than `number-digits` allows widens its gutter.
     let digits = calc.max(code-config.number-digits, str(it.count).len())
     let gutter = if cfg.numbers { _gutter(it.number, digits, cfg.num-ink) }
 
-    // Where a continuation row starts: past the gutter, then past this line's
-    // own indent, so a wrap hangs under the code it belongs to rather than
-    // under the line number. The listing font is mono, so one measured
-    // character width sizes both.
+    // A continuation row starts past the gutter and this line's own indent.
     let hang = (
         (if cfg.numbers { cfg.char-width * digits + code-config.number-gap } else { 0pt })
             + cfg.char-width * _leading-spaces(it.text)
@@ -476,9 +384,7 @@
     }
 
     let banded = it.number in cfg.hl-lines
-    // The band's weight lands on the code alone: the gutter holds one face down
-    // the whole listing, so it reads as a ruler rather than joining in the
-    // emphasis.
+    // The band's weight lands on the code alone; the gutter reads as a ruler.
     let row = par(hanging-indent: hang, {
         gutter
         if banded {
@@ -490,8 +396,7 @@
     })
 
     if banded {
-        // A `block`, so the band covers every row of a wrapped line and not
-        // just its first. The `y` outset makes consecutive banded lines meet.
+        // A block, so the band covers every row of a wrapped line.
         block(
             width: 100%,
             spacing: 0pt,
@@ -504,10 +409,8 @@
     }
 }
 
-// One show rule per pattern rather than one merged alternation, because a
-// `regex` value cannot be spliced back into a larger pattern (its `repr`
-// re-escapes backslashes). Literals do merge into a single alternation,
-// longest first, so a longer mark wins over a prefix of it.
+// One show rule per regex (a `regex` value cannot be spliced into a larger
+// pattern); literals merge into one alternation, longest first.
 #let _fold-marks(body, patterns, ink) = {
     if patterns.len() == 0 {
         body
@@ -549,19 +452,10 @@
     _check-palette(code-config.palettes.at(mode))
 }
 
-// Who highlights a listing. Three rules, in order:
-//
-//   `theme: none`  one flat ink, nothing highlights.
-//   a spec         this module highlights. `mark:` still applies on top, from
-//                  the show rules `_apply-marks` installs.
-//   otherwise      syntect, but only if there is no mark to honour.
-//
-// The asymmetry is about how finely each highlighter cuts the line up, because a
-// mark can only match inside one piece. Syntect makes a piece per token, so most
-// marks would silently fail — not worth the colour, hence no highlighting there.
-// A spec only cuts out what its own rules describe, so a mark usually has a big
-// plain run to land in. One that crosses a run boundary (`while q < Q`, where
-// `while` is a keyword) still fails silently: `lang: none` on that listing.
+// Who highlights a listing: `theme: none` — nobody, one flat ink; a spec — this
+// module, with `mark:` on top; otherwise syntect, but only when there is no
+// mark to honour, since syntect cuts every token apart and most marks would
+// silently miss.
 #let _resolve-highlighter(theme, marks, lang) = {
     if theme == none {
         (lang: none, syntect: false)
@@ -572,15 +466,9 @@
     }
 }
 
-// Repaint the spans Typst's built-in theme produced, keyed by the color it gave
-// them. `fill` always lands, so a bucket the palette leaves bare reverts to body
-// ink rather than keeping the built-in hue; `weight` only lands when the row
-// asks, which is what lets the bold from `hl:` through on everything else.
-//
-// Anything whose fill is not in the table is left alone. That covers the `dim:`
-// ink and `mark:` accents, which are ours and already correct — and it is also
-// where a Typst upgrade that moved the built-in theme would show up, as listings
-// suddenly wearing the built-in colors.
+// Repaint the spans Typst's built-in theme produced, keyed by their color.
+// `fill` always lands; `weight` only when the row asks. Spans whose fill is not
+// in the table (dim ink, marks) are left alone.
 #let _syntax-rule(palette) = {
     let rows = (:)
     for (bucket, key) in _classifier {
@@ -615,15 +503,13 @@
 
     let marks = _mark-list(spec.mark)
     let palette = _resolve-palette(spec.theme, mode)
-    // The fence's own tag is read from the body rather than per fence, so who
-    // highlights this listing is settled before `raw` is set up.
+    // Settle who highlights this listing before `raw` is set up.
     let (lang, syntect) = _resolve-highlighter(
         spec.theme,
         marks,
         _resolve-lang(spec.lang, _first-lang(spec.body), code-langs),
     )
-    // One character, once: the listing font is mono, so this sizes the gutter
-    // and every wrap indent in it.
+    // One mono character width sizes the gutter and every wrap indent.
     let char-width = measure(text(font: spec.font, size: resolved-size, "0")).width
 
     let focus-lines = _line-set(spec.focus, "focus")
@@ -635,11 +521,8 @@
     let inner = {
         set text(size: resolved-size, fill: palette.fg)
         set par(leading: spec.leading, spacing: spec.gap)
-        // `auto` is Typst's built-in theme, which classifies the tokens that
-        // `_syntax-rule` then repaints; `none` leaves every token on one ink,
-        // which is also what a spec-highlighted listing wants — `_spec-line`
-        // rebuilds those lines from their source and never reads what syntect
-        // made of them. Typst's own `tab-size` default is 2.
+        // `auto` is Typst's built-in theme, whose tokens `_syntax-rule` repaints;
+        // `none` leaves one ink, which is what a spec-highlighted listing wants.
         set raw(
             theme: if syntect { auto } else { none },
             tab-size: if spec.indent == auto { 2 } else { spec.indent },
@@ -647,15 +530,13 @@
         show raw: set text(font: spec.font, size: resolved-size)
         show raw: set par(leading: spec.leading)
         show raw: it => if it.lang == _flat-lang { it } else {
-            // `focus:` is `hl:` plus "mute everything else"; the line count is
-            // only known once the raw element itself is in hand.
+            // `focus:` is `hl:` plus "mute everything else".
             let dims = if focus-lines.len() > 0 {
                 range(1, it.lines.len() + 1).filter(n => n not in hl-lines)
             } else {
                 dim-lines
             }
-            // A gutter, and a language, belong to a listing — not to inline
-            // `raw` sitting in the prose beside it, which this rule also reaches.
+            // A gutter and a language belong to a listing, not to inline `raw` in the prose.
             show raw.line: _line-rule((
                 hl-lines: hl-lines,
                 dim-lines: dims,
@@ -677,12 +558,9 @@
         _apply-marks(spec.body, marks, accent)
     }
 
-    // A listing on its own takes the uniform flow rhythm; inside a row the row
-    // owns the spacing, so the item adds none of its own.
+    // A listing on its own takes the flow rhythm; inside a row the row owns the spacing.
     let outer = if outer-spacing { auto } else { 0pt }
-    // The visible listing, at whatever height it is asked for. Spacing is the
-    // caller's, since a natural-height surface is wrapped in the block that
-    // carries it.
+    // The visible listing at the height it is asked for.
     let surface = (target-height, above: 0pt, below: 0pt) => if spec.frame {
         block(
             width: 100%,
@@ -702,8 +580,7 @@
     if spec.stretch or height == auto {
         surface(height, above: outer, below: outer)
     } else {
-        // Keep consuming the row's assigned height so a following caption stays
-        // on the shared foot band; only the visible code surface stays natural.
+        // Keep the row's height so a caption stays on the shared band; only the surface stays natural.
         block(width: 100%, height: height, above: outer, below: outer, spacing: 0pt)[
             #surface(auto)
         ]

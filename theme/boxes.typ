@@ -183,15 +183,9 @@
     )
 }
 
-// One item at a given height. A spec carrying `render:` belongs to another
-// module and is rendered by that function; everything else is a box, and its
-// two shapes differ only in which grid goes inside the same outer block.
-//
-// The row's `title-size` rides along IN THE SPEC rather than as an argument, so
-// no renderer has to declare a parameter it does not care about — an extra dict
-// key is invisible to one that reads only the keys it knows. `vstack` is what
-// reads it back: it hands the size to the row nested in its cell, so a row-level
-// `title-size` reaches boxes at any depth instead of stopping at the stack.
+// One item at a given height. A spec with `render:` belongs to another module
+// (img, code, vtable, vstack) and is drawn by that function; anything else is a
+// box. The row's `title-size` rides along in the spec so nested rows see it.
 #let _render-spec(spec, height: auto, outer-spacing: true, row-title-size: none) = if "render" in spec {
     (spec.render)(spec + (row-title-size: row-title-size), height: height, outer-spacing: outer-spacing)
 } else {
@@ -219,21 +213,12 @@
 // ROW ITEMS
 // -----------------------------------------------------------------------------
 
-// Row-item constructor. A box helper — or any other theme module that wants its
-// output to compose with `vboxs` — wraps its spec and body with this. A spec
-// carrying a `render:` function is rendered by that function instead of by the
-// box frames above, which is how `theme/code.typ` joins an equal-height row
-// without boxes.typ knowing anything about code listings. The renderer is
-// called as `render(spec, height: ..., outer-spacing: ...)` and reads its body
-// from `spec.body`; `height` is the item's share of a stretched row, else `auto`.
-//
-// A spec may also carry `foot:` — content pinned below the item, which the ROW
-// lays out rather than the renderer (`_render-cell`). Every foot in a row is
-// measured together and the tallest sets one band, so the items above them all
-// end at the same line: that is what keeps image captions of different lengths
-// from pushing their figures to different heights. A renderer never sees the
-// band; it is simply handed a smaller `height`. `theme/images.typ` uses this for
-// captions, and an item without a foot (a box, a listing) takes the full height.
+// Row-item constructor: wraps a spec and body so `vboxs` can lay the item out.
+// A spec with `render:` is drawn by that function as
+// `render(spec, height: ..., outer-spacing: ...)`, reading its body from
+// `spec.body`. A spec may carry `foot:` (a caption): the row measures every
+// foot together and reserves one band for the tallest, so items end on the
+// same line and captions align.
 #let box-item(spec, body) = figure(
     kind: _box-figure-kind,
     caption: none,
@@ -255,10 +240,8 @@
 
 #let _with-body(spec, body) = spec + (body: body)
 
-// Everything in a row is a `box-item`; a bare `[...]`, a `table`, or a raw
-// `vboxs` is rejected here rather than measured into a baffling layout. `name`
-// is the caller, so a `vstack` reports itself at its own call site instead of
-// failing later as the `vboxs` it forwards to.
+// Everything in a row is a `box-item`; plain content or a raw `vboxs` is
+// rejected here rather than measured into a baffling layout.
 #let _assert-row-items(name, items) = {
     for item in items {
         assert(
@@ -268,12 +251,8 @@
     }
 }
 
-// One cell: the item, and its `foot` under it. `height` is the cell's total and
-// `foot-height` the band the row reserved for the tallest foot in it, so the
-// item is rendered that much shorter and every foot in the row starts on the
-// same line. With no foot the item takes the whole cell, which is what lets a
-// captionless box share a row with a captioned figure and still reach the
-// bottom. `height: auto` stacks the two at their natural sizes.
+// One cell: the item above its `foot`. `foot-height` is the row's shared band,
+// so the item is drawn that much shorter; without a foot it takes the whole cell.
 #let _render-cell(spec, height: auto, foot-height: 0pt, outer-spacing: true, row-title-size: none) = {
     let foot = _item-foot(spec)
     if foot == none {
@@ -300,9 +279,7 @@
     let pos = args.pos()
     let named = args.named()
     let options = ("compact", "body-align", "body-inset", "title-size", "title-inset")
-    // Revealing is the ROW's job, never an item's: a stepped row is emitted as a
-    // Touying mark that only survives outside a `context` (see `vboxs`), and a box
-    // standing on its own is drawn by a show rule, long after Touying parsed the marks.
+    // Revealing is the row's job (`vboxs(.., step: ..)`); a lone box reveals with `#pause`.
     assert(
         "step" not in named,
         message: name + ": `step` belongs on the row — `vboxs(.., step: ..)`; "
@@ -352,16 +329,9 @@
 
 #let apply-box-style(body) = {
     show figure.where(kind: _box-figure-kind): set align(left)
-    // A figure is placed as one unbreakable unit, and Typst DROPS one that does
-    // not fit its region: no warning, no partial render, the slide simply comes
-    // out empty. Box items are figures only so a spec can ride along with the
-    // body (`box-item`), so that placement rule buys this theme nothing and
-    // costs it silent content loss. Breakable, an over-tall box spills onto the
-    // next page instead — still wrong for a slide, but wrong where it shows.
-    //
-    // This reaches the blocks inside a box as well, so a frame splits rather
-    // than being pushed along whole. A block that passes `breakable:` itself
-    // still wins, which is why `code-config.breakable` is on.
+    // Typst silently drops an unbreakable figure that does not fit its region.
+    // Breakable, an over-tall box spills onto the next page instead, which is
+    // wrong where it shows. A block passing `breakable:` itself still wins.
     show figure.where(kind: _box-figure-kind): set block(breakable: true)
     // Outside a row an item is simply its own cell: natural height, and its
     // `foot` (a figure caption) still rendered under it.
@@ -398,29 +368,21 @@
     step
 }
 
-// The theme's one row layout. Side by side, every item gets the SAME height,
-// whatever it is — that is what makes columns line up. Stacked (`ttb` / `btt`)
-// they get their OWN heights instead, in proportion to what each one measures:
-// filling, those proportions are scaled up to the height the row was given; not
-// filling, each item is simply its natural height. `heights:` replaces the
-// measured proportions with named ones, and `heights: (1fr,) * n` is how a stack
-// asks for the even split that measuring would not have produced.
+// The theme's one row layout. Side by side, every item gets the same height so
+// columns line up. Stacked (`ttb` / `btt`), items get their own heights in
+// proportion to what they measure, scaled to fill the row when filling;
+// `heights:` names those proportions (`(1fr,) * n` for an even split).
 //
-// `step` reveals the row a subslide at a time, and is the ONLY way to do it —
-// `#pause` inside a row is a hard error, not an oversight (see `_resolve-steps`
-// and the `touying-fn-wrapper` at the end of this function).
+// `step` reveals the row one subslide at a time and is the only way to do so
+// (`#pause` inside a row is an error):
 //
 //   step: true          one item per subslide, `after` on the one past the last
 //   step: 2             the same, but the row starts on subslide 2
 //   step: (1, 1, 2)     an index per item — the first two together, then the third
 //
-// Indices are absolute subslide numbers, the way Touying's own `uncover("2-")`
-// counts, and a row spends none of its own: a `#pause` before it has already
-// taken subslide 1, so the row starts at `step: 2`, and a `#pause` after it goes
-// on counting the pauses alone. They attach to items in the order WRITTEN,
-// unlike `widths`, which names tracks in the order drawn. An item that has not
-// arrived yet is covered, not dropped, so the row's geometry is identical on
-// every subslide.
+// Indices are absolute subslide numbers, as in Touying's `uncover("2-")`, and
+// attach to items in the order written. An item not yet revealed is covered,
+// not dropped, so the row's geometry is identical on every subslide.
 #let vboxs(
     ..items,
     dir: ltr,
@@ -449,21 +411,17 @@
     assert(dir in (ltr, rtl, ttb, btt), message: "vboxs: `dir` must be one of ltr, rtl, ttb, btt")
     let is-vertical = dir == ttb or dir == btt
 
-    // Indices are folded in BEFORE `ordered` reverses an `rtl` / `btt` row, which
-    // is what makes them follow the order the items were written.
+    // Steps attach before `rtl` / `btt` reverse the items, so they follow the order written.
     let steps = _resolve-steps(step, count)
     if steps != none {
         specs = specs.zip(steps).map(((spec, at)) => spec + (step: at))
     }
-    // The row's `after` lands on its own subslide once the row steps at all: one
-    // past the last item. There is no separate knob — `step` owns the whole row's
-    // timing, so a reader counts subslides in one place.
+    // `after` gets its own subslide, one past the last item.
     let last-step = if steps == none { 1 } else { calc.max(..steps) }
     let after-step = if steps == none or after == none { none } else { last-step + 1 }
     let max-step = if after-step == none { last-step } else { after-step }
 
-    // `rtl` / `btt` reverse the items themselves, so `widths` keeps naming the
-    // tracks in the order they are drawn rather than the order written.
+    // `rtl` / `btt` reverse the items, so `widths` names tracks in the order drawn.
     let ordered = if dir == rtl or dir == btt { specs.rev() } else { specs }
 
     let tracks = if widths == auto {
@@ -478,13 +436,8 @@
         widths
     }
 
-    // `heights` is the vertical counterpart of `widths`, and mirrors it: named
-    // in the order tracks are DRAWN, rejected on the axis that has only one
-    // track. Left `auto`, a stack takes its proportions from what its items
-    // measure. The values are weights rather than grid tracks — they are
-    // normalized against each other and resolved to lengths before layout,
-    // because an item that scales itself to fit needs a real height, not a `1fr`
-    // that the grid alone would know how to divide.
+    // `heights` mirrors `widths` on the stacked axis: weights, normalized and
+    // resolved to lengths before layout, since a scale-to-fit item needs a real height.
     let tall-tracks = if heights == auto {
         auto
     } else {
@@ -508,14 +461,9 @@
     // Measure and render the same block so paragraph spacing cannot change its flow height.
     let after-block = if after != none { block(width: 100%, spacing: 0pt)[#after] }
 
-    // A stepped row is rendered once per subslide, so everything below is a
-    // function of Touying's `self`. A row that does not step is called once with
-    // `self: none` and never touches it.
+    // Rendered once per subslide with Touying's `self`; a non-stepping row is called once with `self: none`.
     let render(self: none) = context {
-        // Not yet revealed: covered, never dropped. Cover is the deck's own method
-        // (`hide` unless a deck configured otherwise), so the cell keeps its exact
-        // size and no track, foot band, or caption baseline moves between
-        // subslides — the whole point of revealing inside an equal-height row.
+        // Not yet revealed: covered by the deck's cover method, never dropped, so the cell keeps its size.
         let veil(at, cont) = if at == none or self == none or self.subslide >= at {
             cont
         } else {
@@ -533,11 +481,7 @@
             if resolved == auto { theme().spacing.flow } else { resolved }
         }
 
-        // The band every foot in this row shares: the tallest one, measured at
-        // the width its own cell will have. A side-by-side row measures its feet
-        // as one grid, so each wraps at its column width and the grid's own row
-        // height is already the maximum; a stack's feet all have the row width,
-        // so those are measured apart and maxed here.
+        // The band every foot in this row shares: the tallest, measured at its cell width.
         let foot-band = available-width => if feet.all(f => f == none) {
             0pt
         } else if is-vertical {
@@ -556,13 +500,8 @@
             ).height
         }
 
-        // `item-heights` is one height PER ITEM. A side-by-side row passes the
-        // same value throughout — equal height is the point there, since the
-        // columns have to line up — while a stack passes each item its own, so
-        // a short figure above a tall one no longer has to pretend to match it.
-        // The value is handed to the grid track AND to the renderer, which is
-        // why it must be a resolved length: a `1fr` track is not known until
-        // layout, and an item that scales itself to fit needs a number now.
+        // One height per item: the same for every column of a side-by-side row, each
+        // its own in a stack. Resolved lengths, since a `1fr` track is unknown until layout.
         let row = (item-heights, band) => block(width: 100%, spacing: 0pt)[
             #grid(
                 columns: if is-vertical { (1fr,) } else { tracks },
@@ -586,17 +525,8 @@
             )
         ]
 
-        // Every cell at its own natural height, measured at the width the row
-        // really got. A stack's proportions come from these, so they are
-        // measured once and used whole rather than folded to a maximum.
-        //
-        // A cell's natural height is its BODY plus the band the row reserves —
-        // not the item's own foot. Measuring the whole cell would count that
-        // foot instead, and the render pass subtracts the full band from
-        // whatever height it is handed: a one-line caption in a row whose band
-        // is two lines would come back one line short, and the body would be
-        // squeezed by the difference (a caption drawn over the last code line).
-        // A footless item is handed the height whole, so it takes no band.
+        // Each cell's natural height: the body plus the row's shared band for captioned
+        // items (not the item's own foot, which the render pass subtracts as the band).
         let naturals = (band, w) => ordered.map(spec => {
             let body = measure(
                 _render-spec(spec, outer-spacing: false, row-title-size: title-size),
@@ -605,9 +535,8 @@
             if _item-foot(spec) == none { body } else { body + band }
         })
 
-        // The weight each item carries when a stack divides its height:
-        // `heights` if the deck named them, else what the content measures.
-        // Normalized here so both paths are plain floats summing to 1.
+        // The weight each item carries when a stack divides its height: `heights` if
+        // given, else what the content measures. Normalized to floats summing to 1.
         let weights = (band, w) => if tall-tracks == auto {
             let hs = naturals(band, w)
             let sum = hs.fold(0pt, (a, b) => a + b)
@@ -618,11 +547,8 @@
             tall-tracks.map(h => h / sum)
         }
 
-        // The item height and the foot band both depend on the width the row
-        // really gets, so both are settled inside one `layout` over the box.
-        // `bleed` widens that box through the slide's side margins; the box is
-        // still `width` of whatever it sits in, so `width: 100%` is what makes a
-        // bled row actually reach both page edges.
+        // Item heights and the foot band both depend on the width the row really gets,
+        // so both are settled inside one `layout`. `bleed` widens the box through the side margins.
         let laid-out = height-for => {
             let placed = box(width: width)[
                 #layout(size => {
@@ -632,17 +558,12 @@
             ]
             if bleed { bleed-block(align(center)[#placed]) } else { align(center)[#placed] }
         }
-        // The gap is never covered: reserving it keeps the row above at the same
-        // height whether or not the trailer has arrived yet.
+        // The gap is never covered, so the row above keeps its height before the trailer arrives.
         let trailer = if after != none { v(after-gap) + veil(after-step, after-block) }
 
         if fill-height {
-            // A stack splits the height it is given between its items, in
-            // proportion to what each one measures — so two figures scale by the
-            // SAME factor and keep their relative sizes while together filling
-            // the column. An even split would blow the short one up to match the
-            // tall one; `heights:` is how a deck overrides the proportions.
-            // A side-by-side row gives every item all of the height instead.
+            // A stack splits its height between items in proportion to what they measure,
+            // so two figures scale by the same factor; a side-by-side row gives every item all of it.
             let share = (total, band, w) => if is-vertical {
                 let inner = calc.max(0pt, total - measure(v(gap)).height * (count - 1))
                 weights(band, w).map(f => inner * f)
@@ -662,12 +583,8 @@
                 })
             ]
         } else {
-            // Nothing to fill: a stack simply gives every item the height it
-            // measures, which is the closest this row comes to plain stacking.
-            // Named `heights:` still take over, sized against the total those
-            // naturals add up to. A side-by-side row still equalizes — it takes
-            // the whole grid's natural height, which is already the tallest
-            // item's, and hands it to every column.
+            // Not filling: a stack gives every item its measured height (`heights:` still
+            // reweights them); a side-by-side row takes the tallest and hands it to every column.
             let natural = (band, w) => if is-vertical {
                 let hs = naturals(band, w)
                 if tall-tracks == auto {
@@ -677,11 +594,8 @@
                     weights(band, w).map(f => total * f)
                 }
             } else {
-                // Measure each BODY at its actual track width, then reserve the
-                // shared band under every captioned body. Measuring `_render-cell`
-                // here would count each caption's own height, then the render pass
-                // would subtract the tallest band from all of them — shrinking a
-                // valid body whenever another caption wrapped taller.
+                // Measure each body at its track width, then reserve the shared band under
+                // captioned bodies, rather than measuring whole cells and over-subtracting.
                 let cells = ordered.map(spec => block(width: 100%, spacing: 0pt)[
                     #_render-spec(spec, outer-spacing: false, row-title-size: title-size)
                     #if _item-foot(spec) != none { block(height: band) }
@@ -700,12 +614,8 @@
         }
     }
 
-    // Touying resolves `#pause` by walking the content tree BEFORE layout, and it
-    // cannot see into a `context` — which is every part of this row, since equal
-    // heights need `measure` and `layout`. `touying-fn-wrapper` is the way in: it
-    // is a mark Touying resolves by CALLING `render` with the current `self`, so
-    // the mark sits outside the `context` and `self` arrives inside it.
-    // `last-subslide` is what tells the slide how many subslides to repeat for.
+    // Touying resolves `#pause` before layout and cannot see into a `context`.
+    // `touying-fn-wrapper` is a mark it resolves by calling `render` with `self`.
     if max-step > 1 {
         touying-fn-wrapper(render, last-subslide: max-step)
     } else {
@@ -716,14 +626,8 @@
 // A STACK IN ONE CELL
 // -----------------------------------------------------------------------------
 
-// A row item that draws NOTHING of its own — no frame, no title, no fill, no
-// caption. It exists so one cell of a row can hold a second row, which is
-// otherwise impossible: every `vboxs` item must be a `box-item`, so neither
-// plain content nor a nested `vboxs` can go in a cell directly.
-//
-// Everything below is a forward to that nested row, so all four directions,
-// `widths`, foot bands, and equal heights are `vboxs`'s doing, not a second
-// implementation of them. Defined after `vboxs` because it closes over it.
+// A row item that draws nothing of its own, so one cell of a row can hold a
+// second row. Everything is forwarded to the nested `vboxs`.
 #let _render-vstack(spec, height: auto, outer-spacing: true) = {
     let outer = if outer-spacing { auto } else { 0pt }
     block(width: 100%, height: height, above: outer, below: outer, spacing: 0pt)[
@@ -736,22 +640,11 @@
             gap: spec.gap,
             after: spec.after,
             after-gap: spec.after-gap,
-            // ON, a stack splits the cell the row gave it BETWEEN its items,
-            // in proportion to what each one measures — which is what lets a
-            // figure that scales to its slot (`img`, and any foreign renderer
-            // that fits itself to the height handed down) actually use the
-            // column. OFF, every item is exactly its own natural height and
-            // whatever the cell has left over stays empty. OFF is the default:
-            // most stacks hold boxes, prose, or listings, which have nothing to
-            // scale into extra height and only stretch their frames when they
-            // are given it. A stack of FIGURES is what asks for
-            // `fill-height: true` — without it a scale-to-fit item renders at
-            // roughly 1× in a column with room to spare. `height == auto` — a
-            // bare `#vstack` outside any row — has nothing to fill either way.
+            // A stack of figures needs `fill-height: true` to scale into its cell;
+            // boxes and listings would only stretch their frames. A bare `#vstack`
+            // outside a row has nothing to fill.
             fill-height: spec.fill-height and height != auto,
-            // `fill-pad` keeps a filling row clear of the footer, and the outer
-            // row already reserved it. Padding again would only shrink the cell
-            // this stack was handed.
+            // The outer row already reserved `fill-pad`.
             fill-pad: 0pt,
             title-size: spec.at("row-title-size", default: none),
         )
@@ -765,12 +658,8 @@
 //       vstack(img(a, [Target A]), img(b, [Target B]), fill-height: true),
 //   )
 //
-// `dir` is the nested row's, not the outer one's, so a `ttb` outer row can hold
-// a cell of items side by side. A `vstack` is itself a row item, so stacks nest.
-//
-// `fill-height: true` for a stack of figures, which need a real height to scale
-// into; the default is off, since filling a stack of boxes, prose, or listings
-// only stretches their frames.
+// `dir` is the nested row's own, so a `ttb` outer row can hold a side-by-side
+// cell. Stacks nest. Use `fill-height: true` for a stack of figures.
 #let vstack(
     ..items,
     dir: ttb,
@@ -782,17 +671,12 @@
     after-gap: auto,
     fill-height: false,
 ) = {
-    // The sink takes positionals only; every option is a named parameter above.
-    // Without this check a stray named argument would land in the sink and be
-    // silently dropped — the same trap `img` guards against.
+    // The sink takes positionals only; a stray named argument must not vanish.
     let unknown = items.named().keys()
     if unknown.len() > 0 {
         let key = unknown.first()
         let hint = if key in ("step", "bleed") {
-            // A nested row is rendered inside a `context`, and a Touying mark
-            // emitted there is never resolved — so revealing belongs to the
-            // outer row, which covers this whole cell as one item. Bleed reaches
-            // through the slide's side margins, which a cell cannot do either.
+            // Revealing and bleeding are the outer row's job; a cell can do neither.
             " — `" + key + "` belongs on the outer row: `vboxs(vstack(..), .., " + key + ": ..)`"
         } else if key == "fill-pad" {
             " — how big the cell is stays the outer row's call; `fill-height` only says whether to fill it"

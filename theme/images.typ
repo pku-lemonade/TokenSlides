@@ -5,11 +5,8 @@
 // CONFIG
 // Default image options plus the caption style shared by every row item;
 // deck-level overrides merge in via `lemonade-theme(img-config: ...)`.
-// `cap-size: auto` resolves to the current aspect ratio's `small` font size.
-//
-// How a figure is PLACED is not here: `img` is a `vboxs` row item, so the row
-// owns width, direction, gaps, bleed, and whether it fills the slide — see
-// `vboxs-config` in boxes.typ.
+// `cap-size: auto` resolves to the aspect ratio's `small` font size. Placement
+// (width, direction, gaps, bleed, filling) is the row's job: see `vboxs-config`.
 #let img-config = (
     cap-size: auto,
     cap-weight: "bold",
@@ -125,14 +122,9 @@
     )
 }
 
-// One figure, as a `vboxs` row item. The row decides how much height this gets
-// (`height`), and lays the caption out itself from the spec's `foot` — see
-// `box-item` in boxes.typ. `height` is a definite length inside a row, `auto`
-// standing alone or when the row is not filling.
-//
-// A definite height is handed straight to the image with `fit`, so `contain`
-// letterboxes a figure whose aspect ratio does not match its slot rather than
-// distorting it, and the figure sits centered in what it was given.
+// One figure, as a `vboxs` row item. `height` is definite inside a filling row
+// and handed straight to the image with `fit`, so `contain` letterboxes a
+// mismatched aspect ratio rather than distorting it.
 #let _render-img(spec, height: auto, outer-spacing: true) = context {
     let colors = theme().colors
     let cfg = _img-config()
@@ -180,14 +172,10 @@
 }
 
 // `#img(source)` or `#img(source, [caption])`, where `source` is a path or
-// ready-made `image(...)` content. (The per-mode `(light:, dark:)` variant dicts
-// that `place-xx` resolves are for logos, and are not accepted here.)
-//
-// The result is a `vboxs` row item, which is the only image layout in this
-// theme: `#vboxs(img(a), img(b))` puts two figures side by side at one height,
-// `dir: ttb` stacks them, and `after:` hangs content under the row. A bare
-// `#img(...)` renders on its own at its natural size, the same way a bare
-// `#code[...]` does.
+// ready-made `image(...)` content. The result is a `vboxs` row item, the only
+// image layout in this theme: `#vboxs(img(a), img(b))` puts two figures side
+// by side at one height, `dir: ttb` stacks them, `after:` hangs content under
+// the row. A bare `#img(...)` renders on its own at its natural size.
 #let img(
     ..args,
     width: 100%,
@@ -206,20 +194,14 @@
         pos.len() == 1 or pos.len() == 2,
         message: "img: use #img(source) or #img(source, [caption])",
     )
-    // The sink is here only to take one or two positionals; every option this
-    // figure has is a named parameter above. Without this an unknown named
-    // argument would land in the sink and be silently dropped.
+    // The sink takes one or two positionals only; a stray named argument must not vanish.
     let unknown = args.named().keys()
     if unknown.len() > 0 {
         // Revealing belongs to the row, not to one figure in it (see `vboxs`).
         let hint = if "step" in unknown { " — `step` belongs on the row: `vboxs(img(..), .., step: ..)`" } else { "" }
         panic("img: unknown option `" + unknown.first() + "`" + hint)
     }
-    // A ratio has nothing to resolve against here: in a filling row the row
-    // hands down a length and this is ignored, and in a non-filling one the row
-    // measures the figure at its natural size first, where `50%` of an
-    // as-yet-unknown height measures as nothing and the figure silently
-    // vanishes. Filling a container is the row's job.
+    // A ratio height has nothing to resolve against here; filling a container is the row's job.
     assert(
         height == auto or type(height) == length,
         message: "img: `height` takes a length; for a figure that fills its container, "

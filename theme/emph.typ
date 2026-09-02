@@ -1,10 +1,6 @@
-// Emphasis styling.
-//
-// Single source of truth for how `_emph_` / `*strong*` render. The theme
-// applies it globally with the primary accent on `*strong*`; surfaces with a
-// primary/accent fill re-apply it with fills that stay readable there (box
-// title bars via `on-primary`, callouts and vtable cells with their own
-// fills). A fill of `none` keeps the surrounding text color.
+// How `_emph_` / `*strong*` render. The theme applies it globally with the
+// primary accent on `*strong*`; filled surfaces (box title bars, callouts,
+// vtable cells) re-apply it with fills that stay readable there.
 
 #import "base.typ": theme
 
