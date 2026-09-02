@@ -133,22 +133,16 @@
         weight: config.weight,
     )
 
-    block(
-        width: 100%,
-        height: footer-layout.height,
-        fill: footer-fill,
-    )[
+    block(width: 100%, height: footer-layout.height, fill: footer-fill)[
         #align(horizon)[
-            #block(width: 100%)[
-                #grid(
-                    columns: (1fr, auto, 1fr),
-                    align: (left + horizon, center + horizon, right + horizon),
-                    inset: config.inset,
-                    _render-slot(config.left, self),
-                    _render-slot(config.middle, self),
-                    _render-slot(config.right, self),
-                )
-            ]
+            #grid(
+                columns: (1fr, auto, 1fr),
+                align: (left + horizon, center + horizon, right + horizon),
+                inset: config.inset,
+                _render-slot(config.left, self),
+                _render-slot(config.middle, self),
+                _render-slot(config.right, self),
+            )
         ]
     ]
 }

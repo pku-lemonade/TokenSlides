@@ -1,6 +1,7 @@
 #import "base.typ": theme
 #import "boxes.typ": box-item
 #import "images.typ": caption-foot
+#import "code-langs.typ": check-lang, code-buckets, code-lang, python-lang, regex-escape
 
 // USER CONFIG
 // - Frame geometry, typography, and the listing font: edit `code-config` below.
@@ -70,45 +71,11 @@
 // A listing inside a box helper is handed no row height at all: pass
 // `frame: false` there and the box's own surface is the listing's.
 
+// PALETTES
 // How a listing reads, per mode. `bg` / `border` are the frame; `fg` is the ink
 // for prose in the code body, for every token the palette does not repaint, and
 // (transparentized) for `dim:`.
 //
-// Typst highlights raw blocks with `syntect`, and syntect's only input for
-// colors is a TextMate theme. Rather than hand `raw` a theme of our own — which
-// would mean generating plist XML, since that is the only format it takes — we
-// let Typst's built-in theme do the classifying and remap what it produced:
-// the color it painted a span with is readable back out of the span with
-// `context text.fill`. That is the whole reason no `.tmTheme` file, and no code
-// that writes one, exists in this repo.
-//
-// The catch is that the built-in theme's colors are an implementation detail of
-// Typst rather than a documented API. `_classifier` below is the observed table,
-// and a Typst upgrade that changes the default theme would make every key miss
-// — listings would fall back to the built-in colors, which are tuned for a white
-// page and go unreadable on a dark `bg`. To re-derive it, render a snippet under
-//
-//     show raw: it => { show text: t => context metadata((txt: t.text, fill: text.fill.to-hex())); it }
-//
-// and `query(metadata)` the result. (`t.fill` is not readable as a field; only
-// the contextual `text.fill` is.)
-#let _classifier = (
-    comment: "#74747c", // `# note`
-    keyword: "#d73948", // def class if return None True and the operators
-    name: "#4b69c6", // function, type and class names
-    decorator: "#301414", // `@deco`
-    string: "#198810", // `"text"`
-    number: "#b60157", // `1`, `1.5`
-    other: "#8b41b1", // inherited class, f-string interpolation
-    plain: "#000000", // everything else
-)
-
-// The bucket vocabulary, shared by both highlighters: syntect spans reach it by
-// color through `_classifier`, and a `code-lang` rule names it outright. One
-// palette row therefore styles a token the same way whichever highlighter
-// produced it, and a deck that swaps a listing's language keeps its look.
-#let _buckets = _classifier.keys()
-
 // A `syntax` row styles one classifier bucket. `fill` defaults to the palette's
 // `fg`, so a bucket left bare is simply not colored — that is what keeps a
 // listing quiet. `weight` is left unset unless a row asks for one, so the bold
@@ -148,225 +115,6 @@
         number: (fill: rgb("#DB8948")),
         other: (fill: rgb("#A987E8")),
         plain: (:),
-    ),
-)
-
-#let _regex-specials = ("\\", ".", "+", "*", "?", "(", ")", "[", "]", "{", "}", "^", "$", "|", "/", "-")
-
-#let _regex-escape(s) = s.clusters().map(c => if c in _regex-specials { "\\" + c } else { c }).join("")
-
-// LANGUAGE SPECS
-//
-// A spec is an ordered list of `(bucket, pattern)` rules that this module
-// matches across a line itself, instead of handing the line to syntect. The
-// first rule that matches at a position wins, and that ordering is the whole
-// point: put `comment` and `string` first and a `def` inside either one stays
-// comment or string ink — which is exactly what a pile of `show regex` rules
-// cannot do, since those all match independently of one another.
-//
-// `bucket` is one of `_buckets`, so a spec-highlighted listing wears the same
-// palette rows as a syntect-highlighted one.
-//
-// `pattern` is a regex SOURCE STRING, or an array of literal words. Never a
-// `regex` value: it cannot be spliced into the combined alternation this
-// builds, because its `repr` re-escapes backslashes. Leave anchors out — every
-// rule is matched inside a line, never against the whole of one. There is no
-// look-around either; Typst's regex engine has none.
-//
-// Capture what the rule should actually color when it has to match more than
-// that to find it. `("name", "\\bdef\\s+([A-Za-z_]\\w*)")` colors the name and
-// hands `def ` back to the other rules, which is how a name is picked out
-// without look-behind. Only the first capture group is read.
-//
-//     #let tm-lang = code-lang(
-//       ("comment", "#.*"),
-//       ("keyword", ("kernel", "tile", "at", "yield")),
-//       ("number", "\\b[0-9]+\\b"),
-//     )
-//
-// Register it deck-wide with `lemonade-theme(code-langs: (tdsl: tm-lang))` and
-// every ```tdsl fence picks it up, or hand it to one listing as `lang:`.
-#let _word-char(c) = c.match(regex("^\\w$")) != none
-
-// `\b` is worth adding only where the word actually has a word boundary: an
-// operator like `->` has none, and `\b->\b` would never match.
-#let _words-pattern(words, bucket) = {
-    assert(words.len() > 0, message: "code-lang: bucket `" + bucket + "` got an empty word list")
-    let atom(w) = {
-        assert(
-            type(w) == str and w.len() > 0,
-            message: "code-lang: bucket `" + bucket + "` takes non-empty strings, got " + repr(w),
-        )
-        let pre = if _word-char(w.first()) { "\\b" } else { "" }
-        let post = if _word-char(w.last()) { "\\b" } else { "" }
-        pre + _regex-escape(w) + post
-    }
-    // Longest first, so no word is shadowed by another that is a prefix of it.
-    "(?:" + words.sorted(key: w => -w.len()).map(atom).join("|") + ")"
-}
-
-#let code-lang(..rules) = {
-    assert(
-        rules.named().len() == 0,
-        message: "code-lang: takes positional `(bucket, pattern)` rules, got named " + repr(rules.named().keys()),
-    )
-    assert(rules.pos().len() > 0, message: "code-lang: needs at least one rule")
-    let out = ()
-    for rule in rules.pos() {
-        assert(
-            type(rule) == array and rule.len() == 2,
-            message: "code-lang: a rule is a `(bucket, pattern)` pair, got " + repr(rule),
-        )
-        let (bucket, pattern) = rule
-        assert(
-            bucket in _buckets,
-            message: "code-lang: unknown bucket " + repr(bucket) + "; pick one of " + repr(_buckets),
-        )
-        let source = if type(pattern) == array {
-            _words-pattern(pattern, bucket)
-        } else if type(pattern) == str {
-            "(?:" + pattern + ")"
-        } else {
-            panic(
-                "code-lang: bucket `"
-                    + bucket
-                    + "` takes a pattern string or an array of literal words, got "
-                    + repr(pattern),
-            )
-        }
-        // `test` re-identifies a token once the combined pattern has cut it out
-        // (see `_tokenize`), which is why each rule keeps its own anchored copy.
-        out.push((bucket: bucket, source: source, test: regex("^(?:" + source + ")$")))
-    }
-    (rules: out, all: regex(out.map(r => r.source).join("|")))
-}
-
-#let _check-lang(lang) = {
-    assert(
-        type(lang) == dictionary and "rules" in lang and "all" in lang,
-        message: "code: a language spec must come from `code-lang(...)`, got " + repr(lang),
-    )
-    lang
-}
-
-// Built-in Python. Ordinary config: edit the word lists, drop a rule, or
-// replace the whole spec from a deck with `code-langs: (python: ...)`.
-// `code-langs: (python: none)` hands Python back to syntect.
-//
-// Only what earns a bucket is listed. Everything a rule does not claim is
-// `plain`, so identifiers, operators and punctuation stay body ink.
-#let python-lang = code-lang(
-    ("comment", "#.*"),
-    // Prefixed and plain strings, single or double quoted, backslash aware.
-    // Every rule matches within one line, so a triple-quoted docstring is
-    // highlighted row by row: the opening row runs to its end, and a row that
-    // closes one is matched by the lazy alternative. An unterminated quote also
-    // runs to the end of its row rather than dropping the whole rule, which is
-    // what keeps a half-typed line from flickering back to plain ink.
-    (
-        "string",
-        "(?:[fFrRbBuU]|[rR][bB]|[bB][rR]|[fF][rR]|[rR][fF])?"
-            + "(?:\"\"\"(?:.*?\"\"\"|.*)"
-            + "|'''(?:.*?'''|.*)"
-            + "|\"(?:[^\"\\\\\\n]|\\\\.)*\"?"
-            + "|'(?:[^'\\\\\\n]|\\\\.)*'?)",
-    ),
-    ("decorator", "@[A-Za-z_][A-Za-z0-9_.]*"),
-    // The name being defined, before the keyword rule can claim the `def` or
-    // `class` this keys off — the capture is what gets the bucket, and the
-    // keyword goes back through the rules.
-    ("name", "\\b(?:def|class)\\s+([A-Za-z_][A-Za-z0-9_]*)"),
-    (
-        "keyword",
-        (
-            "def",
-            "class",
-            "lambda",
-            "return",
-            "yield",
-            "await",
-            "async",
-            "if",
-            "elif",
-            "else",
-            "for",
-            "while",
-            "break",
-            "continue",
-            "pass",
-            "try",
-            "except",
-            "finally",
-            "raise",
-            "with",
-            "as",
-            "import",
-            "from",
-            "global",
-            "nonlocal",
-            "assert",
-            "del",
-            "in",
-            "is",
-            "not",
-            "and",
-            "or",
-            "match",
-            "case",
-            "True",
-            "False",
-            "None",
-            "self",
-            "cls",
-        ),
-    ),
-    (
-        "name",
-        (
-            "abs",
-            "all",
-            "any",
-            "bool",
-            "bytes",
-            "dict",
-            "enumerate",
-            "filter",
-            "float",
-            "frozenset",
-            "getattr",
-            "hasattr",
-            "int",
-            "isinstance",
-            "issubclass",
-            "iter",
-            "len",
-            "list",
-            "map",
-            "max",
-            "min",
-            "next",
-            "object",
-            "open",
-            "print",
-            "range",
-            "repr",
-            "reversed",
-            "round",
-            "set",
-            "setattr",
-            "sorted",
-            "str",
-            "sum",
-            "super",
-            "tuple",
-            "type",
-            "zip",
-        ),
-    ),
-    // Ints, floats, exponents, hex/oct/bin, and `1_000_000`.
-    (
-        "number",
-        "\\b(?:0[xX][0-9a-fA-F_]+|0[oO][0-7_]+|0[bB][01_]+|[0-9][0-9_]*(?:\\.[0-9_]*)?(?:[eE][-+]?[0-9]+)?j?)\\b",
     ),
 )
 
@@ -442,6 +190,44 @@
     // the highlighter would have made of it, comment and string ink included:
     // marking says "look here", and it is the only thing on the slide that does.
     mark-weight: "bold",
+)
+
+// SYNTECT REPAINT
+//
+// Typst highlights raw blocks with `syntect`, and syntect's only input for
+// colors is a TextMate theme. Rather than hand `raw` a theme of our own — which
+// would mean generating plist XML, since that is the only format it takes — we
+// let Typst's built-in theme do the classifying and remap what it produced:
+// the color it painted a span with is readable back out of the span with
+// `context text.fill`. That is the whole reason no `.tmTheme` file, and no code
+// that writes one, exists in this repo.
+//
+// The catch is that the built-in theme's colors are an implementation detail of
+// Typst rather than a documented API. `_classifier` below is the observed table,
+// and a Typst upgrade that changes the default theme would make every key miss
+// — listings would fall back to the built-in colors, which are tuned for a white
+// page and go unreadable on a dark `bg`. To re-derive it, render a snippet under
+//
+//     show raw: it => { show text: t => context metadata((txt: t.text, fill: text.fill.to-hex())); it }
+//
+// and `query(metadata)` the result. (`t.fill` is not readable as a field; only
+// the contextual `text.fill` is.)
+#let _classifier = (
+    comment: "#74747c", // `# note`
+    keyword: "#d73948", // def class if return None True and the operators
+    name: "#4b69c6", // function, type and class names
+    decorator: "#301414", // `@deco`
+    string: "#198810", // `"text"`
+    number: "#b60157", // `1`, `1.5`
+    other: "#8b41b1", // inherited class, f-string interpolation
+    plain: "#000000", // everything else
+)
+
+// The observed table and the shared vocabulary must agree, or a bucket would
+// have a palette row but never be produced (or the reverse).
+#assert(
+    _classifier.keys().sorted() == code-buckets.sorted(),
+    message: "code: `_classifier` buckets must match `code-buckets` in code-langs.typ",
 )
 
 // Accept a bare line number or an array of them (`range(3, 7)` included).
@@ -551,7 +337,7 @@
     if lang == none {
         none
     } else if type(lang) == dictionary {
-        _check-lang(lang)
+        check-lang(lang)
     } else if type(lang) == str {
         assert(
             lang in langs,
@@ -561,10 +347,10 @@
             langs.at(lang) != none,
             message: "code: language spec `" + lang + "` is turned off by this deck's `code-langs`",
         )
-        _check-lang(langs.at(lang))
+        check-lang(langs.at(lang))
     } else if lang == auto {
         let found = if fence == none { none } else { langs.at(fence, default: none) }
-        if found == none { none } else { _check-lang(found) }
+        if found == none { none } else { check-lang(found) }
     } else {
         panic(
             "code: `lang` must be `auto`, `none`, a registered name, or a `code-lang(...)` spec, got " + repr(lang),
@@ -735,7 +521,7 @@
     let literals = marks.filter(m => type(m) == str).sorted(key: m => -m.len())
     let patterns = marks.filter(m => type(m) == regex)
     if literals.len() > 0 {
-        patterns.push(regex("(?:" + literals.map(_regex-escape).join("|") + ")"))
+        patterns.push(regex("(?:" + literals.map(regex-escape).join("|") + ")"))
     }
     _fold-marks(body, patterns, ink)
 }
@@ -745,7 +531,7 @@
     for key in ("bg", "border", "fg", "syntax") {
         assert(key in palette, message: "code: code palette needs a `" + key + "` key, got " + repr(palette.keys()))
     }
-    for bucket in _classifier.keys() {
+    for bucket in code-buckets {
         assert(
             bucket in palette.syntax,
             message: "code: code palette has no `" + bucket + "` syntax row; every bucket in `_classifier` needs one",
