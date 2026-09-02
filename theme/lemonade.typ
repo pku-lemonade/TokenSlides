@@ -1,8 +1,8 @@
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": (
-    accent-config, aspect-ratios, bleed, cur-theme, font-config, layout-config, merge-config, mode-config, theme,
-    title-alignments,
+    accent-config, aspect-ratios, bleed, cur-theme, font-config, layout-config, merge-config, mode-config,
+    resolve-theme, theme, title-alignments,
 )
 // `appendix` freezes Touying's last-slide counter, so backup slides kept after
 // the closing slide stop inflating the `n / total` the footer shows on the
@@ -84,8 +84,20 @@
         message: "lemonade-theme: `title-align` must be left, center or right, got " + repr(title-align),
     )
 
-    let mode-cfg = mode-config.at(mode)
-    let colors = merge-config("colors-override", mode-cfg.colors, if colors-override == none { (:) } else { colors-override })
+    let resolved = resolve-theme(
+        aspect-ratio: aspect-ratio,
+        mode: mode,
+        colors-override: if colors-override == none { (:) } else { colors-override },
+        box-compact: box-compact,
+        box-fill: box-fill,
+        title-align: title-align,
+        artifact-badges: artifact-badges,
+    ) + (
+        img: merge-config("img-config", default-img-config, img-config),
+        vboxs: merge-config("vboxs-config", default-vboxs-config, vboxs-config),
+        code-langs: code-config.langs + code-langs,
+    )
+    let colors = resolved.colors
     let layout = layout-config.at(aspect-ratio)
     let spacing = layout.spacing
     let footer-cfg = resolve-footer(footer)
@@ -110,23 +122,7 @@
     }
     let section-slide-fn = body => outline-slide(level: 1, body: body)
 
-    cur-theme.update((
-        aspect-ratio: aspect-ratio,
-        mode: mode,
-        colors: colors,
-        box-styles: mode-cfg.box,
-        box-compact: box-compact,
-        box-fill: box-fill,
-        title-align: title-align,
-        font-sizes: layout.font-sizes,
-        spacing: spacing,
-        // Slide margins without the footer band; `bleed` reaches through these.
-        margins: layout.margins,
-        artifact-badges: artifact-badges,
-        img: merge-config("img-config", default-img-config, img-config),
-        vboxs: merge-config("vboxs-config", default-vboxs-config, vboxs-config),
-        code-langs: code-config.langs + code-langs,
-    ))
+    cur-theme.update(resolved)
 
     show: apply-box-style
     show: apply-table-style.with(colors)

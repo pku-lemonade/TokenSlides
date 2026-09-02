@@ -22,10 +22,14 @@
     cap-gap: 0.2em,
 )
 
+// The deck's `img` defaults: `lemonade-theme(img-config: ...)` merged over `img-config`.
+#let _img-config() = theme().at("img", default: img-config)
+
 // Shared caption styling for `place-image` and `img`. `auto` values resolve
 // from the deck's `img` config; `cap-color: auto` keeps the surrounding text color.
 #let _caption-block(caption, cap-size: auto, cap-weight: auto, cap-color: auto) = context {
-    let (img: img-config, font-sizes) = theme()
+    let font-sizes = theme().font-sizes
+    let img-config = _img-config()
     let resolved-cap-size = if cap-size != auto {
         cap-size
     } else if img-config.cap-size != auto {
@@ -58,7 +62,7 @@
     cap-gap: auto,
 ) = if caption == none { none } else {
     context {
-        v(if cap-gap == auto { theme().img.cap-gap } else { cap-gap })
+        v(if cap-gap == auto { _img-config().cap-gap } else { cap-gap })
         block(width: 100%, spacing: 0pt)[
             #align(center)[
                 #_caption-block(
@@ -130,7 +134,8 @@
 // letterboxes a figure whose aspect ratio does not match its slot rather than
 // distorting it, and the figure sits centered in what it was given.
 #let _render-img(spec, height: auto, outer-spacing: true) = context {
-    let (img: cfg, colors) = theme()
+    let colors = theme().colors
+    let cfg = _img-config()
     let pick = (value, key) => if value == auto { cfg.at(key) } else { value }
     let stroke = {
         let border = pick(spec.border, "border")

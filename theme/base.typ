@@ -177,23 +177,7 @@
 // Horizontal alignments a content-slide title may take (`lemonade-theme(title-align:)`).
 #let title-alignments = (left, center, right)
 
-// Runtime state: the theme as `lemonade-theme` resolved it — aspect ratio,
-// mode, colors, font sizes, spacing, margins, and every deck-level component
-// default. Modules read it with `theme()` inside `context`; a new deck-level
-// knob is one more key here and in `lemonade-theme`, nothing else.
-#let cur-theme = state("lemonade-theme", none)
-
-#let theme() = {
-    let resolved = cur-theme.get()
-    assert(resolved != none, message: "lemonade: theme state read before `lemonade-theme` was applied")
-    resolved
-}
-
-// The active aspect ratio's entry of a config's `layouts:` dict. Requires context.
-#let layout-of(config) = config.layouts.at(theme().aspect-ratio)
-
-// Merge `overrides` over `defaults`, rejecting keys the defaults do not have: a
-// misspelt or removed option would otherwise merge in and be read by nobody.
+// Merge `overrides` over `defaults`, rejecting keys the defaults do not have.
 #let merge-config(name, defaults, overrides) = {
     for key in overrides.keys() {
         assert(
@@ -203,6 +187,47 @@
     }
     defaults + overrides
 }
+
+// The theme as `lemonade-theme` resolves it: aspect ratio, mode, colors, box
+// styles, font sizes, spacing and margins. lemonade.typ adds the deck-level
+// component defaults (`img`, `vboxs`, `code-langs`); each module reads those
+// with a fallback to its own config.
+#let resolve-theme(
+    aspect-ratio: "16-9",
+    mode: "light",
+    colors-override: (:),
+    box-compact: false,
+    box-fill: false,
+    title-align: center,
+    artifact-badges: (),
+) = {
+    let layout = layout-config.at(aspect-ratio)
+    let mode-cfg = mode-config.at(mode)
+    (
+        aspect-ratio: aspect-ratio,
+        mode: mode,
+        colors: merge-config("colors-override", mode-cfg.colors, colors-override),
+        box-styles: mode-cfg.box,
+        box-compact: box-compact,
+        box-fill: box-fill,
+        title-align: title-align,
+        font-sizes: layout.font-sizes,
+        spacing: layout.spacing,
+        margins: layout.margins,
+        artifact-badges: artifact-badges,
+    )
+}
+
+// Runtime state, set once by `lemonade-theme`. Modules read it with `theme()`
+// inside `context`. The default must be a complete theme: Typst's layout loop
+// consults it before the update is visible, and a placeholder keeps the loop
+// from converging.
+#let cur-theme = state("lemonade-theme", resolve-theme())
+
+#let theme() = cur-theme.get()
+
+// The active aspect ratio's entry of a config's `layouts:` dict. Requires context.
+#let layout-of(config) = config.layouts.at(theme().aspect-ratio)
 
 // Slot parts, shared by the title slide's metadata lines and the footer slots.
 // A part is `self => content` (called with Touying's `self`), literal content,

@@ -524,7 +524,7 @@
 
         // An argument left `auto` defers to the deck's `vboxs-config`; that
         // dict's own `after-gap: auto` in turn means the uniform flow gap.
-        let cfg = theme().vboxs
+        let cfg = theme().at("vboxs", default: vboxs-config)
         let gap = if gap == auto { cfg.gap } else { gap }
         let fill-height = if fill-height == auto { cfg.fill-height } else { fill-height }
         let fill-pad = if fill-pad == auto { cfg.fill-pad } else { fill-pad }

@@ -29,13 +29,20 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 if [ -n "$ref_dir" ] && [ -z "$png_dir" ]; then png_dir="$tmp/png"; fi
 failed=0
+warned=0
 count=0
 changed=0
 while IFS= read -r src; do
     count=$((count + 1))
     name=$(basename "${src%.typ}")
     if typst compile --root . "$src" "$tmp/$name.pdf" >"$tmp/$name.log" 2>&1; then
-        printf 'ok   %s\n' "$src"
+        if grep -q '^warning' "$tmp/$name.log"; then
+            warned=$((warned + 1))
+            printf 'WARN %s\n' "$src"
+            grep -A2 '^warning' "$tmp/$name.log" | sed 's/^/     /'
+        else
+            printf 'ok   %s\n' "$src"
+        fi
         if [ -n "$png_dir" ]; then
             mkdir -p "$png_dir/$name"
             typst compile --root . --format png --ppi 48 "$src" "$png_dir/$name/{0p}.png" >/dev/null 2>&1
@@ -54,5 +61,5 @@ while IFS= read -r src; do
         sed 's/^/     /' "$tmp/$name.log"
     fi
 done < <(grep -rl --include='*.typ' --exclude-dir=archive 'lemonade-theme.with' "${roots[@]}")
-echo "$count decks, $failed failed${ref_dir:+, $changed changed vs $ref_dir}"
-[ "$failed" = 0 ]
+echo "$count decks, $failed failed, $warned with warnings${ref_dir:+, $changed changed vs $ref_dir}"
+[ "$failed" = 0 ] && [ "$warned" = 0 ]

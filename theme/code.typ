@@ -606,7 +606,8 @@
 }
 
 #let _render-code(spec, height: auto, outer-spacing: true) = context {
-    let (colors, font-sizes, mode, code-langs) = theme()
+    let (colors, font-sizes, mode) = theme()
+    let code-langs = theme().at("code-langs", default: code-config.langs)
     let accent = if spec.accent == auto { colors.primary } else { spec.accent }
     let resolved-size = (if spec.size == auto { font-sizes.code } else { spec.size }) * spec.scale
     let inset = if type(spec.inset) == ratio { spec.inset * resolved-size } else { spec.inset }
