@@ -22,7 +22,7 @@ IMPORTANT: When unsure about Typst or Touying APIs, use Context7 and web search 
 - `theme/table.typ`: table styling and `vtable`
 - `theme/assets.typ`: common logo and QR asset paths
 - `docs/`: one compilable reference deck per theme module. Every public theme name appears in at least one of them (`scripts/check.sh --coverage` fails otherwise); update the owning deck when changing a public theme API
-- `examples/`: complete sample decks (`paper-reading`, `seminar-zh`, `lecture`) that use only the public API
+- `examples/`: complete sample decks by genre, `examples/<genre>/<deck>.typ` with figures in `examples/<genre>/assets/<deck>/`; only sources and assets are tracked. Decks use only the public API
 
 ## Workflow boundaries
 
