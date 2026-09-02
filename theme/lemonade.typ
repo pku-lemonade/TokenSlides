@@ -1,9 +1,8 @@
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": (
-    accent-config, layout-config, aspect-ratios, bleed, cur-ar, cur-artifact-badges, cur-box, cur-box-compact,
-    cur-box-fill, cur-colors, cur-font-sizes, cur-mode, cur-title-align, font-config,
-    mode-config, title-alignments,
+    accent-config, aspect-ratios, bleed, cur-theme, font-config, layout-config, merge-config, mode-config, theme,
+    title-alignments,
 )
 // `appendix` freezes Touying's last-slide counter, so backup slides kept after
 // the closing slide stop inflating the `n / total` the footer shows on the
@@ -18,7 +17,7 @@
 #import "assets.typ": lemonade-qr, nsfc-logo, pku-logo, thu-logo
 #import "boxes.typ": *
 #import "callout.typ": *
-#import "code.typ": code, code-config, code-lang, cur-code-langs, python-lang
+#import "code.typ": code, code-config, code-lang, python-lang
 #import "emph.typ": apply-emph-style, on-primary
 #import "images.typ": *
 #import "images.typ": img-config as default-img-config
@@ -81,8 +80,8 @@
     assert(mode in mode-config.keys())
     assert(title-align in title-alignments)
 
-    let theme = mode-config.at(mode)
-    let colors = theme.colors + (if colors-override == none { (:) } else { colors-override })
+    let mode-cfg = mode-config.at(mode)
+    let colors = merge-config("colors-override", mode-cfg.colors, if colors-override == none { (:) } else { colors-override })
     let layout = layout-config.at(aspect-ratio)
     let spacing = layout.spacing
     let footer-cfg = resolve-footer(footer)
@@ -91,23 +90,6 @@
     let slide-margins = layout.margins + (
         bottom: layout.margins.bottom + footer-band(aspect-ratio, footer-cfg),
     )
-    let slide-page-size = layout.page-size
-    let resolved-font-sizes = layout.font-sizes
-    // A stale or misplaced key would otherwise merge in and be read by nobody —
-    // silent wrong layout rather than an error. `fill-height` moving from the
-    // figure to the row is exactly the mistake worth failing on.
-    let checked-config = (name, defaults, overrides) => {
-        for key in overrides.keys() {
-            assert(
-                key in defaults,
-                message: name + ": unknown key `" + key + "`; known keys are " + repr(defaults.keys()),
-            )
-        }
-        defaults + overrides
-    }
-    let resolved-img-config = checked-config("img-config", default-img-config, img-config)
-    let resolved-vboxs-config = checked-config("vboxs-config", default-vboxs-config, vboxs-config)
-    let resolved-code-langs = code-config.langs + code-langs
     let info = (date: if date == auto { datetime.today() } else { date })
     for (key, value) in (
         title: title,
@@ -124,27 +106,32 @@
     }
     let section-slide-fn = body => outline-slide(level: 1, body: body)
 
-    cur-ar.update(aspect-ratio)
-    cur-mode.update(mode)
-    cur-colors.update(colors)
-    cur-box.update(theme.box)
-    cur-box-compact.update(box-compact)
-    cur-box-fill.update(box-fill)
-    cur-title-align.update(title-align)
-    cur-font-sizes.update(resolved-font-sizes)
-    cur-artifact-badges.update(artifact-badges)
-    cur-img-config.update(resolved-img-config)
-    cur-vboxs-config.update(resolved-vboxs-config)
-    cur-code-langs.update(resolved-code-langs)
+    cur-theme.update((
+        aspect-ratio: aspect-ratio,
+        mode: mode,
+        colors: colors,
+        box-styles: mode-cfg.box,
+        box-compact: box-compact,
+        box-fill: box-fill,
+        title-align: title-align,
+        font-sizes: layout.font-sizes,
+        spacing: spacing,
+        // Slide margins without the footer band; `bleed` reaches through these.
+        margins: layout.margins,
+        artifact-badges: artifact-badges,
+        img: merge-config("img-config", default-img-config, img-config),
+        vboxs: merge-config("vboxs-config", default-vboxs-config, vboxs-config),
+        code-langs: code-config.langs + code-langs,
+    ))
 
     show: apply-box-style
-    show: apply-table-style.with(theme.colors)
+    show: apply-table-style.with(colors)
     show: touying-slides.with(
         config-page(
             paper: "presentation-" + aspect-ratio,
-            width: slide-page-size.width,
-            height: slide-page-size.height,
-            fill: theme.colors.bg,
+            width: layout.page-size.width,
+            height: layout.page-size.height,
+            fill: colors.bg,
             margin: slide-margins,
             header: none,
             footer: if footer-cfg == none { none } else { footer-fn.with(config: footer-cfg) },
@@ -167,7 +154,7 @@
     )
 
     set text(
-        size: resolved-font-sizes.body,
+        size: layout.font-sizes.body,
         font: font-config.body,
         weight: "medium",
         fill: colors.fg,
@@ -179,7 +166,7 @@
     set par(leading: spacing.leading, spacing: spacing.flow)
     set heading(numbering: numbly("{1}.", default: "1.1"))
     show math.equation: set text(font: font-config.math)
-    show raw: set text(font: font-config.mono, size: resolved-font-sizes.code)
+    show raw: set text(font: font-config.mono, size: layout.font-sizes.code)
     show: apply-emph-style.with(strong-fill: colors.primary)
     // Only color external links; keep internal navigation links (e.g. outline) inheriting
     // surrounding text color so progressive fading works.

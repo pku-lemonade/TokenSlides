@@ -1,4 +1,4 @@
-#import "base.typ": cur-colors, cur-font-sizes, font-config
+#import "base.typ": font-config, theme
 #import "assets.typ": asset-path, lemonade-qr
 #import "boxes.typ": box-item
 
@@ -22,24 +22,21 @@
     cap-gap: 0.2em,
 )
 
-// Internal runtime state (set by `lemonade-theme`).
-#let cur-img-config = state("lec-img-config", img-config)
-
 // Shared caption styling for `place-image` and `img`. `auto` values resolve
-// from `cur-img-config`; `cap-color: auto` keeps the surrounding text color.
+// from the deck's `img` config; `cap-color: auto` keeps the surrounding text color.
 #let _caption-block(caption, cap-size: auto, cap-weight: auto, cap-color: auto) = context {
-    let img-config = cur-img-config.get()
+    let (img: img-config, font-sizes) = theme()
     let resolved-cap-size = if cap-size != auto {
         cap-size
-    } else if img-config.at("cap-size") != auto {
-        img-config.at("cap-size")
+    } else if img-config.cap-size != auto {
+        img-config.cap-size
     } else {
-        cur-font-sizes.get().small
+        font-sizes.small
     }
     let cap-text-args = (
         font: font-config.mono,
         size: resolved-cap-size,
-        weight: if cap-weight == auto { img-config.at("cap-weight") } else { cap-weight },
+        weight: if cap-weight == auto { img-config.cap-weight } else { cap-weight },
     )
     if cap-color != auto { cap-text-args.insert("fill", cap-color) }
     block(width: 100%)[
@@ -61,7 +58,7 @@
     cap-gap: auto,
 ) = if caption == none { none } else {
     context {
-        v(if cap-gap == auto { cur-img-config.get().cap-gap } else { cap-gap })
+        v(if cap-gap == auto { theme().img.cap-gap } else { cap-gap })
         block(width: 100%, spacing: 0pt)[
             #align(center)[
                 #_caption-block(
@@ -133,13 +130,13 @@
 // letterboxes a figure whose aspect ratio does not match its slot rather than
 // distorting it, and the figure sits centered in what it was given.
 #let _render-img(spec, height: auto, outer-spacing: true) = context {
-    let cfg = cur-img-config.get()
+    let (img: cfg, colors) = theme()
     let pick = (value, key) => if value == auto { cfg.at(key) } else { value }
     let stroke = {
         let border = pick(spec.border, "border")
         // The config's own `auto` is the mode-dependent hairline; only a
         // resolved color or `none` gets past here.
-        if border == auto { 1pt + cur-colors.get().table-stroke } else { border }
+        if border == auto { 1pt + colors.table-stroke } else { border }
     }
     let target = if height != auto { height } else { spec.height }
 

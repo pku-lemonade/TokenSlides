@@ -1,13 +1,13 @@
-#import "base.typ": cur-artifact-badges
+#import "base.typ": layout-of, theme
 
 // ACM artifact badge artwork. Prefer v1.1 PNGs when available; `replicated`
 // falls back to ACM's older download image until a high-resolution v1.1 asset is available.
 #let artifact-badge-assets = (
-    available: "../assets/acm-artifact-badges/acm_available_1.1.png",
-    functional: "../assets/acm-artifact-badges/acm_functional_1.1.png",
-    reusable: "../assets/acm-artifact-badges/artifacts_evaluated_reusable_v1_1.png",
-    reproduced: "../assets/acm-artifact-badges/acm_reproduced_1.1.png",
-    replicated: "../assets/acm-artifact-badges/results_replicated_dl.jpg",
+    available: "/assets/acm-artifact-badges/acm_available_1.1.png",
+    functional: "/assets/acm-artifact-badges/acm_functional_1.1.png",
+    reusable: "/assets/acm-artifact-badges/artifacts_evaluated_reusable_v1_1.png",
+    reproduced: "/assets/acm-artifact-badges/acm_reproduced_1.1.png",
+    replicated: "/assets/acm-artifact-badges/results_replicated_dl.jpg",
 )
 
 #let artifact-badge-config = (
@@ -37,12 +37,12 @@
 ) = context {
     let items = badges.pos()
     if items.len() == 0 {
-        items = cur-artifact-badges.get()
+        items = theme().artifact-badges
     }
     if items.len() == 0 {
         none
     } else {
-        let layout = artifact-badge-config.layouts.at(config.at("aspect-ratio", default: "16-9"))
+        let layout = layout-of(artifact-badge-config)
         let resolved-height = if height == auto { config.at("height", default: layout.height) } else { height }
         let resolved-gap = if gap == auto { config.at("gap", default: layout.gap) } else { gap }
         let resolved-dx = if dx == auto { config.at("dx", default: layout.dx) } else { dx }

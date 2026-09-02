@@ -1,6 +1,6 @@
 #import "@preview/shadowed:0.3.0": shadow as draw-shadow
 
-#import "base.typ": bleed as bleed-block, cur-colors, cur-font-sizes
+#import "base.typ": bleed as bleed-block, merge-config, theme
 #import "emph.typ": apply-emph-style
 
 // CONFIG
@@ -62,13 +62,8 @@
 // `color` is a name from `callout-colors` or a partial style dict merged over
 // the "white" style, e.g. `color: (fill: ..., emph-fill: ...)`.
 #let callout(body, color: "white", config: (:)) = context {
-    for key in config.keys() {
-        assert(key in callout-config, message: "callout: unknown config key `" + key + "`")
-    }
-    let cfg = callout-config + config
-
-    let colors = cur-colors.get()
-    let font-sizes = cur-font-sizes.get()
+    let cfg = merge-config("callout", callout-config, config)
+    let (colors, font-sizes) = theme()
     let color-styles = callout-colors(colors)
     let style = if type(color) == str {
         assert(color in color-styles, message: "callout: unknown color `" + color + "`")

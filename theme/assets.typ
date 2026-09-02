@@ -1,4 +1,4 @@
-#import "base.typ": cur-mode
+#import "base.typ": theme
 
 // Common figures as plain exported values — no registry, no lookup. Pass them
 // wherever a `place-xx` helper takes a source: `#place-logo(pku-logo)`,
@@ -18,5 +18,5 @@
 // Resolve per-mode variants to the current mode's path; plain sources pass
 // through. Needs `context` when given a variant dict.
 #let asset-path(source) = {
-    if type(source) == dictionary { source.at(cur-mode.get(), default: source.light) } else { source }
+    if type(source) == dictionary { source.at(theme().mode, default: source.light) } else { source }
 }

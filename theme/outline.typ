@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, is-zh-lang
+#import "base.typ": font-config, is-zh-lang, layout-of, theme
 #import "base.typ": components, touying-slide, touying-slide-wrapper, utils
 
 // CONFIG
@@ -86,7 +86,7 @@
     colors: (:),
     highlight-current: false,
 ) = context {
-    let font-sizes = cur-font-sizes.get()
+    let font-sizes = theme().font-sizes
     let start-page = 1
     let end-page = calc.inf
     if level != none {
@@ -196,12 +196,9 @@
     variant: auto,
     body: none,
 ) = touying-slide-wrapper(self => context {
-    let colors = cur-colors.get()
-    let font-sizes = cur-font-sizes.get()
+    let (colors, font-sizes) = theme()
     let variant-name = if variant == auto { outline-config.default-variant } else { variant }
-
-    let aspect-ratio = cur-ar.get()
-    let outline-layout = outline-config.layouts.at(aspect-ratio)
+    let outline-layout = layout-of(outline-config)
     let variant-layout = outline-layout.variants.at(variant-name)
 
     let variant-config = outline-config.variants.at(variant-name)

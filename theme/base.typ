@@ -162,23 +162,46 @@
 
 #let title-alignments = ("left", "center")
 
-// Internal runtime state (set by `lemonade-theme`; other modules read it).
-#let cur-ar = state("lec-ar", "16-9")
-#let cur-mode = state("lec-mode", "light")
-#let cur-colors = state("lec-colors", mode-config.light.colors)
-#let cur-box = state("lec-box", mode-config.light.box)
-#let cur-box-compact = state("lec-box-compact", false)
-#let cur-box-fill = state("lec-box-fill", false)
-#let cur-title-align = state("lec-title-align", "center")
-#let cur-font-sizes = state("lec-font-sizes", layout-config.at("16-9").font-sizes)
-#let cur-artifact-badges = state("lec-artifact-badges", ())
+// Runtime state: the theme as `lemonade-theme` resolved it — aspect ratio,
+// mode, colors, font sizes, spacing, margins, and every deck-level component
+// default. Modules read it with `theme()` inside `context`; a new deck-level
+// knob is one more key here and in `lemonade-theme`, nothing else.
+#let cur-theme = state("lemonade-theme", none)
 
-// Rhythm tokens for the active aspect ratio. Requires context.
-#let cur-spacing() = layout-config.at(cur-ar.get()).spacing
+#let theme() = {
+    let resolved = cur-theme.get()
+    assert(resolved != none, message: "lemonade: theme state read before `lemonade-theme` was applied")
+    resolved
+}
+
+// The active aspect ratio's entry of a config's `layouts:` dict. Requires context.
+#let layout-of(config) = config.layouts.at(theme().aspect-ratio)
+
+// Merge `overrides` over `defaults`, rejecting keys the defaults do not have: a
+// misspelt or removed option would otherwise merge in and be read by nobody.
+#let merge-config(name, defaults, overrides) = {
+    for key in overrides.keys() {
+        assert(
+            key in defaults,
+            message: name + ": unknown key `" + key + "`; known keys are " + repr(defaults.keys()),
+        )
+    }
+    defaults + overrides
+}
+
+// Slot parts, shared by the title slide's metadata lines and the footer slots.
+// A part is `self => content` (called with Touying's `self`), literal content,
+// or an array of those; parts resolving to `none` drop out.
+#let resolve-parts(slot, self) = {
+    let items = if type(slot) == array { slot } else { (slot,) }
+    items.map(part => if type(part) == function { part(self) } else { part }).filter(it => it != none)
+}
+
+#let info-part(key) = self => self.info.at(key, default: none)
 
 // Full-bleed helper: ignore slide left/right margins.
 #let bleed(body) = context {
-    let margins = layout-config.at(cur-ar.get()).margins
+    let margins = theme().margins
     move(dx: -margins.left)[
         #block(width: 100% + margins.left + margins.right)[#body]
     ]

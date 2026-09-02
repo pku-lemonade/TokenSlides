@@ -1,6 +1,6 @@
 // Table styling.
 
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, layout-config
+#import "base.typ": font-config, theme
 #import "boxes.typ": box-item
 #import "emph.typ": apply-emph-style
 
@@ -45,7 +45,7 @@
 
 #let apply-table-style(colors, body) = {
     context {
-        let font-sizes = cur-font-sizes.get()
+        let font-sizes = theme().font-sizes
         let table-text-size = if table-config.text-size == auto { font-sizes.table } else { table-config.text-size }
         set table(stroke: (paint: colors.table-stroke, thickness: table-config.stroke-width))
         show table.cell: set text(size: table-text-size)
@@ -144,7 +144,7 @@
     assert(not header-row or header != none, message: "vtable: `header` is required when `header-row` is true")
     assert(row-stretch in ("content", "equal"), message: "vtable: `row-stretch` must be \"content\" or \"equal\"")
 
-    let colors = cur-colors.get()
+    let colors = theme().colors
     let column-count = columns.len()
     assert(column-count > 0, message: "vtable: `columns` cannot be empty")
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
@@ -470,7 +470,7 @@
         layout(size => fitted(item-height, size.width))
     } else if fill-height and outer-spacing {
         layout(size => context {
-            let slide-margins = layout-config.at(cur-ar.get()).margins
+            let slide-margins = theme().margins
             let top-margin = measure(v(slide-margins.top)).height
             let pos = here().position()
             let pad-height = measure(v(fill-pad)).height

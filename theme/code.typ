@@ -1,4 +1,4 @@
-#import "base.typ": cur-colors, cur-font-sizes, cur-mode
+#import "base.typ": theme
 #import "boxes.typ": box-item
 #import "images.typ": caption-foot
 
@@ -444,12 +444,6 @@
     mark-weight: "bold",
 )
 
-// The registry a fence tag is looked up in. Deck-level specs merge over the
-// built-ins through `lemonade-theme(code-langs: ...)`, so a deck can add its
-// own DSL, replace `python-lang`, or hand a language back to syntect with
-// `(python: none)`.
-#let cur-code-langs = state("lec-code-langs", code-config.langs)
-
 // Accept a bare line number or an array of them (`range(3, 7)` included).
 #let _line-set(spec, name) = {
     if spec == none {
@@ -826,21 +820,20 @@
 }
 
 #let _render-code(spec, height: auto, outer-spacing: true) = context {
-    let colors = cur-colors.get()
-    let font-sizes = cur-font-sizes.get()
+    let (colors, font-sizes, mode, code-langs) = theme()
     let accent = if spec.accent == auto { colors.primary } else { spec.accent }
     let resolved-size = (if spec.size == auto { font-sizes.code } else { spec.size }) * spec.scale
     let inset = if type(spec.inset) == ratio { spec.inset * resolved-size } else { spec.inset }
     let pad = if spec.frame { inset } else { 0pt }
 
     let marks = _mark-list(spec.mark)
-    let palette = _resolve-palette(spec.theme, cur-mode.get())
+    let palette = _resolve-palette(spec.theme, mode)
     // The fence's own tag is read from the body rather than per fence, so who
     // highlights this listing is settled before `raw` is set up.
     let (lang, syntect) = _resolve-highlighter(
         spec.theme,
         marks,
-        _resolve-lang(spec.lang, _first-lang(spec.body), cur-code-langs.get()),
+        _resolve-lang(spec.lang, _first-lang(spec.body), code-langs),
     )
     // One character, once: the listing font is mono, so this sizes the gutter
     // and every wrap indent in it.

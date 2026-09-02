@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, font-config
+#import "base.typ": font-config, info-part, layout-of, merge-config, resolve-parts, theme
 #import "base.typ": utils
 
 #let _footer-inline-title(it) = utils.markup-text(it, mode: "typ").replace(regex("\\s*[\\r\\n]+\\s*"), "")
@@ -12,7 +12,7 @@
     if inst != none { upper(inst) }
 }
 
-#let _author(self) = self.info.at("author", default: none)
+#let _author = info-part("author")
 
 #let _title(self) = {
     let title = self.info.at("short-title", default: auto)
@@ -46,8 +46,8 @@
 #let footer-config = (
     // Footer geometry per aspect ratio. `height` uses `em` so it scales with
     // `text-size` (e.g. `text-size: 16pt` + `height: 1.6em` => 25.6pt tall footer).
-    // The theme reserves this band as the page bottom margin (see `footer-band`
-    // in lemonade.typ), so slide content can never run under the footer.
+    // The theme reserves this band as the page bottom margin (`footer-band`
+    // below, read by lemonade.typ), so slide content can never run under it.
     layouts: (
         "16-9": (height: 1.2em, text-size: 16pt),
         "4-3": (height: 1.2em, text-size: 16pt),
@@ -89,10 +89,7 @@
         assert(type(footer) == dictionary, message: "footer must be none, a preset name, or a config dictionary")
         footer
     }
-    for key in overrides.keys() {
-        assert(key in footer-config, message: "unknown footer config key: " + key)
-    }
-    let config = footer-config + overrides
+    let config = merge-config("footer", footer-config, overrides)
     assert(config.style in ("bar", "plain"), message: "footer style must be \"bar\" or \"plain\"")
     config
 }
@@ -108,21 +105,17 @@
     }
 }
 
-// A slot renders its items in order: parts are called, `none` results drop
-// out, and everything else concatenates — so absence needs no case analysis
-// here or in the parts.
+// A slot's resolved parts concatenate; absence needs no case analysis here.
 #let _render-slot(slot, self) = {
-    let items = if type(slot) == array { slot } else { (slot,) }
-    let rendered = items.map(part => if type(part) == function { part(self) } else { part }).filter(it => it != none)
+    let rendered = resolve-parts(slot, self)
     if rendered.len() == 0 { [] } else { rendered.join() }
 }
 
 // Footer renderer. Set as `config-page(footer: footer.with(config: ...))` with
 // a config from `resolve-footer` in the theme.
 #let footer(self, config: footer-config) = context {
-    let aspect-ratio = cur-ar.get()
-    let colors = cur-colors.get()
-    let footer-layout = config.layouts.at(aspect-ratio)
+    let colors = theme().colors
+    let footer-layout = layout-of(config)
     let footer-fill = if config.fill == auto {
         if config.style == "bar" {
             if colors.footer-bg == auto { colors.primary } else { colors.footer-bg }

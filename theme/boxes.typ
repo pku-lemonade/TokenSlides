@@ -1,7 +1,4 @@
-#import "base.typ": (
-    bleed as bleed-block, cur-box, cur-box-compact, cur-box-fill, cur-colors, cur-font-sizes, cur-spacing,
-    touying-fn-wrapper,
-)
+#import "base.typ": bleed as bleed-block, theme, touying-fn-wrapper
 #import "emph.typ": apply-emph-style, on-primary
 
 // USER CONFIG
@@ -54,9 +51,6 @@
     fill-pad: 0.3em,
 )
 
-// Internal runtime state (set by `lemonade-theme`).
-#let cur-vboxs-config = state("lec-vboxs-config", vboxs-config)
-
 #let _box-figure-kind = "lemonade-box"
 #let _box-spec-label = <lemonade-box-spec>
 
@@ -71,7 +65,7 @@
 }
 
 #let _box-visuals(spec, colors) = {
-    let styles = cur-box.get()
+    let styles = theme().box-styles
     let style = if spec.style == none {
         none
     } else {
@@ -79,7 +73,7 @@
         styles.at(spec.style)
     }
     let accent = if style == none { colors.primary } else { style.border }
-    let fill = if style != none and cur-box-fill.get() { style.at("fill", default: none) } else { none }
+    let fill = if style != none and theme().box-fill { style.at("fill", default: none) } else { none }
     let frame-paint = if fill == none { colors.table-stroke } else { accent.transparentize(box-config.frame-tint) }
     (
         accent: accent,
@@ -203,8 +197,9 @@
     (spec.render)(spec + (row-title-size: row-title-size), height: height, outer-spacing: outer-spacing)
 } else {
     context {
-        let visuals = _box-visuals(spec, cur-colors.get())
-        let compact = spec.at("compact", default: cur-box-compact.get())
+        let resolved = theme()
+        let visuals = _box-visuals(spec, resolved.colors)
+        let compact = spec.at("compact", default: resolved.box-compact)
         let inner = if spec.kind == "plain" { _plain-grid } else { _top-grid }
         // A box on its own takes the uniform flow rhythm; inside a row the row
         // owns the spacing, so the item adds none of its own.
@@ -214,7 +209,7 @@
                 spec,
                 visuals,
                 if compact { box-config.compact } else { box-config.normal },
-                cur-font-sizes.get(),
+                resolved.font-sizes,
                 height: height,
                 row-title-size: row-title-size,
             )
@@ -524,13 +519,13 @@
 
         // An argument left `auto` defers to the deck's `vboxs-config`; that
         // dict's own `after-gap: auto` in turn means the uniform flow gap.
-        let cfg = cur-vboxs-config.get()
+        let cfg = theme().vboxs
         let gap = if gap == auto { cfg.gap } else { gap }
         let fill-height = if fill-height == auto { cfg.fill-height } else { fill-height }
         let fill-pad = if fill-pad == auto { cfg.fill-pad } else { fill-pad }
         let after-gap = {
             let resolved = if after-gap == auto { cfg.after-gap } else { after-gap }
-            if resolved == auto { cur-spacing().flow } else { resolved }
+            if resolved == auto { theme().spacing.flow } else { resolved }
         }
 
         // The band every foot in this row shares: the tallest one, measured at

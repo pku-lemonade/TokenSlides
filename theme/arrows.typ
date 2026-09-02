@@ -1,4 +1,4 @@
-#import "base.typ": cur-colors
+#import "base.typ": theme
 
 // One shared silhouette for short process arrows, plus one shared CeTZ style
 // for relationship connectors. Diagram geometry and semantic colors remain the
@@ -30,7 +30,7 @@
     )
 
     let cfg = arrow-config.solid
-    let resolved-fill = if fill == auto { cur-colors.get().primary } else { fill }
+    let resolved-fill = if fill == auto { theme().colors.primary } else { fill }
     let resolved-length = if length == auto { cfg.length } else { length }
     let resolved-thickness = if thickness == auto { cfg.thickness } else { thickness }
     let points = (

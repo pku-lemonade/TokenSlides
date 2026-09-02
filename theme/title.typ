@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config, is-zh-lang
+#import "base.typ": font-config, info-part, is-zh-lang, layout-of, resolve-parts, theme
 #import "base.typ": config-page, touying-slide, touying-slide-wrapper, utils
 #import "artifact-badges.typ": artifact-badges
 
@@ -18,9 +18,9 @@
 // Building blocks for the bottom band's `lines:` tuple. Each part is
 // `self => content`, returning `none` when the underlying info is absent so
 // empty lines drop out (the renderer pads back up to `min-lines`).
-#let _author(self) = self.info.at("author", default: none)
+#let _author = info-part("author")
 
-#let _institution(self) = self.info.at("institution", default: none)
+#let _institution = info-part("institution")
 
 #let _date(self) = {
     let date = self.info.at("date", default: datetime.today())
@@ -111,10 +111,8 @@
     extra: none,
 ) = touying-slide-wrapper(self => context {
     let cfg = preset
-    let aspect-ratio = cur-ar.get()
-    let colors = cur-colors.get()
-    let font-sizes = cur-font-sizes.get()
-    let margins = cfg.layouts.at(aspect-ratio)
+    let (colors, font-sizes) = theme()
+    let margins = layout-of(cfg)
     let self = utils.merge-dicts(self, config-page(footer: none, margin: margins), config)
 
     let display-title = if title == auto { self.info.at("title", default: none) } else { title }
@@ -133,14 +131,11 @@
     if bottom-han-delta != none {
         bottom-han-args.insert("size", bottom-size + bottom-han-delta)
     }
-    let lines = bottom-cfg
-        .lines
-        .map(part => if type(part) == function { part(self) } else { part })
-        .filter(it => it != none)
+    let lines = resolve-parts(bottom-cfg.lines, self)
     let display-lines = lines + range(calc.max(0, bottom-cfg.min-lines - lines.len())).map(_ => hide[placeholder])
 
     let body = {
-        artifact-badges(config: (aspect-ratio: aspect-ratio))
+        artifact-badges()
         if display-venue != none {
             place(top + center, dy: cfg.placement.venue-dy)[
                 #text(size: font-sizes.body-title, font: font-config.body, weight: "bold")[

@@ -6,7 +6,7 @@
 // title bars via `on-primary`, callouts and vtable cells with their own
 // fills). A fill of `none` keeps the surrounding text color.
 
-#import "base.typ": cur-colors
+#import "base.typ": theme
 
 #let _emph-text(inner, fill, weight, tracking) = {
     if tracking != none { h(tracking) }
@@ -29,6 +29,6 @@
 // Theme components apply this automatically; wrap custom filled blocks
 // manually: `#block(fill: colors.primary)[#on-primary[... *text* ...]]`.
 #let on-primary(body) = context {
-    let colors = cur-colors.get()
+    let colors = theme().colors
     apply-emph-style(body, emph-fill: colors.secondary, strong-fill: colors.secondary)
 }

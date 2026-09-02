@@ -46,7 +46,7 @@
 == Thin CeTZ connector
 
 #context {
-    let colors = cur-colors.get()
+    let colors = theme().colors
     let normal = connector-arrow(colors.primary)
     let failed = connector-arrow(
         rgb("#AE3B47"),

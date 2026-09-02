@@ -1,4 +1,4 @@
-#import "base.typ": cur-ar, cur-colors, cur-font-sizes, font-config
+#import "base.typ": font-config, layout-of, theme
 #import "base.typ": utils
 
 // CONFIG
@@ -19,9 +19,8 @@
     if not enabled or current-slide == 1 {
         none
     } else {
-        let colors = cur-colors.get()
-        let font-sizes = cur-font-sizes.get()
-        let layout = page-number-config.layouts.at(cur-ar.get())
+        let (colors, font-sizes) = theme()
+        let layout = layout-of(page-number-config)
         let text-size = if layout.text-size == auto { font-sizes.page-number } else { layout.text-size }
         let text-fill = if page-number-config.fill == auto {
             colors.fg
