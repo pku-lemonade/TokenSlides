@@ -1,7 +1,7 @@
 // Compilable reference for theme/images.typ and theme/assets.typ.
 //
 // Compile from the repository root:
-//   typst compile --root . examples/images/images.typ /tmp/images.pdf
+//   typst compile --root . docs/images.typ /tmp/images.pdf
 //
 // A figure is `#img(source)` or `#img(source, [caption])`, and it is a `vboxs`
 // row item — the same thing `#code` and the box helpers are. There is no

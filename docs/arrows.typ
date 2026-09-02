@@ -1,7 +1,7 @@
 // Compilable reference for theme/arrows.typ.
 //
 // Compile from the repository root:
-//   typst compile --root . examples/arrows/arrows.typ /tmp/arrows.pdf
+//   typst compile --root . docs/arrows.typ /tmp/arrows.pdf
 
 #import "/lemonade.typ": *
 #import "@preview/cetz:0.3.4"
