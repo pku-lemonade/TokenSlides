@@ -22,10 +22,10 @@
 
 // These assets already live in the repository, so this example adds no copied
 // binaries. Each `image(...)` path resolves relative to this source file.
-#let workflow = image("../vstack/assets/vstack-fig01-workflow.png")
-#let baselines = image("../vstack/assets/vstack-fig02-baselines.png")
-#let architecture = image("../vstack/assets/vstack-fig03-architecture.png")
-#let stack-design = image("../vstack/assets/vstack-fig04-stack-design.png")
+#let workflow = image("../graph-hls/assets/fig1-workflow.pdf")
+#let baselines = image("../graph-hls/assets/fig7-vs-thundergp.pdf")
+#let architecture = image("../graph-hls/assets/fig3-overview.pdf")
+#let stack-design = image("../graph-hls/assets/fig4-hierarchy.pdf")
 
 #set text(lang: "en")
 
@@ -177,7 +177,7 @@ The design separates request routing, scheduling, and memory management.
 #block(width: 100%, height: 330pt)[
     #place-logo(pku-logo, width: 8%)
     #place-image(
-        "/examples/vstack/assets/vstack-fig03-architecture.png",
+        "/examples/graph-hls/assets/fig3-overview.pdf",
         caption: "architecture",
         width: 24%,
         position: bottom + right,
