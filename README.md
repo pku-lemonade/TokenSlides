@@ -29,7 +29,7 @@ A Typst slide theme built on [Touying](https://typst.app/universe/package/touyin
 #ibox[*Claim:* state the takeaway directly.]
 
 #vboxs(
-  img("/examples/paper-reading/assets/graph-hls/fig1-workflow.pdf", [Short caption]),
+  img("/examples/paper-reading/graph-hls/assets/fig1-workflow.pdf", [Short caption]),
   width: 80%,
 )
 ```
@@ -59,23 +59,23 @@ Typical prompts:
 $academic-paper-to-slides @paper.pdf
 $academic-paper-to-slides @paper.pdf  Make the slides Chinese and use a seminar / reading-report style.
 $figure-extraction @paper.pdf  Recover the best asset for Figure 4 and save it under out/<paper>/assets/.
-Revise examples/paper-reading/graph-hls.typ. Tighten the boxes and revalidate.
+Revise examples/paper-reading/graph-hls/graph-hls.typ. Tighten the boxes and revalidate.
 ```
 
 The paper-to-slides skill keeps each paper in `out/<paper>/` with its notes and assets; the artifact layout, helper commands and validation steps are in [`docs/workflow.md`](docs/workflow.md).
 
 ## Examples
 
-Complete decks to copy from, grouped by genre. Layout is `examples/<genre>/<deck>.typ` with figures under `examples/<genre>/assets/<deck>/`; only sources and assets are tracked, so notes and previews next to a deck stay local.
+Complete decks to copy from, grouped by genre. Each deck has its own folder, `examples/<genre>/<deck>/<deck>.typ` with figures under `assets/`, the same shape as a generated `out/<paper>/`. Only sources and assets are tracked, so notes and previews in a deck folder stay local.
 
 **Paper reading** (a conference paper in 10 to 15 slides)
-- [`paper-reading/graph-hls.typ`](examples/paper-reading/graph-hls.typ): English, 16:9, ACM artifact badges, figures beside box rows, a results table.
+- [`paper-reading/graph-hls`](examples/paper-reading/graph-hls/graph-hls.typ): English, 16:9, ACM artifact badges, figures beside box rows, a results table.
 
 **Seminar report**
-- [`seminar/research.typ`](examples/seminar/research.typ): Chinese, dark mode, filled boxes, QR code on the closing slide.
+- [`seminar/research`](examples/seminar/research/research.typ): Chinese, dark mode, filled boxes, QR code on the closing slide.
 
 **Lecture**
-- [`lecture/algebraic-graph-theory.typ`](examples/lecture/algebraic-graph-theory.typ): 4:3, sections with an outline, speaker notes, stepped reveals, math.
+- [`lecture/algebraic-graph-theory`](examples/lecture/algebraic-graph-theory/algebraic-graph-theory.typ): 4:3, sections with an outline, speaker notes, stepped reveals, math.
 
 ## Theme reference
 

@@ -11,8 +11,8 @@ third_party/
 .claude/settings.local.json
 
 # Example deck directories track sources and assets only: notes, previews and
-# exports next to a deck stay local. Layout: examples/<genre>/<deck>.typ with
-# figures under examples/<genre>/assets/<deck>/.
+# exports next to a deck stay local. Layout: examples/<genre>/<deck>/<deck>.typ
+# with figures under examples/<genre>/<deck>/assets/.
 examples/**
 !examples/**/
 !examples/**/*.typ

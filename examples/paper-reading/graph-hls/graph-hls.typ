@@ -36,7 +36,7 @@
 
 #vboxs(
     img(
-        "/examples/paper-reading/assets/graph-hls/fig1-workflow.pdf",
+        "/examples/paper-reading/graph-hls/assets/fig1-workflow.pdf",
         [Existing flows spend effort on integration and emulation, not exploration],
     ),
 )
@@ -52,7 +52,7 @@
 ]
 
 #vboxs(
-    img("/examples/paper-reading/assets/graph-hls/fig2-bitwidth-cascade.pdf", [One bitwidth change fans out across the accelerator stack]),
+    img("/examples/paper-reading/graph-hls/assets/fig2-bitwidth-cascade.pdf", [One bitwidth change fans out across the accelerator stack]),
 )
 
 = Design
@@ -69,7 +69,7 @@
 
 #vboxs(
     img(
-        "/examples/paper-reading/assets/graph-hls/fig3-overview.pdf",
+        "/examples/paper-reading/graph-hls/assets/fig3-overview.pdf",
         [Abstraction, generation, and verification form one compiler workflow],
     ),
 )
@@ -82,7 +82,7 @@
         hbox[*L2:* microarchitecture knobs such as property bitwidth and lane count propagate through the full accelerator.],
         nbox[*L3:* dataflow strategy changes rewrite both FPGA organization and host-side coordination.],
     ),
-    img("/examples/paper-reading/assets/graph-hls/fig4-hierarchy.pdf", [`L1` single-line, `L2` multi-file, `L3` redesign]),
+    img("/examples/paper-reading/graph-hls/assets/fig4-hierarchy.pdf", [`L1` single-line, `L2` multi-file, `L3` redesign]),
 )
 
 == DSL Frontend
@@ -92,7 +92,7 @@
         ibox[*Abstraction:* Graph.hls builds accelerators from `iteration_input`, `map`, `filter`, `reduce`, and `return`.],
         hbox[*Why beyond GAS:* Belief Propagation needs neighbor exclusion before reduction, which the paper argues GAS cannot express directly.],
     ),
-    img("/examples/paper-reading/assets/graph-hls/fig5a-dsl.pdf", [One DSL block binds schema, parameters, and one iteration]),
+    img("/examples/paper-reading/graph-hls/assets/fig5a-dsl.pdf", [One DSL block binds schema, parameters, and one iteration]),
 )
 
 == Constraint Propagation
@@ -103,7 +103,7 @@
         hbox[*Then L1/L2:* bidirectional dependency propagation keeps only configurations that are both hardware-feasible and algorithmically valid.],
         nbox[*Worked example:* on `U55C`, PageRank on `rmat-21-32` becomes `11` little + `3` big pipelines; `32-bit` stays because `16-bit` would round `~1e-3` contributions to zero.],
     ),
-    img("/examples/paper-reading/assets/graph-hls/fig5b-level-examples.pdf", [The hierarchy maps to partitioning, bitwidth, and pipeline changes]),
+    img("/examples/paper-reading/graph-hls/assets/fig5b-level-examples.pdf", [The hierarchy maps to partitioning, bitwidth, and pipeline changes]),
 )
 
 == IR-Level Validation
@@ -153,7 +153,7 @@
 
 #vboxs(
     img(
-        "/examples/paper-reading/assets/graph-hls/fig6-vs-regraph.pdf",
+        "/examples/paper-reading/graph-hls/assets/fig6-vs-regraph.pdf",
         [Only `L1` changes here, so the gain comes from better use of ReGraph's fixed structure],
     ),
 )
@@ -170,7 +170,7 @@
 
 #vboxs(
     img(
-        "/examples/paper-reading/assets/graph-hls/fig7-vs-thundergp.pdf",
+        "/examples/paper-reading/graph-hls/assets/fig7-vs-thundergp.pdf",
         [Graph.hls keeps pace while avoiding several ThunderGP out-of-memory cases],
     ),
 )
@@ -187,7 +187,7 @@
 
 #vboxs(
     img(
-        "/examples/paper-reading/assets/graph-hls/fig8-ablation.pdf",
+        "/examples/paper-reading/graph-hls/assets/fig8-ablation.pdf",
         [The full gain appears only when the three levels are tuned together],
     ),
 )
@@ -203,7 +203,7 @@
 ]
 
 #vboxs(
-    img("/examples/paper-reading/assets/graph-hls/fig9-simulation-speedup.pdf", [IR-level simulation consistently outpaces Vitis `C-Sim`]),
+    img("/examples/paper-reading/graph-hls/assets/fig9-simulation-speedup.pdf", [IR-level simulation consistently outpaces Vitis `C-Sim`]),
 )
 
 == Takeaways

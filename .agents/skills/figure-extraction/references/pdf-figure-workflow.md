@@ -27,7 +27,7 @@
 
 ## Local Evidence
 
-In this repo, a rendered `examples/seminar/research.typ` (page 13) contains one displayed embedded raster image, which is a good sanity check for native raster capture. The old `examples/vstack/vstack.pdf` path referenced by earlier notes does not exist.
+In this repo, a rendered `examples/seminar/research/research.typ` (page 13) contains one displayed embedded raster image, which is a good sanity check for native raster capture. The old `examples/vstack/vstack.pdf` path referenced by earlier notes does not exist.
 
 ## External References
 
