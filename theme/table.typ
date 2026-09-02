@@ -149,8 +149,6 @@
     assert(column-count > 0, message: "vtable: `columns` cannot be empty")
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
     let palettes = _vtable-palettes(colors)
-    // `red` is a historical alias from when the primary accent was red.
-    let palette = if palette == "red" { "primary" } else { palette }
     let palette-colors = if type(palette) == str {
         assert(palette in palettes, message: "vtable: unknown palette `" + palette + "`")
         palettes.at(palette)

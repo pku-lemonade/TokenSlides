@@ -70,8 +70,6 @@
     let colors = cur-colors.get()
     let font-sizes = cur-font-sizes.get()
     let color-styles = callout-colors(colors)
-    // `red` is a historical alias from when the primary accent was red.
-    let color = if color == "red" { "primary" } else { color }
     let style = if type(color) == str {
         assert(color in color-styles, message: "callout: unknown color `" + color + "`")
         color-styles.at(color)
@@ -128,9 +126,7 @@
     ]
 }
 
-#let bluecallout(body, config: (:)) = callout(body, color: "blue", config: config)
-// Fills with the theme primary accent; the `red*` names are historical aliases.
-#let primarycallout(body, config: (:)) = callout(body, color: "primary", config: config)
-#let redcallout = primarycallout
-#let bcallout = bluecallout
-#let rcallout = redcallout
+// Short names: `b` is the fixed blue banner, `r` fills with the theme primary
+// accent (the name dates from when that accent was red).
+#let bcallout(body, config: (:)) = callout(body, color: "blue", config: config)
+#let rcallout(body, config: (:)) = callout(body, color: "primary", config: config)

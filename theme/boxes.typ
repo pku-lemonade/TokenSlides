@@ -819,17 +819,3 @@
         [],
     )
 }
-
-#let tbox(
-    body,
-    size: none,
-    weight: "bold",
-    alignment: left,
-    leading: 1em,
-) = context {
-    let font-sizes = cur-font-sizes.get()
-    set par(leading: leading)
-    align(alignment)[
-        #text(size: if size == none { font-sizes.body-title } else { size }, weight: weight)[#body]
-    ]
-}

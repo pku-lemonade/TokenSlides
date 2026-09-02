@@ -1,4 +1,3 @@
-#import "@preview/theorion:0.4.0": *
 #import "@preview/numbly:0.1.0": numbly
 
 #import "base.typ": (
@@ -32,14 +31,8 @@
 #import "thank-you.typ": thank-you-slide
 #import "outline.typ": outline-slide
 
-#show: show-theorion
-
 // Re-export footer under a stable name (avoid clashing with `lemonade-theme(footer: ...)`).
 #let footer = footer-fn
-
-// Explicit LaTeX-style text helpers. Normal `_emph_` / `#emph[...]` is themed as bold.
-#let textbf(body) = text(weight: "black")[#body]
-#let textit(body) = text(style: "italic")[#body]
 
 // Main theme entry.
 #let lemonade-theme(
