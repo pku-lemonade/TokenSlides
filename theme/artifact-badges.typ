@@ -26,6 +26,9 @@
     }
 }
 
+// Badge row, placed in a slide corner. With no positional badges the deck's
+// `lemonade-theme(artifact-badges: ...)` list is used; `auto` geometry takes
+// the aspect ratio's layout.
 #let artifact-badges(
     ..badges,
     height: auto,
@@ -33,8 +36,8 @@
     position: top + right,
     dx: auto,
     dy: auto,
-    config: (:),
 ) = context {
+    assert(badges.named().len() == 0, message: "artifact-badges: unknown options " + repr(badges.named().keys()))
     let items = badges.pos()
     if items.len() == 0 {
         items = theme().artifact-badges
@@ -43,10 +46,10 @@
         none
     } else {
         let layout = layout-of(artifact-badge-config)
-        let resolved-height = if height == auto { config.at("height", default: layout.height) } else { height }
-        let resolved-gap = if gap == auto { config.at("gap", default: layout.gap) } else { gap }
-        let resolved-dx = if dx == auto { config.at("dx", default: layout.dx) } else { dx }
-        let resolved-dy = if dy == auto { config.at("dy", default: layout.dy) } else { dy }
+        let resolved-height = if height == auto { layout.height } else { height }
+        let resolved-gap = if gap == auto { layout.gap } else { gap }
+        let resolved-dx = if dx == auto { layout.dx } else { dx }
+        let resolved-dy = if dy == auto { layout.dy } else { dy }
 
         place(position, dx: resolved-dx, dy: resolved-dy)[
             #box[

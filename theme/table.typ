@@ -163,8 +163,9 @@
     for key in fills.keys() {
         assert(key in palettes.primary, message: "vtable: unknown fills key `" + key + "`")
     }
-    let fill-of = palette-colors + (style-preset.fills)(colors) + fills
-    let fill-of = fill-of
+    // A `fills` entry of `"palette"` reinstates the palette color a style preset
+    // masked (e.g. the header fill under `style: "grid"`).
+    let fill-of = (palette-colors + (style-preset.fills)(colors) + fills)
         .pairs()
         .map(((key, value)) => (key, if value == "palette" { palette-colors.at(key) } else { value }))
         .to-dict()

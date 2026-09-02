@@ -73,17 +73,13 @@
         styles.at(spec.style)
     }
     let accent = if style == none { colors.primary } else { style.border }
-    let fill = if style != none and theme().box-fill { style.at("fill", default: none) } else { none }
+    let fill = if style != none and theme().box-fill { style.fill } else { none }
     let frame-paint = if fill == none { colors.table-stroke } else { accent.transparentize(box-config.frame-tint) }
     (
         accent: accent,
         fill: fill,
-        title-ink: if style == none {
-            box-config.title-text-fill
-        } else {
-            style.at("title-text-fill", default: box-config.title-text-fill)
-        },
-        title-emph: if style == none { none } else { style.at("title-emph-fill", default: none) },
+        title-ink: if style == none or style.title-text-fill == auto { box-config.title-text-fill } else { style.title-text-fill },
+        title-emph: if style == none or style.title-emph-fill == auto { none } else { style.title-emph-fill },
         frame: _frame-stroke(frame-paint),
         frame-no-left: _frame-stroke(frame-paint, left: false),
     )
@@ -108,9 +104,14 @@
     )[#title]
 }
 
-#let _body-content(spec, font-sizes) = block(width: 100%)[
-    #set text(size: font-sizes.body)
-    #spec.body
+// The body at its box's alignment. A horizontal component re-aligns every
+// paragraph line inside, since alignment is inherited; `left + horizon` is
+// the usual way to centre a short body in an equal-height row.
+#let _body-content(spec, font-sizes) = align(spec.at("body-align", default: box-config.body-align))[
+    #block(width: 100%)[
+        #set text(size: font-sizes.body)
+        #spec.body
+    ]
 ]
 
 #let _body-inset(spec, metrics) = {
@@ -130,7 +131,6 @@
     let has-title = spec.title != none
     let title-inset = spec.at("title-inset", default: box-config.title-inset)
     let body-inset = _body-inset(spec, metrics)
-    let body-align = spec.at("body-align", default: box-config.body-align)
     grid(
         columns: if has-title { (auto, 1fr) } else { (box-config.accent-width, 1fr) },
         rows: if height == auto { (auto,) } else { (1fr,) },
@@ -138,7 +138,7 @@
         inset: (x, y) => if x == 0 { if has-title { title-inset } else { 0pt } } else { body-inset },
         fill: (x, y) => if x == 0 { visuals.accent } else { visuals.fill },
         stroke: (x, y) => if x == 0 { none } else { visuals.frame-no-left },
-        align: (x, y) => if x == 0 { box-config.title-align + horizon } else { body-align },
+        align: (x, y) => if x == 0 { box-config.title-align + horizon } else { left + top },
         if has-title { _title-content(spec, visuals, font-sizes, row-title-size: row-title-size) } else { [] },
         _body-content(spec, font-sizes),
     )
@@ -163,7 +163,6 @@
 
 #let _top-grid(spec, visuals, metrics, font-sizes, height: auto, row-title-size: none) = {
     let body-inset = _body-inset(spec, metrics)
-    let body-align = spec.at("body-align", default: box-config.body-align)
     grid(
         columns: (1fr,),
         rows: if height == auto { (auto, auto) } else { (auto, 1fr) },
@@ -180,7 +179,7 @@
             fill: visuals.fill,
             inset: body-inset,
             stroke: visuals.frame,
-        )[#align(body-align)[#_body-content(spec, font-sizes)]],
+        )[#_body-content(spec, font-sizes)],
     )
 }
 
@@ -323,6 +322,12 @@
     )
     for key in options {
         if key in named { spec.insert(key, named.at(key)) }
+    }
+    if "body-align" in spec {
+        assert(
+            type(spec.body-align) == alignment,
+            message: name + ": `body-align` takes an alignment such as `left + horizon`, got " + repr(spec.body-align),
+        )
     }
     box-item(spec, pos.at(if titled { 1 } else { 0 }, default: []))
 }

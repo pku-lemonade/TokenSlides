@@ -1,14 +1,16 @@
 #import "title.typ": han-config, title-config, title-parts, title-slide
 
 // CONFIG
-// The closing slide inherits the title slide's metadata layout and typography.
-// Only the larger closing title and contact-oriented line set differ.
+// The closing slide is the title slide with these deltas: a larger title whose
+// Han glyphs stay at the title size, and contact lines in place of the deck
+// metadata. Nested dicts merge over `title-config` so new title-config keys
+// reach this slide too.
 #let thank-you-config = (
     title-config
         + (
             // Intentionally larger than the opening title slide; Han glyphs stay at
             // the title size.
-            title: (size-delta: 6pt, han-size-delta: none),
+            title: title-config.title + (size-delta: 6pt, han-size-delta: none),
             // Contact lines instead of the deck metadata; same slot semantics.
             bottom: title-config.bottom
                 + (
@@ -30,10 +32,14 @@
     config: (:),
     han: han-config,
     ..extras,
-) = title-slide(
-    config: config,
-    preset: thank-you-config,
-    han: han,
-    title: title,
-    extra: extras.pos().sum(default: none),
-)
+) = {
+    // The sink takes positional extras only; a misspelt option must not vanish.
+    assert(extras.named().len() == 0, message: "thank-you-slide: unknown options " + repr(extras.named().keys()))
+    title-slide(
+        config: config,
+        preset: thank-you-config,
+        han: han,
+        title: title,
+        extra: extras.pos().sum(default: none),
+    )
+}

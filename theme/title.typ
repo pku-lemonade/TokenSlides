@@ -1,4 +1,4 @@
-#import "base.typ": font-config, info-part, is-zh-lang, layout-of, resolve-parts, theme
+#import "base.typ": font-config, info-part, is-zh-lang, resolve-parts, theme
 #import "base.typ": config-page, touying-slide, touying-slide-wrapper, utils
 #import "artifact-badges.typ": artifact-badges
 
@@ -67,15 +67,14 @@
 )
 
 #let title-config = (
-    // Title-slide page margins per aspect ratio.
-    layouts: (
-        "16-9": (top: 0em, bottom: 0em, left: 1em, right: 1em),
-        "4-3": (top: 0em, bottom: 0em, left: 1em, right: 1em),
-    ),
+    // Title-slide page margins (the same for every aspect ratio).
+    margins: (top: 0em, bottom: 0em, left: 1em, right: 1em),
     placement: (
         venue-dy: 2em,
         title-dy: 0em,
-        bottom-dy: 0em,
+        // The bottom band is placed with its last baseline at the page edge, so
+        // a small lift keeps that line's descenders on the page.
+        bottom-dy: -0.25em,
     ),
     // `size-delta` adds to the aspect ratio's `title` font size.
     // `han-size-delta`: `auto` = `han-config.size-delta`, `none` keeps Han
@@ -112,7 +111,7 @@
 ) = touying-slide-wrapper(self => context {
     let cfg = preset
     let (colors, font-sizes) = theme()
-    let margins = layout-of(cfg)
+    let margins = cfg.margins
     let self = utils.merge-dicts(self, config-page(footer: none, margin: margins), config)
 
     let display-title = if title == auto { self.info.at("title", default: none) } else { title }

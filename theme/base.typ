@@ -135,23 +135,35 @@
 // hairlines take the accent at low alpha (see `frame-tint` in boxes.typ), which
 // is what sells the tinted-glass edge. Highlight runs a little brighter and
 // cleaner than before while keeping white large-title text at 3:1 contrast.
+//
+// Every style declares every key: `border` is the accent, `fill` the body pane
+// (used when `box-fill` is on), `title-text-fill: auto` takes the box-config
+// default ink, and `title-emph-fill: auto` gives emphasis in the title the
+// shared on-primary treatment; a color pins it instead.
+#let _box-style(border, fill, title-text-fill: auto, title-emph-fill: auto) = (
+    border: border,
+    fill: fill,
+    title-text-fill: title-text-fill,
+    title-emph-fill: title-emph-fill,
+)
+
 #let light-box-styles = (
-    highlight: (border: rgb("#C58900"), fill: rgb("#fbf6ed"), title-emph-fill: white),
-    info: (border: accent-config.berkeley-blue, fill: rgb("#f2f7ff")),
-    error: (border: accent-config.dark-red, fill: rgb("#fff3f3")),
-    success: (border: rgb("#327b38"), fill: rgb("#f2f9f1")),
-    neutral: (border: rgb("#585858"), fill: rgb("#f7f7f4")),
-    purple: (border: accent-config.tsinghua-purple, fill: rgb("#f8f5ff")),
+    highlight: _box-style(rgb("#C58900"), rgb("#fbf6ed"), title-emph-fill: white),
+    info: _box-style(accent-config.berkeley-blue, rgb("#f2f7ff")),
+    error: _box-style(accent-config.dark-red, rgb("#fff3f3")),
+    success: _box-style(rgb("#327b38"), rgb("#f2f9f1")),
+    neutral: _box-style(rgb("#585858"), rgb("#f7f7f4")),
+    purple: _box-style(accent-config.tsinghua-purple, rgb("#f8f5ff")),
 )
 
 // Same accents as light mode; fills share OKLCH L 0.235 / C 0.014.
 #let dark-box-styles = (
-    highlight: (border: rgb("#C58900"), fill: rgb("#221d17"), title-emph-fill: white),
-    info: (border: accent-config.berkeley-blue, fill: rgb("#1a1e25")),
-    error: (border: accent-config.dark-red, fill: rgb("#241c1c")),
-    success: (border: rgb("#327b38"), fill: rgb("#1a201a")),
-    neutral: (border: rgb("#585858"), fill: rgb("#1f1e1c")),
-    purple: (border: accent-config.tsinghua-purple, fill: rgb("#1f1d24")),
+    highlight: _box-style(rgb("#C58900"), rgb("#221d17"), title-emph-fill: white),
+    info: _box-style(accent-config.berkeley-blue, rgb("#1a1e25")),
+    error: _box-style(accent-config.dark-red, rgb("#241c1c")),
+    success: _box-style(rgb("#327b38"), rgb("#1a201a")),
+    neutral: _box-style(rgb("#585858"), rgb("#1f1e1c")),
+    purple: _box-style(accent-config.tsinghua-purple, rgb("#1f1d24")),
 )
 
 // Central theme “choices”: pick one of these modes in `lemonade-theme(mode: ...)`.
