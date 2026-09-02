@@ -6,7 +6,7 @@
 
 #show: lemonade-theme.with(
   aspect-ratio: "16-9",
-  title-align: "left",
+  title-align: left,
   box-compact: true,
   img-config: (
     cap-size: 15pt,
