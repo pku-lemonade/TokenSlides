@@ -1,5 +1,8 @@
 #import "/lemonade.typ": *
-#import "@preview/numbly:0.1.0": numbly
+
+// 4:3 lecture deck: sections with an outline slide, speaker notes, stepped
+// reveals with `#pause`, box rows, a callout, and a closing slide with a custom
+// title and contact lines.
 
 #show: lemonade-theme.with(
     aspect-ratio: "4-3",
@@ -14,8 +17,6 @@
     email: "youwei@pku.edu.cn",
     github: "pku-lemonade",
 )
-
-#set heading(numbering: numbly("{1}.", default: "1.1"))
 
 #title-slide()
 
@@ -72,17 +73,17 @@ This measures the total weight of edges crossing the boundary between $S$ and $o
 
 Minimize the raw size of the cut.
 
-#hbox([
+#hbox[
     *Max Flow-Min Cut Theorem:* \
     The maximum $s$-$t$ flow value equals the minimum $s$-$t$ cut capacity.
-])
+]
 
-#nbox([
+#nbox[
     *Computational Complexity:*
     - Focus: Finding the bottleneck capacity
     - Approximation algorithms can achieve $O(n^(3\/2))$ for sparse graphs
 
-])
+]
 
 #ibox[
     *Question*: Is this the right objective for community detection?
@@ -109,13 +110,13 @@ Minimize the raw size of the cut.
 
 We need to normalize the external connection relative to the cluster's *internal size* or *volume*.
 
-#hbox([
+#hbox[
     *Volume of a set S:* Sum of degrees of nodes within $S$.
 
     $ "vol"(S) = sum_(u in S) "deg" (u) = sum_(u in S) sum_(v in V) w_(u,v) $
 
     Measures the total edge weight incident to nodes in $S$.
-])
+]
 
 == Ratio/Conductance
 
@@ -162,9 +163,9 @@ Conductance quantifies whether internal connections are *significantly richer* t
     $ phi.alt(G) = min_(S subset V) phi.alt(S) $
 ]
 
-#ebox([
+#ebox[
     *Challenge:* Finding the exact minimum conductance cut is NP-hard.
-])
+]
 
 = Graph Laplacians
 
@@ -172,7 +173,7 @@ Conductance quantifies whether internal connections are *significantly richer* t
 
 How can we *approximate* the minimum conductance cut?
 
-#sbox([*Key Idea:* Represent the graph as a matrix and analyze its properties.])
+#sbox[*Key Idea:* Represent the graph as a matrix and analyze its properties.]
 
 == Adjacency Matrix
 
@@ -191,7 +192,7 @@ However, the conclusions will extend to directed/weighted graphs.
         )
     $
 
-    *Degree Matrix ($D$):* Diagonal matrix of  degrees. $D_(i i) = sum_j W_(i j)$.
+    *Degree Matrix ($D$):* Diagonal matrix of degrees. $D_(i i) = sum_j W_(i j)$.
 
     $
         D = mat(
@@ -205,7 +206,7 @@ However, the conclusions will extend to directed/weighted graphs.
 
 == Laplacian Matrix
 
-#hbox([
+#hbox[
     *Graph Laplacian*: A matrix representing graph connectivity.
 
     $ L = D - W $
@@ -213,9 +214,9 @@ However, the conclusions will extend to directed/weighted graphs.
     where:
     - $D$ is the diagonal degree matrix
     - $W$ is the weighted adjacency matrix
-])
+]
 
-#nbox([
+#nbox[
     *Laplacian Matrix Example:*
 
     $
@@ -237,7 +238,7 @@ However, the conclusions will extend to directed/weighted graphs.
             0, 0, -1, 1;
         )
     $
-])
+]
 
 == The Laplacian Quadratic Form
 
@@ -265,7 +266,7 @@ However, the conclusions will extend to directed/weighted graphs.
     $
         L = mat(
             2, -1, -1, 0;
-            -1, 2, 1, 0;
+            -1, 2, -1, 0;
             -1, -1, 3, -1;
             0, 0, -1, 1;
         ), x = vec(x_1, x_2, x_3, x_4)
@@ -293,7 +294,6 @@ However, the conclusions will extend to directed/weighted graphs.
     $
 ]
 
-#v(-0.5em)
 #sbox[The Laplacian quadratic form directly encodes *cut sizes*!
     <=>
     Minimizing $x^T L x$ over certain vectors $x$ is finding minimum cuts.]
@@ -386,7 +386,7 @@ Assume that $G$ has $k$ connected components.
 
 #pause
 #hbox[
-    (Cheeger, 1973) proved that the second smallest non-zero eigenvalue of a normalized Laplacian $v_2$ is bouned:
+    (Cheeger, 1973) proved that the second smallest non-zero eigenvalue of a normalized Laplacian $v_2$ is bounded:
 
     $ phi.alt(G) <= v_2 <= phi.alt(G)^2/2 $
 
@@ -411,7 +411,6 @@ Assume that $G$ has $k$ connected components.
         $ phi.alt(S)= frac("cut"(S, overline(S)), min("vol"(S), "vol"(overline(S)))) $
     ],
     widths: (1fr, 1fr, 1.5fr),
-    gap: 5pt,
     fill-height: false,
 )
 #pause
@@ -433,7 +432,6 @@ Assume that $G$ has $k$ connected components.
     - Second eigenvalue = cut ratio / conductance
 
 #pause
-#v(1em)
 #sbox[*Question*: How does the *eigenvectors* correspond to the cuts?]
 #pause
 #pbox[*Hint*: Nodes in the same partition should have similar values.]

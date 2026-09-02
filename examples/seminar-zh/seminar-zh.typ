@@ -1,5 +1,8 @@
 #import "/lemonade.typ": *
 
+// Chinese seminar deck in dark mode: filled boxes, a plain footer, a QR code on
+// the closing slide, and `lang: "zh"` so dates and outline numbering follow.
+
 #set text(lang: "zh")
 #show: lemonade-theme.with(
     aspect-ratio: "16-9",
