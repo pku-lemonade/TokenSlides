@@ -16,8 +16,9 @@
         palette: "primary",
         fills: (:),
         center-cols: (),
-        text-size: 20pt,
-        header-text-size: 24pt,
+        // `auto` = the aspect ratio's `table` / `table-header` font sizes.
+        text-size: auto,
+        header-text-size: auto,
         weight: "medium",
         header-weight: "bold",
         emphasis-weight: "black",
@@ -144,7 +145,9 @@
     assert(not header-row or header != none, message: "vtable: `header` is required when `header-row` is true")
     assert(row-stretch in ("content", "equal"), message: "vtable: `row-stretch` must be \"content\" or \"equal\"")
 
-    let colors = theme().colors
+    let (colors, font-sizes) = theme()
+    let text-size = if text-size == auto { font-sizes.table } else { text-size }
+    let header-text-size = if header-text-size == auto { font-sizes.table-header } else { header-text-size }
     let column-count = columns.len()
     assert(column-count > 0, message: "vtable: `columns` cannot be empty")
     assert(column-styles.len() <= column-count, message: "vtable: `column-styles` cannot be longer than `columns`")
