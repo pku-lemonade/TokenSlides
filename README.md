@@ -39,7 +39,7 @@ typst compile --root . my-deck.typ /tmp/my-deck.pdf
 scripts/check.sh   # compiles every reference and example deck
 ```
 
-The fastest way to a real deck is to copy an example below. How the theme is used in a deck file, from rows and figures to code listings, is in [`docs/theme.md`](docs/theme.md).
+The fastest way to a real deck is to copy an example below. How the theme is used in a deck file, from rows and figures to code listings, is in [`docs/README.md`](docs/README.md#writing-a-deck).
 
 ## Skills
 
@@ -62,7 +62,7 @@ $figure-extraction @paper.pdf  Recover the best asset for Figure 4 and save it u
 Revise examples/paper-reading/graph-hls/graph-hls.typ. Tighten the boxes and revalidate.
 ```
 
-The paper-to-slides skill keeps each paper in `out/<paper>/` with its notes and assets; the artifact layout, helper commands and validation steps are in [`docs/workflow.md`](docs/workflow.md).
+The paper-to-slides skill keeps each paper in `out/<paper>/` with its notes and assets; the artifact layout, helper commands and validation steps are in [`docs/README.md`](docs/README.md#paper-to-slides-workflow).
 
 ## Examples
 
@@ -97,7 +97,7 @@ Knobs live at the top of each `theme/<module>.typ` as a `<feature>-config` dicti
 
 - `lemonade.typ`: entry point, re-exports `theme/lemonade.typ`
 - `theme/`: the theme modules
-- `docs/`: reference decks and the two guides above
+- `docs/`: reference decks and their [README](docs/README.md) with the two guides
 - `examples/`: sample decks by genre
 - `assets/`: shared logos and QR codes ([`assets/README.md`](assets/README.md))
 - `scripts/check.sh`: compile, render-diff and coverage checks
