@@ -28,8 +28,8 @@
         "16-9": (
             width: 100%,
             variants: (
-                sections: (indent: (0em,), spacing: (6pt,)),
-                subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
+                sections: (indent: (0em,), spacing: 6pt),
+                subsections: (indent: (0em, 1em), spacing: 0em),
             ),
         ),
         "4-3": (
@@ -37,8 +37,8 @@
             variants: (
                 // 22pt = the former 1em at the 4-3 body size; pt keeps the
                 // outline gutters unit-consistent with the 16-9 layout.
-                sections: (indent: (0em,), spacing: (22pt,)),
-                subsections: (indent: (0em, 1em), spacing: (0em, 0em)),
+                sections: (indent: (0em,), spacing: 22pt),
+                subsections: (indent: (0em, 1em), spacing: 0em),
             ),
         ),
     ),
@@ -70,23 +70,13 @@
 
 #let _array-at(arr, idx) = arr.at(idx, default: arr.last())
 
-#let _centered-progressive-outline(
-    self: none,
-    alpha: outline-config.alpha,
-    level: auto,
-    numbered: (false,),
-    numbering-patterns: (),
-    text-size: none,
-    text-weight: none,
-    number-title-gap: 0em,
-    vspace: none,
-    indent: (0em,),
-    depth: 1,
-    short-heading: true,
-    colors: (:),
-    highlight-current: false,
-) = context {
-    let font-sizes = theme().font-sizes
+// The entry list: every heading down to the variant's depth at the variant's
+// per-level sizes and indents, numbers right-aligned in one column. Given a
+// `level`, headings outside the current section fade to `outline-config.alpha`
+// and the current one takes the primary color.
+#let _outline-entries(self, variant, variant-layout, numbering-patterns, level: none, numbered: true) = context {
+    let (colors, font-sizes) = theme()
+    // Pages covered by the current heading at `level`.
     let start-page = 1
     let end-page = calc.inf
     if level != none {
@@ -97,95 +87,46 @@
                 let next-headings = query(
                     selector(heading.where(level: level)).after(inclusive: false, current-heading.location()),
                 )
-                if next-headings != () {
-                    end-page = next-headings.at(0).location().page()
-                }
+                if next-headings != () { end-page = next-headings.at(0).location().page() }
             } else {
                 end-page = start-page + 1
             }
         }
     }
+    let entries = query(heading).filter(item => item.level <= variant.depth)
 
-    let entries = ()
-    for item in query(heading) {
-        if item.level <= depth {
-            entries.push(item)
-        }
-    }
-
-    let resolve-size = size => {
-        if type(size) == str {
-            font-sizes.at(size)
-        } else {
-            size
-        }
-    }
     let entry-size = item => {
-        if type(text-size) == array and text-size.len() > 0 {
-            resolve-size(_array-at(text-size, item.level - 1))
-        } else { font-sizes.body }
-    }
-    let entry-weight = item => _array-at(text-weight, item.level - 1)
-    let with-entry-text = (item, fill: auto, body) => {
-        set text(size: entry-size(item))
-        set text(weight: entry-weight(item)) if type(text-weight) == array and text-weight.len() > 0
-        set text(fill: fill) if fill != auto
-        body
+        let size = _array-at(variant.text-size, item.level - 1)
+        if type(size) == str { font-sizes.at(size) } else { size }
     }
     let entry-fill = item => {
         let covered = item.location().page() < start-page or item.location().page() >= end-page
-        let base-fill = if highlight-current and not covered { colors.primary } else { colors.fg }
-        if covered { utils.update-alpha(base-fill, alpha) } else { base-fill }
+        let base-fill = if level != none and not covered { colors.primary } else { colors.fg }
+        if covered { utils.update-alpha(base-fill, outline-config.alpha) } else { base-fill }
     }
-
-    let number-body = item => {
-        if _array-at(numbered, item.level - 1) {
-            let current-numbering = numbering-patterns.at(item.level - 1, default: item.numbering)
-            if current-numbering != none {
-                numbering(current-numbering, ..counter(heading).at(item.location()))
-            }
-        }
+    let number-body = item => if numbered {
+        let pattern = numbering-patterns.at(item.level - 1, default: item.numbering)
+        if pattern != none { numbering(pattern, ..counter(heading).at(item.location())) }
     }
-
-    let number-measure-body = item => with-entry-text(item)[#number-body(item)]
-
-    let number-col-width = 0pt
-    for item in entries {
-        number-col-width = calc.max(number-col-width, measure(number-measure-body(item)).width)
-    }
+    let measured-number = item => text(size: entry-size(item), weight: outline-config.entry-weight)[#number-body(item)]
+    let number-col-width = entries.map(item => measure(measured-number(item)).width).fold(0pt, calc.max)
 
     let render-entry = item => {
         let size = entry-size(item)
-        let number-width = measure(number-measure-body(item)).width
+        let number-width = measure(measured-number(item)).width
         box(height: size * 1.35)[
             #align(left + horizon)[
-                #h(range(1, item.level + 1).map(level => _array-at(indent, level - 1)).sum())
-                #with-entry-text(item, fill: entry-fill(item))[
+                #h(range(item.level).map(depth => _array-at(variant-layout.indent, depth)).sum())
+                #text(size: size, weight: outline-config.entry-weight, fill: entry-fill(item))[
                     #number-body(item)
-                    #h(calc.max(0pt, number-col-width - number-width + number-title-gap))
-                    #link(
-                        item.location(),
-                        if short-heading {
-                            utils.short-heading(self: self, item)
-                        } else {
-                            item.body
-                        },
-                    )
+                    #h(calc.max(0pt, number-col-width - number-width + outline-config.number-title-gap))
+                    #link(item.location(), utils.short-heading(self: self, item))
                 ]
             ]
         ]
     }
 
-    let row-gutter = if type(vspace) == array and vspace.len() > 0 {
-        vspace.at(0)
-    } else { 0pt }
-
-    grid(
-        columns: (auto,),
-        row-gutter: row-gutter,
-        align: left,
-        ..entries.map(render-entry),
-    )
+    grid(columns: (auto,), row-gutter: variant-layout.spacing, align: left, ..entries.map(render-entry))
 }
 
 #let outline-slide(
@@ -196,7 +137,7 @@
     variant: auto,
     body: none,
 ) = touying-slide-wrapper(self => context {
-    let (colors, font-sizes) = theme()
+    let font-sizes = theme().font-sizes
     let variant-name = if variant == auto { outline-config.default-variant } else { variant }
     let outline-layout = layout-of(outline-config)
     let variant-layout = outline-layout.variants.at(variant-name)
@@ -209,27 +150,10 @@
         outline-config.numbering-style
     }
     let outline-numbering = outline-config.numbering-styles.at(numbering-style)
-    let highlight-current = level != none
 
     let outline-content = {
-        let cont = _centered-progressive-outline(
-            self: self,
-            level: level,
-            alpha: outline-config.alpha,
-            indent: variant-layout.indent,
-            vspace: variant-layout.spacing,
-            numbered: (numbered,),
-            numbering-patterns: outline-numbering,
-            number-title-gap: outline-config.number-title-gap,
-            colors: colors,
-            highlight-current: highlight-current,
-            depth: variant-config.depth,
-            text-size: variant-config.text-size,
-            text-weight: (outline-config.entry-weight,),
-        )
-
         set text(font: font-config.mono, tracking: outline-config.entry-tracking)
-        cont
+        _outline-entries(self, variant-config, variant-layout, outline-numbering, level: level, numbered: numbered)
     }
 
     let main-body = {

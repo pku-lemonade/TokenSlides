@@ -224,109 +224,63 @@
     if row-weights != auto {
         assert(row-weights.len() == body-row-count, message: "vtable: `row-weights` length must match body row count")
     }
-    let col-style = col => if col < column-styles.len() {
-        column-styles.at(col)
-    } else {
-        (:)
-    }
-    let style-value = (style, key, default) => style.at(key, default: default)
+    // What the per-cell closures need to know about a cell: its column style and
+    // whether it sits in the header or total row. `styled` reads a column-style
+    // key, taking the `header-` prefixed one in the header row.
+    let cell-role = (x, y) => (
+        style: if x < column-styles.len() { column-styles.at(x) } else { (:) },
+        header: header-row and y == 0,
+        total: total-row and y == total-row-index,
+        body-row: y - header-offset,
+    )
+    let styled = (role, key, default) => role.style.at(if role.header { "header-" + key } else { key }, default: default)
+
     let cell-align = (x, y) => {
-        let is-header = header-row and y == 0
-        let style = col-style(x)
-        let default-align = if is-header {
-            header-align
-        } else if x in center-cols {
-            center
-        } else {
-            align
-        }
-        let horizontal = if is-header {
-            style-value(style, "header-align", default-align)
-        } else {
-            style-value(style, "align", default-align)
-        }
-        horizontal + horizon
+        let role = cell-role(x, y)
+        let default-align = if role.header { header-align } else if x in center-cols { center } else { align }
+        styled(role, "align", default-align) + horizon
     }
     let cell-fill = (x, y) => {
-        let is-header = header-row and y == 0
-        let is-total = total-row and y == total-row-index
-        let body-row = y - header-offset
-        let style = col-style(x)
-        let default-fill = if is-header {
+        let role = cell-role(x, y)
+        let default-fill = if role.header {
             fill-of.header-fill
-        } else if is-total {
+        } else if role.total {
             fill-of.total-fill
         } else if banded-rows {
-            if calc.odd(body-row + 1) { fill-of.row-odd-fill } else { fill-of.row-even-fill }
+            if calc.odd(role.body-row + 1) { fill-of.row-odd-fill } else { fill-of.row-even-fill }
         } else if banded-columns {
             if calc.odd(x + 1) { fill-of.column-odd-fill } else { fill-of.column-even-fill }
         } else {
             none
         }
-        if is-header {
-            style-value(style, "header-cell-fill", default-fill)
-        } else {
-            style-value(style, "cell-fill", default-fill)
-        }
+        styled(role, "cell-fill", default-fill)
     }
-
     let cell-inset = (x, y) => {
-        let style = col-style(x)
-        if header-row and y == 0 {
-            style-value(style, "header-inset", header-inset)
-        } else {
-            style-value(style, "inset", inset)
-        }
+        let role = cell-role(x, y)
+        styled(role, "inset", if role.header { header-inset } else { inset })
     }
 
     let style-cell(cell, row-offset: 0) = {
-        let col = cell.x
-        let row = cell.y + row-offset
-        let style = col-style(col)
-        let is-header = header-row and row == 0
-        let is-total = total-row and row == total-row-index
-        let is-first-column = first-column and not is-header and col == 0
-        let is-last-column = last-column and not is-header and col == column-count - 1
-        let is-emphasis = is-header or is-total or is-first-column or is-last-column
-        let default-size = if is-header { header-text-size } else { text-size }
-        let default-weight = if is-header {
-            header-weight
-        } else if is-emphasis {
-            emphasis-weight
-        } else {
-            weight
-        }
-        let default-fill = if is-header {
-            fill-of.header-text-fill
-        } else if is-total {
-            fill-of.total-text-fill
-        } else {
-            colors.fg
-        }
-        let size = if is-header {
-            style-value(style, "header-text-size", default-size)
-        } else {
-            style-value(style, "text-size", default-size)
-        }
-        let weight = if is-header {
-            style-value(style, "header-weight", default-weight)
-        } else {
-            style-value(style, "weight", default-weight)
-        }
-        let fill = if is-header {
-            style-value(style, "header-text-fill", default-fill)
-        } else {
-            style-value(style, "text-fill", default-fill)
-        }
-        let cell-leading = if is-header {
-            style-value(style, "header-leading", header-leading)
-        } else {
-            style-value(style, "leading", leading)
-        }
-        set text(size: size, weight: weight, fill: fill)
+        let role = cell-role(cell.x, cell.y + row-offset)
+        let edge-column = not role.header and (
+            (first-column and cell.x == 0) or (last-column and cell.x == column-count - 1)
+        )
+        let size = styled(role, "text-size", if role.header { header-text-size } else { text-size })
+        let cell-weight = styled(
+            role,
+            "weight",
+            if role.header { header-weight } else if role.total or edge-column { emphasis-weight } else { weight },
+        )
+        let cell-text-fill = styled(
+            role,
+            "text-fill",
+            if role.header { fill-of.header-text-fill } else if role.total { fill-of.total-text-fill } else { colors.fg },
+        )
+        let cell-leading = styled(role, "leading", if role.header { header-leading } else { leading })
+        set text(size: size, weight: cell-weight, fill: cell-text-fill)
         if cell-leading != auto { set par(leading: cell-leading) }
         show raw: set text(font: font-config.mono, size: size)
-        show: apply-emph-style.with(emph-fill: fill, strong-fill: fill)
+        show: apply-emph-style.with(emph-fill: cell-text-fill, strong-fill: cell-text-fill)
         cell
     }
 
