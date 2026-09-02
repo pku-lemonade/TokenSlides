@@ -11,9 +11,10 @@
 // - Body and title font sizes: edit `body` / `body-title` in base.typ.
 // - Soft body fills are enabled with `lemonade-theme(box-fill: true)`.
 //
-// Per-box `compact`, `body-inset`, `title-size`, and `title-inset` override
-// these defaults. A dictionary `body-inset` is merged over the selected normal
-// or compact inset, so `body-inset: (right: 0pt)` changes only that side.
+// Per-box `compact`, `body-align`, `body-inset`, `title-size`, and
+// `title-inset` override these defaults. A dictionary `body-inset` is merged
+// over the selected normal or compact inset, so
+// `body-inset: (right: 0pt)` changes only that side.
 // A vboxs `title-size` applies to the row unless a box sets its own title size.
 // Outer box spacing is not configured here: boxes take the uniform `flow`
 // rhythm (see `layout-config` in base.typ) via `auto` block spacing.
@@ -31,6 +32,7 @@
     // for white overrides it per style (`title-text-fill` in base.typ).
     title-text-fill: white,
     title-align: center,
+    body-align: left + top,
     frame-width: 1pt,
     // With body fills on, hairlines take the box accent at this transparency
     // instead of the neutral table stroke — the tinted edge on a near-white
@@ -134,6 +136,7 @@
     let has-title = spec.title != none
     let title-inset = spec.at("title-inset", default: box-config.title-inset)
     let body-inset = _body-inset(spec, metrics)
+    let body-align = spec.at("body-align", default: box-config.body-align)
     grid(
         columns: if has-title { (auto, 1fr) } else { (box-config.accent-width, 1fr) },
         rows: if height == auto { (auto,) } else { (1fr,) },
@@ -141,7 +144,7 @@
         inset: (x, y) => if x == 0 { if has-title { title-inset } else { 0pt } } else { body-inset },
         fill: (x, y) => if x == 0 { visuals.accent } else { visuals.fill },
         stroke: (x, y) => if x == 0 { none } else { visuals.frame-no-left },
-        align: (x, y) => if x == 0 { box-config.title-align + horizon } else { left + top },
+        align: (x, y) => if x == 0 { box-config.title-align + horizon } else { body-align },
         if has-title { _title-content(spec, visuals, font-sizes, row-title-size: row-title-size) } else { [] },
         _body-content(spec, font-sizes),
     )
@@ -166,6 +169,7 @@
 
 #let _top-grid(spec, visuals, metrics, font-sizes, height: auto, row-title-size: none) = {
     let body-inset = _body-inset(spec, metrics)
+    let body-align = spec.at("body-align", default: box-config.body-align)
     grid(
         columns: (1fr,),
         rows: if height == auto { (auto, auto) } else { (auto, 1fr) },
@@ -182,7 +186,7 @@
             fill: visuals.fill,
             inset: body-inset,
             stroke: visuals.frame,
-        )[#_body-content(spec, font-sizes)],
+        )[#align(body-align)[#_body-content(spec, font-sizes)]],
     )
 }
 
@@ -301,7 +305,7 @@
 #let _make-box(kind, style, name, ..args) = {
     let pos = args.pos()
     let named = args.named()
-    let options = ("compact", "body-inset", "title-size", "title-inset")
+    let options = ("compact", "body-align", "body-inset", "title-size", "title-inset")
     // Revealing is the ROW's job, never an item's: a stepped row is emitted as a
     // Touying mark that only survives outside a `context` (see `vboxs`), and a box
     // standing on its own is drawn by a show rule, long after Touying parsed the marks.

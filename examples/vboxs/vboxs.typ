@@ -90,6 +90,13 @@
     ],
 )
 
+== Per-box body alignment
+
+#vboxs(
+    ibox([水平标题], body-align: left + horizon)[正文在等高盒子中垂直居中。],
+    vpbox([顶部标题], body-align: left + horizon)[顶部标题盒子使用同一个正文对齐参数。],
+)
+
 = Stepped Rows
 
 == `step: true`, with a trailing callout
